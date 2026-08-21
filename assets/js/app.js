@@ -251,6 +251,12 @@
         }
       });
     });
+    /* 窓の大きさが変わると軌道の半径も変わる。潜ったままだと、
+       クリックした時の角度のままではカメラが的を外す。引き直す。 */
+    if (state.zoom) {
+      var zc = catOf(state.zoom);
+      if (zc) state.ang = angleOf(zc);
+    }
     place(0);
     applyCamera(false);
     return true;
@@ -449,8 +455,11 @@
         st.setProperty('--sc', pt.s.toFixed(3));
         var open = state.openSlug === wk.slug;
         st.setProperty('--dim', open ? '1' : (0.58 + (pt.z + 1) / 2 * 0.42).toFixed(3));
+        /* 重なり順。作品はいつでも軌道の線より上に来る。
+           奥:12〜19 → 中心:20 → 軌道の線(手前):21 → 手前の作品:24〜31 */
         st.zIndex = open ? 60
-                  : (pt.z > 0 ? 21 + Math.round(pt.z * 8) : 19 + Math.round(pt.z * 8));
+                  : (pt.z > 0 ? 24 + Math.round(pt.z * 7)
+                              : 12 + Math.round((1 + pt.z) * 7));
       }
     }
   }

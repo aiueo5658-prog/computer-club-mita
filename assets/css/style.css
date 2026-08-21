@@ -215,17 +215,16 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
 
 /* 軌道の線。円を透視で落とした形なので、CSS の楕円ではなく
    app.js が点を打って描く。中心の丸に重なるところは描いていない。
-   奥半分は破線で薄く、手前半分は実線ではっきり。前後が読めるようにする。 */
+   奥半分は薄く、手前半分は濃く。線の太さは倍率に関わらず一定。 */
 .orbsvg{position:absolute;left:-500px;top:-500px;width:1000px;height:1000px;
   overflow:visible;pointer-events:none;
   opacity:0;transition:opacity .2s ease}
 .satsys.on .orbsvg{opacity:1;transition:opacity .3s ease .04s}
-.orbsvg.back {z-index:12}   /* 中心より下 */
-.orbsvg.front{z-index:28}   /* 中心より上 */
+.orbsvg.back {z-index:6}    /* 奥の線。作品も中心も、この上に来る */
+.orbsvg.front{z-index:21}   /* 手前の線。中心より上、ただし作品より下 */
 .orbline{fill:none;vector-effect:non-scaling-stroke}
-.orbline.back {stroke:color-mix(in oklab, var(--c) 20%, transparent);
-  stroke-width:1;stroke-dasharray:3 7}
-.orbline.front{stroke:color-mix(in oklab, var(--c) 44%, transparent);stroke-width:1.2}
+.orbline.back {stroke:color-mix(in oklab, var(--c) 22%, transparent);stroke-width:1}
+.orbline.front{stroke:color-mix(in oklab, var(--c) 46%, transparent);stroke-width:1.2}
 
 /* 衛星ひとつ。位置・奥行きの倍率・重なり順は app.js が毎コマ入れる。 */
 .satnode{position:absolute;left:0;top:0;width:0;height:0;
