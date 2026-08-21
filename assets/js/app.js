@@ -415,10 +415,14 @@
      中心の丸に重なるところは描かない。浅い角度だと、そこが
      真ん中を横切るただの線に見えてしまうため。 */
   function ringPath(r, pitch, wantFront, pr) {
+    /* 中心の丸に隠れるのは、手前レイヤーは考えなくていい。手前は
+       中心より上に描くので、丸に重なってもそのまま線が見えるだけで
+       問題にならない。隠す必要があるのは奥側だけ。 */
     var out = [], cur = [], N = 180;
     for (var k = 0; k <= N; k++) {
       var q = proj(k / N * Math.PI * 2, r, pitch);
-      var ok = ((q.z >= 0) === wantFront) && (q.x * q.x + q.y * q.y >= pr * pr);
+      var hidden = !wantFront && (q.x * q.x + q.y * q.y < pr * pr);
+      var ok = ((q.z >= 0) === wantFront) && !hidden;
       if (ok) cur.push(q.x.toFixed(1) + ',' + q.y.toFixed(1));
       else { if (cur.length > 1) out.push('M' + cur.join('L')); cur = []; }
     }

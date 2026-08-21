@@ -214,17 +214,16 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
 .satrings{position:absolute;left:0;top:0;width:0;height:0}
 
 /* 軌道の線。円を透視で落とした形なので、CSS の楕円ではなく
-   app.js が点を打って描く。中心の丸に重なるところは描いていない。
-   奥半分は薄く、手前半分は濃く。線の太さは倍率に関わらず一定。 */
+   app.js が点を打って描く。前後で見た目は変えない。奥側だけ、
+   中心の丸に隠れる範囲を描かない（手前は丸より上に描くので隠す必要がない）。 */
 .orbsvg{position:absolute;left:-500px;top:-500px;width:1000px;height:1000px;
   overflow:visible;pointer-events:none;
   opacity:0;transition:opacity .2s ease}
 .satsys.on .orbsvg{opacity:1;transition:opacity .3s ease .04s}
 .orbsvg.back {z-index:6}    /* 奥の線。作品も中心も、この上に来る */
 .orbsvg.front{z-index:21}   /* 手前の線。中心より上、ただし作品より下 */
-.orbline{fill:none;vector-effect:non-scaling-stroke}
-.orbline.back {stroke:color-mix(in oklab, var(--c) 22%, transparent);stroke-width:1}
-.orbline.front{stroke:color-mix(in oklab, var(--c) 46%, transparent);stroke-width:1.2}
+.orbline{fill:none;vector-effect:non-scaling-stroke;
+  stroke:color-mix(in oklab, var(--c) 34%, transparent);stroke-width:1.1}
 
 /* 衛星ひとつ。位置・奥行きの倍率・重なり順は app.js が毎コマ入れる。 */
 .satnode{position:absolute;left:0;top:0;width:0;height:0;
