@@ -414,7 +414,7 @@
      yaw では描き直さない。pitch が変わったときだけ引き直す。
      中心の丸に重なるところは描かない。浅い角度だと、そこが
      真ん中を横切るただの線に見えてしまうため。 */
-  function ringPath(r, pitch, wantFront, pr) {
+  function ringPath(r, pitch, wantFront, pr, avoid) {
     /* 中心の丸に隠れるのは、手前レイヤーは考えなくていい。手前は
        中心より上に描くので、丸に重なってもそのまま線が見えるだけで
        問題にならない。隠す必要があるのは奥側だけ。
@@ -434,6 +434,15 @@
       var q = proj(phi, r, pitch);
       var spx = r * Math.cos(phi), spy = r * Math.sin(phi) * Math.sin(pitch);
       var hidden = !wantFront && (spx * spx + spy * spy < pr * pr);
+      /* 見た目の位置（q.x, q.y）で、いま置かれている作品の丸に
+         重なっていないかも見る。透けて見える作品があると、
+         そこだけ線が透けて見えてしまうため。 */
+      if (!hidden && avoid) {
+        for (var ai = 0; ai < avoid.length; ai++) {
+          var av = avoid[ai], dx = q.x - av.x, dy = q.y - av.y;
+          if (dx * dx + dy * dy < av.rad * av.rad) { hidden = true; break; }
+        }
+      }
       var onSide = wantFront ? (q.z >= -EPS) : (q.z <= EPS);
       var ok = onSide && !hidden;
       if (ok) cur.push(q.x.toFixed(1) + ',' + q.y.toFixed(1));
@@ -443,15 +452,17 @@
     return out.join('');
   }
 
-  function drawRings(c) {
+  function drawRings(c, avoid) {
+    /* 作品は動き続けるので、線を作品よけする分は毎コマ引き直す。
+       見下ろし角しか使わない中心よけの部分だけなら本来は角度が
+       変わるまで使い回せるが、作品よけと同じ関数の中でまとめて
+       計算しているため、両方まとめて毎コマ引く。 */
     if (!c.node.paths) return;
-    if (c.node.ringPitch === cam.pitch) return;
-    c.node.ringPitch = cam.pitch;
     var pr = (c.node.pd || 0) / 2 + 6;
     for (var i = 0; i < c.node.shells.length; i++) {
       var r = c.node.shells[i].r;
-      c.node.paths[i].back.setAttribute('d', ringPath(r, cam.pitch, false, pr));
-      c.node.paths[i].front.setAttribute('d', ringPath(r, cam.pitch, true, pr));
+      c.node.paths[i].back.setAttribute('d', ringPath(r, cam.pitch, false, pr, avoid));
+      c.node.paths[i].front.setAttribute('d', ringPath(r, cam.pitch, true, pr, avoid));
     }
   }
 
@@ -460,8 +471,11 @@
       var c = cats[ci];
       if (state.zoom && state.zoom !== c.key) continue;
       if (!c.node.shells) continue;
-      drawRings(c);
 
+      /* 先に全作品の位置を決めてから、その位置をよけて線を引く。
+         透明に近いサムネイルの作品でも、線がその下に隠れて透けて
+         見えることがないように、線の側を削る。 */
+      var avoid = [];
       for (var wi = 0; wi < c.works.length; wi++) {
         var wk = c.works[wi], n = wk.node;
         if (!n || !n.r) continue;
@@ -477,7 +491,9 @@
         st.zIndex = open ? 60
                   : (pt.z > 0 ? 24 + Math.round(pt.z * 7)
                               : 12 + Math.round((1 + pt.z) * 7));
+        avoid.push({ x: pt.x, y: pt.y, rad: (geo.satD / 2) * pt.s * 1.14 });
       }
+      drawRings(c, avoid);
     }
   }
 
