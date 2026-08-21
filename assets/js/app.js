@@ -220,6 +220,25 @@
       var shells = (xR > mR && planShells(c.works.length, geo.satD, mR, xR, PITCH0))
                 || geo.shells;
       c.node.shells = shells;
+      c.node.pd = pd;
+      c.node.ringPitch = null;      /* 角度が変わったときだけ描き直す */
+
+      c.node.rings.innerHTML = '';
+      c.node.paths = shells.map(function () {
+        /* 手前半分と奥半分は別々の svg にする。同じ svg に入れると
+           中心の前後にレイヤーを分けられない。 */
+        function layer(half) {
+          var svg = d.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('class', 'orbsvg ' + half);
+          svg.setAttribute('viewBox', '-500 -500 1000 1000');
+          var path = d.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('class', 'orbline ' + half);
+          svg.appendChild(path);
+          c.node.rings.appendChild(svg);
+          return path;
+        }
+        return { back: layer('back'), front: layer('front') };
+      });
 
       var put = 0;
       shells.forEach(function (sh, i) {
@@ -309,6 +328,8 @@
 
       var satsys = el('div', 'satsys');
       satsys.style.setProperty('--c', color);
+      var rings = el('div', 'satrings');
+      satsys.appendChild(rings);
 
       c.works.forEach(function (wk, j) {
         var wc = hue(c.hue + (j - c.works.length / 2) * 11);
@@ -359,7 +380,7 @@
       sys.appendChild(seat);
 
       c.node = { seat: seat, arm: arm, body: body, flag: flag, pos: pos,
-                 satsys: satsys, color: color };
+                 satsys: satsys, rings: rings, color: color };
     });
   }
 
@@ -383,11 +404,40 @@
      こちら側に来たものほど大きく明るく、中心より手前のレイヤーへ。
      絵そのものは回さない。いつでもこちらを向いたまま。
      ===================================================== */
+  /* 輪の線。円は自分の軸で回しても形が変わらないので、
+     yaw では描き直さない。pitch が変わったときだけ引き直す。
+     中心の丸に重なるところは描かない。浅い角度だと、そこが
+     真ん中を横切るただの線に見えてしまうため。 */
+  function ringPath(r, pitch, wantFront, pr) {
+    var out = [], cur = [], N = 180;
+    for (var k = 0; k <= N; k++) {
+      var q = proj(k / N * Math.PI * 2, r, pitch);
+      var ok = ((q.z >= 0) === wantFront) && (q.x * q.x + q.y * q.y >= pr * pr);
+      if (ok) cur.push(q.x.toFixed(1) + ',' + q.y.toFixed(1));
+      else { if (cur.length > 1) out.push('M' + cur.join('L')); cur = []; }
+    }
+    if (cur.length > 1) out.push('M' + cur.join('L'));
+    return out.join('');
+  }
+
+  function drawRings(c) {
+    if (!c.node.paths) return;
+    if (c.node.ringPitch === cam.pitch) return;
+    c.node.ringPitch = cam.pitch;
+    var pr = (c.node.pd || 0) / 2 + 6;
+    for (var i = 0; i < c.node.shells.length; i++) {
+      var r = c.node.shells[i].r;
+      c.node.paths[i].back.setAttribute('d', ringPath(r, cam.pitch, false, pr));
+      c.node.paths[i].front.setAttribute('d', ringPath(r, cam.pitch, true, pr));
+    }
+  }
+
   function place(t) {
     for (var ci = 0; ci < cats.length; ci++) {
       var c = cats[ci];
       if (state.zoom && state.zoom !== c.key) continue;
       if (!c.node.shells) continue;
+      drawRings(c);
 
       for (var wi = 0; wi < c.works.length; wi++) {
         var wk = c.works[wi], n = wk.node;
