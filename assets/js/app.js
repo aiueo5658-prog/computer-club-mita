@@ -417,11 +417,19 @@
   function ringPath(r, pitch, wantFront, pr) {
     /* 中心の丸に隠れるのは、手前レイヤーは考えなくていい。手前は
        中心より上に描くので、丸に重なってもそのまま線が見えるだけで
-       問題にならない。隠す必要があるのは奥側だけ。 */
+       問題にならない。隠す必要があるのは奥側だけ。
+
+       隠すかどうかは、縮む前の位置（sp.x, sp.y）で判定する。proj() が
+       返す x, y は遠近の s を掛けたあとの「見た目の位置」で、奥ほど
+       中心へ引き寄せて描く演出が入っている。この引き寄せられた後の
+       座標で「中心の丸に近いか」を測ると、実際には丸から離れている
+       区間まで巻き込んで判定してしまい、線が大きく欠けて見えていた。 */
     var out = [], cur = [], N = 180;
     for (var k = 0; k <= N; k++) {
-      var q = proj(k / N * Math.PI * 2, r, pitch);
-      var hidden = !wantFront && (q.x * q.x + q.y * q.y < pr * pr);
+      var phi = k / N * Math.PI * 2;
+      var q = proj(phi, r, pitch);
+      var spx = r * Math.cos(phi), spy = r * Math.sin(phi) * Math.sin(pitch);
+      var hidden = !wantFront && (spx * spx + spy * spy < pr * pr);
       var ok = ((q.z >= 0) === wantFront) && !hidden;
       if (ok) cur.push(q.x.toFixed(1) + ',' + q.y.toFixed(1));
       else { if (cur.length > 1) out.push('M' + cur.join('L')); cur = []; }
