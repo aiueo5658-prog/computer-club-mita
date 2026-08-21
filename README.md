@@ -190,6 +190,23 @@ URL を貼るだけで自動判別します。
 
 ---
 
+## 8-1. 更新してもブラウザに反映されないとき
+
+GitHub Pages は CSS / JS に `Cache-Control: max-age=600`（10分）を付けます。
+そのため push 直後は、ブラウザが古い版を握ったままのことがあります。
+
+`index.html` `qa.html` `survey.html` `works.html` の `<link>` `<script>` には
+`?v=更新した日時` を付けてあります。**CSS か JS を書き換えたら、この数字を
+更新してから push してください。** 番号が変われば別のURL扱いになるので、
+10分を待たずに反映されます。
+
+```bash
+V=$(date +%Y%m%d%H%M%S)
+sed -i "s/?v=[0-9]*/?v=$V/g" index.html qa.html survey.html works.html
+```
+
+それでも直らないときは、ブラウザの強制再読み込み（Windows: `Ctrl+Shift+R`）を。
+
 ## 9. ファイル構成
 
 ```
