@@ -35,23 +35,22 @@ cd computer-club-mita && python3 -m http.server 5173
 
 **画面の基準は MacBook Air の 1440 × 900（16:10）です。** 下で確認した値もこの寸法です。
 
-### ⚠ 背景動画のサイズについて
+### 背景動画について
 
-`assets/video/computopia2.mov` は **72MB / 60秒 / 1920×1080** です。
-**このままだと文化祭当日に問題になります。** 数百人が同一Wi-Fiで開くと、
-ホームを開くだけで回線を占有します。公開前に圧縮してください。
+`assets/video/computopia2.mp4` は **7.4MB / 61秒 / 1280×720 / 24fps / 無音**です。
+元の `computopia2.mov`（72MB / 1920×1080）を ffmpeg で圧縮したものです。
 
 ```bash
 ffmpeg -i computopia2.mov -vf "scale=1280:-2,fps=24" -c:v libx264 -crf 30 -preset slow -an -movflags +faststart computopia2.mp4
 ```
 
-`-an` で音声を落とし、1280幅・24fps・無音にすると **3〜6MB** 程度まで落ちます
-（背景動画は音が鳴らないので音声は不要です）。
-書き出したら `assets/video/` に置き、`index.html` の `<source src>` を差し替えてください。
+`-an` で音声を落としています（背景動画なので音は鳴らしません）。
+`+faststart` を付けているので、全部読み終わる前に再生が始まります。
+撮り直したときは同じコマンドで作り直してください。
 
-なお `.mov` は QuickTime のコンテナです。中身が H.264 なので Chrome / Safari は再生しますが、
-**Firefox は再生しない可能性があります。** その場合は背景が地の色（緑黒のグラデーション）だけになり、
-ページ自体は問題なく表示されます。上の手順で `.mp4` にすれば全ブラウザで再生されます。
+元の `.mov` は `.gitignore` で除外しています。QuickTime のコンテナは
+Firefox が再生しないことがあるためで、`.mp4` だけを置けば全ブラウザで動きます。
+どちらも読めない環境では、`.filmbg` の地の色（緑黒のグラデーション）だけで成立します。
 
 ---
 
@@ -74,7 +73,6 @@ ffmpeg -i computopia2.mov -vf "scale=1280:-2,fps=24" -c:v libx264 -crf 30 -prese
 
 ## 4. 公開前チェックリスト
 
-- [ ] **背景動画を圧縮した**（上の ⚠ を参照。72MB のままは危険）
 - [ ] **サンプルデータを差し替えた** — `data.js` の SEED には、見え方を確かめるために
       Scratch / YouTube の**公開作品の URL** が入っています。他人の作品が部員の作品として
       並んだまま公開されます。`sheetCsvUrl` を設定するか SEED を実データに置き換えてください
