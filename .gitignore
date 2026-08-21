@@ -1,0 +1,12 @@
+# エディタ・OS が勝手に作るもの
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# 圧縮前の元動画は置かない（README の手順で .mp4 を作って置く）
+assets/video/*.mov
+
+# 開発用のメモと設定は公開しない
+.claude/
+prompt_for_chatgpt.md

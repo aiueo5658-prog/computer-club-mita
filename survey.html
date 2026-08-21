@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<title>アンケート — コンピュータ部 作品展 2026</title>
+<meta name="description" content="三田国際科学学園 コンピュータ部 作品展 2026 のアンケート。">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body class="page-doc">
+
+<div class="bg" aria-hidden="true">
+  <div class="stars" id="stars"></div>
+  <div class="limb"><i class="limb-glow"></i><i class="limb-core"></i></div>
+</div>
+
+<header class="nav">
+  <a class="brand" href="index.html">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none">
+        <path d="M16 2.6 28 9.3v13.4L16 29.4 4 22.7V9.3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M20.6 12.2a5.6 5.6 0 1 0 0 7.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <span class="brand-txt">コンピュータ部</span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html">ホーム</a>
+    <a href="works.html">作品一覧</a>
+    <a href="qa.html">Q&amp;A</a>
+  </nav>
+  <div class="nav-end">
+    <a class="cta" href="survey.html" aria-current="page">アンケート</a>
+  </div>
+</header>
+
+<main class="sv">
+  <!-- 左：見出し。ここは動かない -->
+  <aside class="sv-side">
+    <p class="doc-kick">SURVEY</p>
+    <h1 class="doc-title">今日は<br>ありがとう<br>ございました</h1>
+    <p class="doc-lede">よかったら、ひとことだけ<br>残していってください。<br>来年つくるものの参考にします。</p>
+    <p class="sv-meta">全7問 ・ 1分ほど ・ 必須は最初の1問だけ</p>
+  </aside>
+
+  <div class="sv-main">
+
+  <form class="form card sv-grid" id="survey-form" novalidate>
+    <fieldset class="field wide">
+      <legend class="label">展示はいかがでしたか<em>必須</em></legend>
+      <div class="rating" id="rating">
+        <button type="button" class="rate" data-v="1" aria-pressed="false"><i></i><u>いまいち</u></button>
+        <button type="button" class="rate" data-v="2" aria-pressed="false"><i></i><u>すこし</u></button>
+        <button type="button" class="rate" data-v="3" aria-pressed="false"><i></i><u>ふつう</u></button>
+        <button type="button" class="rate" data-v="4" aria-pressed="false"><i></i><u>よかった</u></button>
+        <button type="button" class="rate" data-v="5" aria-pressed="false"><i></i><u>最高</u></button>
+      </div>
+    </fieldset>
+
+    <fieldset class="field">
+      <legend class="label">あなたについて</legend>
+      <div class="chips" id="who">
+        <button type="button" class="chip" data-v="在校生" aria-pressed="false">在校生</button>
+        <button type="button" class="chip" data-v="保護者" aria-pressed="false">保護者</button>
+        <button type="button" class="chip" data-v="受験生" aria-pressed="false">受験生</button>
+        <button type="button" class="chip" data-v="卒業生" aria-pressed="false">卒業生</button>
+        <button type="button" class="chip" data-v="その他" aria-pressed="false">その他</button>
+      </div>
+    </fieldset>
+
+    <fieldset class="field">
+      <legend class="label">コンピュータ部に興味を持ちましたか</legend>
+      <div class="chips" id="interest">
+        <button type="button" class="chip" data-v="入ってみたい" aria-pressed="false">入ってみたい</button>
+        <button type="button" class="chip" data-v="少し気になる" aria-pressed="false">少し気になる</button>
+        <button type="button" class="chip" data-v="見るのが楽しい" aria-pressed="false">見るのが楽しい</button>
+        <button type="button" class="chip" data-v="もともと部員" aria-pressed="false">もともと部員</button>
+      </div>
+    </fieldset>
+
+    <div class="field">
+      <label class="label" for="fav-work">一番よかった作品</label>
+      <div class="select-wrap">
+        <select id="fav-work"><option value="">選択してください</option></select>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+      </div>
+      <p class="hintline">迷ったら、いま思い出せたものを選んでください。</p>
+    </div>
+
+    <fieldset class="field">
+      <legend class="label">この展示をどこで知りましたか</legend>
+      <div class="chips" id="found">
+        <button type="button" class="chip" data-v="校内の掲示" aria-pressed="false">校内の掲示</button>
+        <button type="button" class="chip" data-v="パンフレット" aria-pressed="false">パンフレット</button>
+        <button type="button" class="chip" data-v="友だち・家族" aria-pressed="false">友だち・家族</button>
+        <button type="button" class="chip" data-v="通りかかって" aria-pressed="false">通りかかって</button>
+        <button type="button" class="chip" data-v="SNS" aria-pressed="false">SNS</button>
+      </div>
+    </fieldset>
+
+    <fieldset class="field wide">
+      <legend class="label">どのジャンルが面白かったですか<em>複数可</em></legend>
+      <div class="chips" id="genre">
+        <button type="button" class="chip" data-v="音楽" aria-pressed="false">音楽</button>
+        <button type="button" class="chip" data-v="映像" aria-pressed="false">映像</button>
+        <button type="button" class="chip" data-v="プログラミング" aria-pressed="false">プログラミング</button>
+        <button type="button" class="chip" data-v="モデリング" aria-pressed="false">モデリング</button>
+        <button type="button" class="chip" data-v="その他" aria-pressed="false">その他</button>
+      </div>
+    </fieldset>
+
+    <div class="field wide">
+      <label class="label" for="comment">感想・部員へのメッセージ</label>
+      <textarea id="comment" rows="4" placeholder="「この作品のここが良かった」と書いてもらえると、本人がとても喜びます。" maxlength="1000"></textarea>
+      <p class="counter"><b id="cc">0</b> / 1000</p>
+    </div>
+
+    <div class="form-foot wide">
+      <p class="note" id="form-note">いただいた声は部員のみが集計に利用します。個人が特定される情報は集めていません。</p>
+      <button class="cta big" type="submit" id="submit-btn">
+        送信する
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </form>
+
+  <div class="thanks card" id="thanks" hidden>
+    <span class="thanks-mark" aria-hidden="true">
+      <i></i><b></b>
+    </span>
+    <p class="thanks-t">ありがとうございました。</p>
+    <p class="thanks-s" id="thanks-s">いただいた声は、来年のわたしたちに渡します。<br>またどこかで、つくったものを見せに来ます。</p>
+    <p class="thanks-echo" id="thanks-echo" hidden></p>
+    <div class="thanks-acts">
+      <a class="cta" href="works.html">作品一覧に戻る</a>
+      <button class="ghost" type="button" id="again">もう一度書く</button>
+    </div>
+  </div>
+
+    <p class="doc-foot">三田国際科学学園 コンピュータ部 ・ ECLIPSE 2026 ・ 10/30 - 10/31</p>
+  </div>
+</main>
+
+<iframe name="gform-sink" title="form sink" style="display:none" aria-hidden="true"></iframe>
+
+<script src="assets/js/site.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/survey.js"></script>
+</body>
+</html>

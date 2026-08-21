@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<title>作品一覧 — コンピュータ部 作品展 2026</title>
+<meta name="description" content="三田国際科学学園 コンピュータ部の作品展 2026。ジャンルを選ぶと、その中の作品が並びます。">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<noscript>
+  <div class="noscript">
+    <h1>三田国際科学学園 コンピュータ部 作品展 2026</h1>
+    <p>このページは JavaScript を使って作品を表示します。ブラウザの設定で JavaScript を有効にしてください。</p>
+    <p>2026年10月30日(金)・31日(土) / コンピュータ部 展示教室</p>
+  </div>
+</noscript>
+
+<!-- ===== 背景 ===== -->
+<div class="bg" aria-hidden="true">
+  <div class="limb"><i class="limb-glow"></i><i class="limb-core"></i></div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<!-- ===== ナビ ===== -->
+<header class="nav">
+  <a class="brand" href="index.html">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none">
+        <path d="M16 2.6 28 9.3v13.4L16 29.4 4 22.7V9.3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M20.6 12.2a5.6 5.6 0 1 0 0 7.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <span class="brand-txt">コンピュータ部</span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html">ホーム</a>
+    <button type="button" data-home class="is-on">作品一覧</button>
+    <a href="qa.html">Q&amp;A</a>
+  </nav>
+  <div class="nav-end">
+    <a class="cta" href="survey.html">アンケート</a>
+  </div>
+</header>
+
+<!-- ===== 左：見出し ===== -->
+<div class="hero" id="hero">
+  <p class="hero-kick" id="hero-kick">ECLIPSE 2026</p>
+  <h1 class="hero-title" id="hero-title">作品一覧</h1>
+  <p class="hero-lede" id="hero-lede"></p>
+  <button class="ghost hero-back" id="hero-back" type="button" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+    すべてのジャンルへ
+  </button>
+</div>
+
+<!-- ===== 作品の配置（これひとつだけ） ===== -->
+<main class="scene" id="scene">
+  <div class="sys" id="sys">
+    <div class="ringgrp" id="ringgrp">
+      <i class="ring ghost" data-r="0.58"></i>
+      <i class="ring ghost" data-r="0.78"></i>
+      <i class="ring ghost" data-r="1.27"></i>
+      <i class="ring" data-r="1"></i>
+      <i class="ec" data-d="0.95"></i>
+      <i class="ec" data-d="0.78"></i>
+      <i class="ec ec-rim" data-d="0.62"></i>
+      <i class="ec ec-disc" data-d="0.48"></i>
+      <span class="ec-cap">ECLIPSE</span>
+    </div>
+    <!-- 中身は app.js が組み立てます -->
+  </div>
+</main>
+
+<!-- ===== 右：作品リスト ===== -->
+<aside class="side off" id="side">
+  <p class="side-kick" id="side-kick"></p>
+  <p class="side-title" id="side-title"></p>
+  <p class="side-count" id="side-count"></p>
+  <div class="side-list" id="side-list"></div>
+</aside>
+
+<!-- ===== 使い方ガイド ===== -->
+<div class="guide" id="guide">
+  <div class="guide-brand">
+    <span class="guide-mark" aria-hidden="true"><i></i><b></b><u></u></span>
+    <span>
+      <span class="guide-kick">GUIDE</span>
+      <span class="guide-name">使い方ガイド</span>
+    </span>
+  </div>
+  <div class="guide-step"><span class="guide-no">01</span><b>ジャンルを選ぶ</b>
+    <p>まるい絵をクリックすると、そのジャンルに入ります。</p></div>
+  <div class="guide-step"><span class="guide-no">02</span><b>左右に引いて回す</b>
+    <p>作品がぐるりと並びます。画面を横に引くと回ります。</p></div>
+  <div class="guide-step"><span class="guide-no">03</span><b>その場で遊ぶ</b>
+    <p>Scratch も映像も音楽も、全画面で楽しめます。</p></div>
+</div>
+
+<button class="camreset" id="camreset" type="button">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+  カメラをリセット
+</button>
+
+<!-- ===== 全画面再生 ===== -->
+<div class="player" id="player" hidden role="dialog" aria-modal="true" aria-labelledby="p-title">
+  <div class="player-bar">
+    <button class="ghost" id="p-close" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+      一覧へ戻る
+    </button>
+    <div class="player-id">
+      <span class="player-kick" id="p-kick"></span>
+      <b id="p-title"></b>
+    </div>
+    <div class="player-acts">
+      <span class="player-by" id="p-by"></span>
+      <a class="ghost" id="p-ext" href="#" target="_blank" rel="noopener noreferrer" hidden>元のページ</a>
+    </div>
+  </div>
+  <div class="player-stage" id="p-stage"></div>
+  <div class="player-foot">
+    <p id="p-desc"></p>
+    <div class="player-steps">
+      <button class="ghost" id="p-prev" type="button">前の作品</button>
+      <button class="ghost" id="p-next" type="button">次の作品</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== アイコンの版下 ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 15V9M8 18V6M12 16V8M16 19V5M20 14v-4"/></symbol>
+  <symbol id="i-film" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2.4"/><path d="M3 9h18M3 15h18M8 4.5v15M16 4.5v15"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m8.5 8-4.5 4 4.5 4M15.5 8l4.5 4-4.5 4"/></symbol>
+  <symbol id="i-model" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8.4v7.2l-9 4.9-9-4.9V8.4l9-4.9z"/><path d="m3 8.4 9 4.9 9-4.9M12 13.3v7.2"/></symbol>
+  <symbol id="i-other" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></symbol>
+</svg>
+
+<iframe name="gform-sink" title="form sink" style="display:none" aria-hidden="true"></iframe>
+
+<script src="assets/js/site.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/thumbs.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+/* =========================================================
+   pages.css — ホーム / Q&A / アンケート
+   style.css の色・書体・部品をそのまま使う。
+   ========================================================= */
+
+/* 作品一覧は1画面固定だが、こちらのページは普通にスクロールする */
+body.page-home, body.page-doc { overflow: auto; }
+
+/* =============== ホーム：映像の背景 =============== */
+.filmbg { position: fixed; inset: 0; z-index: 0; overflow: hidden;
+  /* 映像が読めない環境でも、この地の色だけで成立する */
+  background: radial-gradient(ellipse 90% 70% at 50% 30%, #06231a 0%, #02100b 55%, #000 100%); }
+.filmbg video { position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; pointer-events: none; }
+body.no-video .filmbg video { display: none; }
+.filmbg-tint { position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,8,5,.72) 0%, rgba(0,8,5,.55) 42%, rgba(0,8,5,.86) 100%); }
+.filmbg-vig { position: absolute; inset: 0;
+  background: radial-gradient(ellipse 82% 72% at 50% 48%, transparent 38%, rgba(0,0,0,.72) 100%); }
+
+.home { position: relative; z-index: 10;
+  min-height: 100svh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: calc(var(--navh) + 40px) var(--pad) 120px; }
+
+.home-badge { display: inline-flex; align-items: center; gap: 10px; margin: 0;
+  padding: 8px 18px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px;
+  background: rgba(255,255,255,.05); backdrop-filter: blur(10px);
+  font-size: 13px; color: #d5e3de; }
+.home-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--acid);
+  box-shadow: 0 0 12px var(--acid); }
+
+.home-title { margin: 32px 0 0; font-weight: 900; line-height: 1.04;
+  letter-spacing: -.06em; font-size: clamp(38px, 7.6vw, 104px);
+  text-shadow: 0 6px 40px rgba(0,0,0,.7); }
+.home-lede { margin: 30px 0 0; max-width: 640px; font-size: clamp(14px, 1.5vw, 17px);
+  line-height: 1.95; color: #c2d2cd; text-shadow: 0 2px 16px rgba(0,0,0,.8); }
+.home-lede b { color: #fff; font-weight: 700; }
+
+.home-acts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 40px; }
+.cta.big { font-size: 16px; padding: 17px 32px; display: inline-flex; align-items: center; gap: 12px;
+  box-shadow: 0 0 60px rgba(255,255,255,.16); }
+.cta.big svg { width: 17px; height: 17px; }
+.ghost.big { font-size: 15px; padding: 16px 28px; backdrop-filter: blur(10px); }
+
+.home-facts { list-style: none; display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 10px 44px; margin: 56px 0 0; padding: 0; }
+.home-facts li { display: flex; align-items: baseline; gap: 9px; }
+.home-facts b { font: 700 clamp(22px, 2.6vw, 30px) var(--font-num); letter-spacing: -.03em; }
+.home-facts span { font-size: 13px; color: #a9bab5; }
+
+.home-theme { position: fixed; left: 0; right: 0; bottom: 22px; margin: 0; z-index: 10;
+  text-align: center; font: 600 12px var(--font-num); letter-spacing: .42em;
+  color: rgba(255,255,255,.34); pointer-events: none; }
+
+/* =============== Q&A / アンケートの共通 =============== */
+.doc { position: relative; z-index: 10; max-width: 860px;
+  margin: 0 auto; padding: calc(var(--navh) + clamp(40px, 8vh, 90px)) var(--pad) 120px; }
+.doc-narrow { max-width: 720px; }
+.doc-kick { margin: 0; font: 600 12.5px var(--font-num); letter-spacing: .26em; color: var(--acid); }
+.doc-title { margin: 18px 0 0; font-weight: 900; line-height: 1.08;
+  letter-spacing: -.055em; font-size: clamp(34px, 5.4vw, 64px); }
+.doc-lede { margin: 26px 0 0; font-size: 15.5px; line-height: 1.95; color: var(--ink-2); }
+.doc-foot { margin: 80px 0 0; padding-top: 26px; border-top: 1px solid rgba(255,255,255,.09);
+  font-size: 12.5px; color: var(--faint); }
+
+.card { margin-top: 40px; padding: clamp(22px, 3vw, 34px);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 20px;
+  background: rgba(8,14,12,.72); backdrop-filter: blur(20px); }
+
+/* =============== Q&A =============== */
+.qa-group { margin-top: 56px; }
+.qa-cat { margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: .12em;
+  color: var(--acid); }
+.qa { border-bottom: 1px solid rgba(255,255,255,.09); }
+.qa summary { list-style: none; cursor: pointer; position: relative;
+  padding: 22px 46px 22px 0; font-size: clamp(15px, 1.7vw, 17.5px); font-weight: 700;
+  line-height: 1.6; transition: color .2s; }
+.qa summary::-webkit-details-marker { display: none; }
+.qa summary:hover { color: #7cffc4; }
+.qa summary::after { content: ""; position: absolute; right: 8px; top: 50%;
+  width: 13px; height: 13px; margin-top: -7px;
+  border-right: 2px solid var(--acid); border-bottom: 2px solid var(--acid);
+  transform: rotate(45deg); transition: transform .25s ease; }
+.qa[open] summary::after { transform: rotate(-135deg); }
+.qa-a { padding: 0 8px 26px 0; animation: qaIn .3s cubic-bezier(.22,1,.36,1) both; }
+@keyframes qaIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.qa-a p { margin: 0 0 14px; font-size: 14.5px; line-height: 2; color: #c2d2cd; }
+.qa-a p:last-child { margin-bottom: 0; }
+.qa-a ol { margin: 0 0 14px; padding-left: 1.3em; }
+.qa-a li { font-size: 14.5px; line-height: 2; color: #c2d2cd; margin-bottom: 4px; }
+.qa-a .deflist { margin: 4px 0 0; }
+.qa-cta { margin-top: 20px !important; }
+
+/* =============== アンケート ===============
+   アートボード 05 と同じ組み。左に見出し、右にフォーム。
+   質問が7問あるので、短いものは2列に並べて縦に伸ばさない。
+   基準は MacBook Air の 1440 × 900。 */
+.sv { position: relative; z-index: 10; display: grid; align-items: start;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: clamp(30px, 3.6vw, 60px);
+  max-width: 1360px; margin: 0 auto;
+  padding: calc(var(--navh) + clamp(20px, 3.4vh, 42px)) var(--pad) 72px; }
+
+/* 見出しは動かさない。書いている間もずっと見えている。 */
+.sv-side { position: sticky; top: calc(var(--navh) + clamp(20px, 3.4vh, 42px)); }
+.sv-side .doc-title { font-size: clamp(32px, 3.5vw, 56px); }
+.sv-side .doc-lede { margin-top: 22px; font-size: 14.5px; }
+.sv-meta { margin: 26px 0 0; font: 600 11.5px var(--font-num);
+  letter-spacing: .16em; color: var(--faint); }
+
+.sv-main { min-width: 0; }
+.sv-grid { margin-top: 0; display: grid; grid-template-columns: 1fr 1fr;
+  gap: clamp(14px, 1.5vw, 20px) clamp(20px, 2.4vw, 34px); align-items: start; }
+.sv-grid .field { margin-bottom: 0; }
+.sv-grid .wide { grid-column: 1 / -1; }
+.sv-grid .form-foot { margin-top: 4px; }
+.sv-main .thanks { margin-top: 0; }
+.sv-main .doc-foot { margin-top: 44px; }
+
+/* 2列に入れるので、選択肢の文字は少しだけ詰める */
+.sv-grid .chip { padding: 9px 15px; font-size: 13px; }
+.sv-grid .rate { padding: 13px 5px; }
+.sv-grid textarea { min-height: 84px; }
+
+/* 縦に置くしかない幅では、素直に1列へ戻す */
+@media (max-width: 1080px) {
+  .sv { grid-template-columns: 1fr; }
+  .sv-side { position: static; }
+  .sv-side .doc-title br { display: none; }
+  .sv-side .doc-lede br { display: none; }
+}
+@media (max-width: 700px) {
+  .sv-grid { grid-template-columns: 1fr; }
+  .sv-grid .wide { grid-column: auto; }
+}
+
+.page-doc .offline { margin-top: 40px; }
+.counter { margin: 8px 0 0; text-align: right; font: 600 12px var(--font-num); color: var(--faint); }
+.thanks-mark { position: relative; width: 64px; height: 64px; display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid rgba(255,255,255,.16); margin-bottom: 6px; }
+.thanks-mark i { width: 34px; height: 34px; border-radius: 50%;
+  border: 2px solid var(--acid); box-shadow: 0 0 24px rgba(0,255,156,.5); display: block; }
+.thanks-mark b { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px;
+  margin: -15px 0 0 -15px; border-radius: 50%; background: #000; }
+
+/* =============== 狭い画面 =============== */
+@media (max-width: 820px) {
+  .nav-links { display: none; }
+  .home-facts { gap: 10px 26px; }
+  .rating { flex-wrap: wrap; }
+  .rate { flex: 1 1 30%; }
+}
+
+
+/* =============== アンケートの細部 =============== */
+.hintline { margin: 10px 0 0; font-size: 12.5px; color: var(--faint); }
+.thanks-echo { margin: 14px 0 0; padding: 12px 16px; border-radius: 10px;
+  border: 1px solid rgba(0,255,156,.24); background: rgba(0,255,156,.06);
+  font-size: 13px; line-height: 1.8; color: #b6ffdd; max-width: 460px; }
+.thanks-echo.warn { border-color: rgba(255,196,110,.3); background: rgba(255,196,110,.07);
+  color: #ffdca8; }
+.chips .chip.on { background: #fff; color: #04140e; border-color: #fff; font-weight: 700; }
+
+/* display を後から当てているので、hidden を明示的に勝たせる */
+.sv-grid[hidden], .sv .thanks[hidden] { display: none !important; }
