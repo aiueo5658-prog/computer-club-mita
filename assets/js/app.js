@@ -424,13 +424,18 @@
        中心へ引き寄せて描く演出が入っている。この引き寄せられた後の
        座標で「中心の丸に近いか」を測ると、実際には丸から離れている
        区間まで巻き込んで判定してしまい、線が大きく欠けて見えていた。 */
-    var out = [], cur = [], N = 180;
+    /* 左右の継ぎ目（phi=0 と phi=π、z がちょうど 0 になる点）は、
+       手前と奥のどちらのパスにも入れる。厳密に z>=0 / z<0 で振り分けると
+       片方は境界の点を含み、もう片方は1コマ先から始まってしまい、
+       2つのパスがぴったり同じ点で終わらず、継ぎ目に小さなすき間ができる。 */
+    var out = [], cur = [], N = 180, EPS = 1e-6;
     for (var k = 0; k <= N; k++) {
       var phi = k / N * Math.PI * 2;
       var q = proj(phi, r, pitch);
       var spx = r * Math.cos(phi), spy = r * Math.sin(phi) * Math.sin(pitch);
       var hidden = !wantFront && (spx * spx + spy * spy < pr * pr);
-      var ok = ((q.z >= 0) === wantFront) && !hidden;
+      var onSide = wantFront ? (q.z >= -EPS) : (q.z <= EPS);
+      var ok = onSide && !hidden;
       if (ok) cur.push(q.x.toFixed(1) + ',' + q.y.toFixed(1));
       else { if (cur.length > 1) out.push('M' + cur.join('L')); cur = []; }
     }
