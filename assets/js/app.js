@@ -13,6 +13,8 @@
   var $  = function (s, r) { return (r || d).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || d).querySelectorAll(s)); };
   function el(tag, cls) { var n = d.createElement(tag); if (cls) n.className = cls; return n; }
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, cls) { var n = d.createElementNS(SVGNS, tag); if (cls) n.setAttribute('class', cls); return n; }
   function safeUrl(u) { u = String(u || '').trim(); return /^https?:\/\//i.test(u) ? u : ''; }
   function hue(h) { return 'oklch(0.86 0.15 ' + h + ')'; }
   function hash(s) {
@@ -224,6 +226,17 @@
       c.node.ringPitch = null;      /* 角度が変わったときだけ描き直す */
 
       c.node.rings.innerHTML = '';
+      ensureFadeDef();
+      /* マスクは作品の数ぶんの円を持つ。奥側だけ中心の丸を隠す円も持つ。 */
+      c.node.mFront = makeMask('mf-' + c.key, c.works.length, false);
+      c.node.mBack  = makeMask('mb-' + c.key, c.works.length, true);
+      c.node.mBack.center.setAttribute('r', ((c.node.pd || pd) / 2 + 6).toFixed(1));
+      var defsHost = svgEl('svg');
+      defsHost.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+      defsHost.appendChild(c.node.mFront.mask);
+      defsHost.appendChild(c.node.mBack.mask);
+      c.node.rings.appendChild(defsHost);
+
       c.node.paths = shells.map(function () {
         /* 手前半分と奥半分は別々の svg にする。同じ svg に入れると
            中心の前後にレイヤーを分けられない。 */
@@ -233,6 +246,7 @@
           svg.setAttribute('viewBox', '-500 -500 1000 1000');
           var path = d.createElementNS('http://www.w3.org/2000/svg', 'path');
           path.setAttribute('class', 'orbline ' + half);
+          path.setAttribute('mask', 'url(#' + (half === 'back' ? c.node.mBack.mask.id : c.node.mFront.mask.id) + ')');
           svg.appendChild(path);
           c.node.rings.appendChild(svg);
           return path;
@@ -414,55 +428,101 @@
      yaw では描き直さない。pitch が変わったときだけ引き直す。
      中心の丸に重なるところは描かない。浅い角度だと、そこが
      真ん中を横切るただの線に見えてしまうため。 */
-  function ringPath(r, pitch, wantFront, pr, avoid) {
-    /* 中心の丸に隠れるのは、手前レイヤーは考えなくていい。手前は
-       中心より上に描くので、丸に重なってもそのまま線が見えるだけで
-       問題にならない。隠す必要があるのは奥側だけ。
-
-       隠すかどうかは、縮む前の位置（sp.x, sp.y）で判定する。proj() が
-       返す x, y は遠近の s を掛けたあとの「見た目の位置」で、奥ほど
-       中心へ引き寄せて描く演出が入っている。この引き寄せられた後の
-       座標で「中心の丸に近いか」を測ると、実際には丸から離れている
-       区間まで巻き込んで判定してしまい、線が大きく欠けて見えていた。 */
-    /* 左右の継ぎ目（phi=0 と phi=π、z がちょうど 0 になる点）は、
-       手前と奥のどちらのパスにも入れる。厳密に z>=0 / z<0 で振り分けると
-       片方は境界の点を含み、もう片方は1コマ先から始まってしまい、
-       2つのパスがぴったり同じ点で終わらず、継ぎ目に小さなすき間ができる。 */
+  function ringPath(r, pitch, wantFront) {
+    /* 隠す・隠さないは、この関数ではもう決めない（マスクの担当）。
+       ここで決めるのは「手前と奥、どちらの半分か」だけ。左右の
+       継ぎ目（phi=0 と phi=π）は両方の経路に含め、ぴったり同じ点で
+       つながるようにする。厳密な不等号だと、境界の点をどちらか
+       片方しか含まず、継ぎ目に小さなすき間ができてしまう。 */
     var out = [], cur = [], N = 180, EPS = 1e-6;
     for (var k = 0; k <= N; k++) {
       var phi = k / N * Math.PI * 2;
       var q = proj(phi, r, pitch);
-      var spx = r * Math.cos(phi), spy = r * Math.sin(phi) * Math.sin(pitch);
-      var hidden = !wantFront && (spx * spx + spy * spy < pr * pr);
-      /* 見た目の位置（q.x, q.y）で、いま置かれている作品の丸に
-         重なっていないかも見る。透けて見える作品があると、
-         そこだけ線が透けて見えてしまうため。 */
-      if (!hidden && avoid) {
-        for (var ai = 0; ai < avoid.length; ai++) {
-          var av = avoid[ai], dx = q.x - av.x, dy = q.y - av.y;
-          if (dx * dx + dy * dy < av.rad * av.rad) { hidden = true; break; }
-        }
-      }
       var onSide = wantFront ? (q.z >= -EPS) : (q.z <= EPS);
-      var ok = onSide && !hidden;
-      if (ok) cur.push(q.x.toFixed(1) + ',' + q.y.toFixed(1));
+      if (onSide) cur.push(q.x.toFixed(1) + ',' + q.y.toFixed(1));
       else { if (cur.length > 1) out.push('M' + cur.join('L')); cur = []; }
     }
     if (cur.length > 1) out.push('M' + cur.join('L'));
     return out.join('');
   }
 
-  function drawRings(c, avoid) {
-    /* 作品は動き続けるので、線を作品よけする分は毎コマ引き直す。
-       見下ろし角しか使わない中心よけの部分だけなら本来は角度が
-       変わるまで使い回せるが、作品よけと同じ関数の中でまとめて
-       計算しているため、両方まとめて毎コマ引く。 */
+  /* 隠す・隠さないは SVG のマスクで滑らかに行う。中心の丸と、
+     いま置かれている作品の丸ぶんだけ、線をぼかしながら透明にする
+     円をマスクに重ねる。円の位置は毎コマそのまま動かすので、
+     線のデータ自体（ringPath の出力）は変えなくてよく、
+     カクつかず滑らかに消えたり現れたりする。 */
+  var FADE_ID = 'orb-fade';
+  function ensureFadeDef() {
+    if (d.getElementById(FADE_ID)) return;
+    var svg = svgEl('svg');
+    svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+    var grad = svgEl('radialGradient');
+    grad.setAttribute('id', FADE_ID);
+    var s0 = svgEl('stop'); s0.setAttribute('offset', '62%'); s0.setAttribute('stop-color', '#000');
+    var s1 = svgEl('stop'); s1.setAttribute('offset', '100%'); s1.setAttribute('stop-color', '#fff');
+    grad.appendChild(s0); grad.appendChild(s1);
+    var defs = svgEl('defs'); defs.appendChild(grad);
+    svg.appendChild(defs);
+    d.body.appendChild(svg);
+  }
+
+  function makeMask(id, n, withCenter) {
+    var mask = svgEl('mask');
+    mask.setAttribute('id', id);
+    mask.setAttribute('maskUnits', 'userSpaceOnUse');
+    mask.setAttribute('x', -500); mask.setAttribute('y', -500);
+    mask.setAttribute('width', 1000); mask.setAttribute('height', 1000);
+    var base = svgEl('rect');
+    base.setAttribute('x', -500); base.setAttribute('y', -500);
+    base.setAttribute('width', 1000); base.setAttribute('height', 1000);
+    base.setAttribute('fill', '#fff');
+    mask.appendChild(base);
+    var center = null;
+    if (withCenter) {
+      center = svgEl('circle');
+      center.setAttribute('cx', 0); center.setAttribute('cy', 0);
+      center.setAttribute('fill', 'url(#' + FADE_ID + ')');
+      mask.appendChild(center);
+    }
+    var circles = [];
+    for (var i = 0; i < n; i++) {
+      var c2 = svgEl('circle');
+      c2.setAttribute('r', 0);
+      c2.setAttribute('fill', 'url(#' + FADE_ID + ')');
+      mask.appendChild(c2);
+      circles.push(c2);
+    }
+    return { mask: mask, center: center, circles: circles };
+  }
+
+  function drawRings(c) {
+    /* 線の形そのものは見下ろし角だけで決まる。角度が変わった
+       ときだけ引き直せばよく、隠す・隠さないの調整はマスク側で
+       毎コマ行うので、こちらは重くならない。 */
     if (!c.node.paths) return;
-    var pr = (c.node.pd || 0) / 2 + 6;
+    if (c.node.ringPitch === cam.pitch) return;
+    c.node.ringPitch = cam.pitch;
     for (var i = 0; i < c.node.shells.length; i++) {
       var r = c.node.shells[i].r;
-      c.node.paths[i].back.setAttribute('d', ringPath(r, cam.pitch, false, pr, avoid));
-      c.node.paths[i].front.setAttribute('d', ringPath(r, cam.pitch, true, pr, avoid));
+      c.node.paths[i].back.setAttribute('d', ringPath(r, cam.pitch, false));
+      c.node.paths[i].front.setAttribute('d', ringPath(r, cam.pitch, true));
+    }
+  }
+
+  /* 中心の丸と、いま置かれている作品の丸ぶんだけ、マスクの円を
+     動かして線をぼかしながら透明にする。奥側のマスクだけ、
+     中心の丸を隠す円も持っている（手前は中心より上に描くので
+     隠す必要がない）。 */
+  function updateMask(c, works) {
+    if (!c.node.mFront) return;
+    for (var i = 0; i < works.length; i++) {
+      var pt = works[i], rad = pt.rad;
+      c.node.mFront.circles[i].setAttribute('cx', pt.x.toFixed(1));
+      c.node.mFront.circles[i].setAttribute('cy', pt.y.toFixed(1));
+      c.node.mFront.circles[i].setAttribute('r', rad.toFixed(1));
+      c.node.mBack.circles[i].setAttribute('cx', pt.x.toFixed(1));
+      c.node.mBack.circles[i].setAttribute('cy', pt.y.toFixed(1));
+      c.node.mBack.circles[i].setAttribute('r', rad.toFixed(1));
     }
   }
 
@@ -472,10 +532,11 @@
       if (state.zoom && state.zoom !== c.key) continue;
       if (!c.node.shells) continue;
 
-      /* 先に全作品の位置を決めてから、その位置をよけて線を引く。
-         透明に近いサムネイルの作品でも、線がその下に隠れて透けて
-         見えることがないように、線の側を削る。 */
-      var avoid = [];
+      drawRings(c);
+
+      /* マスクの円は、作品と同じインデックスで動かす。中心の丸を
+         隠す円は固定なので毎コマ触らなくていい（作った時の r のまま）。 */
+      var works = [];
       for (var wi = 0; wi < c.works.length; wi++) {
         var wk = c.works[wi], n = wk.node;
         if (!n || !n.r) continue;
@@ -491,9 +552,9 @@
         st.zIndex = open ? 60
                   : (pt.z > 0 ? 24 + Math.round(pt.z * 7)
                               : 12 + Math.round((1 + pt.z) * 7));
-        avoid.push({ x: pt.x, y: pt.y, rad: (geo.satD / 2) * pt.s * 1.14 });
+        works.push({ x: pt.x, y: pt.y, rad: (geo.satD / 2) * pt.s * 1.14 });
       }
-      drawRings(c, avoid);
+      updateMask(c, works);
     }
   }
 
