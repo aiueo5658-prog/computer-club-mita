@@ -197,9 +197,11 @@
                thumb:'https://img.youtube.com/vi/' + yid + '/mqdefault.jpg' };
     }
     if (did) {
+      /* 公開設定（リンクを知っている全員）になっているファイルなら、
+         ログインなしでこのサムネイル用エンドポイントが読める。 */
       return { kind:'drive', id:did,
                embed:'https://drive.google.com/file/d/' + did + '/preview',
-               thumb:'' };
+               thumb:'https://drive.google.com/thumbnail?id=' + did + '&sz=w480' };
     }
     if (isDirectMedia(url, ['.mp4', '.webm'])) return { kind:'video-file', embed:url, thumb:'' };
     if (isDirectMedia(url, ['.mp3', '.wav', '.m4a', '.ogg'])) return { kind:'audio-file', embed:url, thumb:'' };
