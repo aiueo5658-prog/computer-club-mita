@@ -70,8 +70,10 @@ a{color:#7cffc4;text-decoration:none}
   padding:0 var(--pad);
 }
 .brand{display:flex;align-items:center;gap:11px}
-.brand-mark{width:30px;height:30px;color:var(--acid);display:block}
-.brand-mark svg{width:100%;height:100%}
+.brand-mark{width:30px;height:30px;color:var(--acid);display:block;
+  border-radius:50%;overflow:hidden;background:#000;
+  box-shadow:0 0 0 1px rgba(255,255,255,.14)}
+.brand-mark svg,.brand-mark img{width:100%;height:100%;display:block;object-fit:cover}
 .brand-txt{font-weight:700;font-size:15.5px;letter-spacing:-.01em}
 .nav-links{display:flex;gap:clamp(14px,2vw,28px);margin-left:14px}
 .nav-links a,.nav-links button{font-size:14px;color:#93a09b;transition:color .2s}
