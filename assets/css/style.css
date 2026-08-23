@@ -8,7 +8,7 @@
   --ink-2:#9aa8a3;
   --muted:#8d9a96;
   --faint:#7a8884;
-  --acid:#00ff00;   /* ロゴの緑。サイト全体でこの1色に統一する */
+  --acid:#00ff9c;
   --line:rgba(255,255,255,.13);
   --line-2:rgba(255,255,255,.2);
   --panel:rgba(8,14,12,.8);
@@ -17,7 +17,7 @@
   --font-num:Archivo,system-ui,sans-serif;
 
   --pad:clamp(20px,3.4vw,56px);
-  --navh:clamp(72px,4.4vw,84px);
+  --navh:76px;
 
   /* app.js が実測して書き込む */
   --cx:56vw; --cy:52vh; --R:245px; --K:1;
@@ -32,7 +32,7 @@ body{
   overflow:hidden;
 }
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
-a{color:var(--acid);text-decoration:none}
+a{color:#7cffc4;text-decoration:none}
 :focus-visible{outline:2px solid var(--acid);outline-offset:3px;border-radius:6px}
 
 .noscript{position:relative;z-index:5;max-width:640px;margin:14vh auto;padding:0 24px;text-align:center}
@@ -53,7 +53,7 @@ a{color:var(--acid);text-decoration:none}
 .limb-glow{
   left:-772px;top:-772px;width:1544px;height:1544px;
   background:conic-gradient(from 235deg,
-    rgba(0,255,0,0) 0deg, rgba(0,255,0,.95) 24deg, rgba(165,255,228,1) 62deg,
+    rgba(0,255,156,0) 0deg, rgba(0,255,156,.95) 24deg, rgba(165,255,228,1) 62deg,
     rgba(70,215,255,.95) 100deg, rgba(125,160,255,.55) 132deg, rgba(0,0,0,0) 162deg);
   filter:blur(26px);
 }
@@ -66,85 +66,18 @@ a{color:var(--acid);text-decoration:none}
 /* =============== ナビ =============== */
 .nav{
   position:fixed;left:0;right:0;top:0;height:var(--navh);z-index:80;
-  display:flex;align-items:center;gap:clamp(18px,2.4vw,34px);
+  display:flex;align-items:center;gap:clamp(16px,2.4vw,30px);
   padding:0 var(--pad);
 }
-/* ロゴが乗る上側は黒のまま。ここが半透明だと、アイコンの丸い外形が
-   切り抜きの縁として立ってしまう。ただし下端まで真っ黒で断ち切ると
-   バーが「蓋」に見えて窮屈なので、最後の2割だけ溶かして地に落とす。
-   境界線も引かない。線を1本引くだけで箱に見える。 */
-.nav::before{
-  content:"";position:absolute;inset:0 0 -34px 0;pointer-events:none;
-  background:#000;
-  /* 溶けるのはバーの外側の 34px。バーの中はどこも真っ黒なので、
-     ロゴがフェードに掛かることがない。 */
-  -webkit-mask:linear-gradient(180deg,#000 0,#000 calc(100% - 34px),transparent 100%);
-          mask:linear-gradient(180deg,#000 0,#000 calc(100% - 34px),transparent 100%);
-}
-.nav > *{position:relative}
-
-.brand{display:flex;align-items:center;gap:clamp(10px,.9vw,14px)}
-/* アイコンは背景を透過させた PNG。丸く切り抜いたり黒地を敷いたり
-   しないので、バーの上でも動画の上でも浮かずに馴染む。 */
-.brand-mark{
-  width:clamp(34px,2.4vw,46px);aspect-ratio:1;flex:none;display:block;
-  color:var(--acid);
-}
-.brand-mark svg{width:100%;height:100%;display:block}
-.brand-mark img{
-  width:100%;height:100%;display:block;object-fit:contain;
-  transition:transform .7s cubic-bezier(.22,1,.36,1), filter .35s ease;
-}
-.brand:hover .brand-mark img{
-  transform:rotate(24deg);
-  filter:drop-shadow(0 0 14px rgba(0,255,0,.5));
-}
-
-.brand-txt{
-  display:inline-flex;align-items:baseline;gap:.3em;
-  font-weight:700;font-size:clamp(14.5px,1.05vw,16.5px);letter-spacing:-.01em;
-  color:var(--acid);
-}
-.brand-slash{
-  font-style:normal;font-family:var(--font-num);font-weight:600;
-  color:var(--acid);opacity:.55;letter-spacing:-.04em;
-  transition:opacity .35s ease;
-}
-.brand:hover .brand-slash{opacity:1}
-
-.nav-links{
-  position:relative;display:flex;gap:clamp(16px,2vw,30px);
-  margin-left:clamp(6px,1.2vw,18px);
-}
-.nav-links a,.nav-links button{
-  position:relative;font-size:14px;color:#93a09b;
-  padding:7px 1px;transition:color .25s ease;
-}
+.brand{display:flex;align-items:center;gap:11px}
+.brand-mark{width:30px;height:30px;color:var(--acid);display:block}
+.brand-mark svg{width:100%;height:100%}
+.brand-txt{font-weight:700;font-size:15.5px;letter-spacing:-.01em}
+.nav-links{display:flex;gap:clamp(14px,2vw,28px);margin-left:14px}
+.nav-links a,.nav-links button{font-size:14px;color:#93a09b;transition:color .2s}
 .nav-links a:hover,.nav-links button:hover,
 .nav-links a.is-on,.nav-links button.is-on{color:#fff}
-
-/* 下線は全体で1本だけ。行き先に狙いを定めると、いまいるタブから
-   そこへ滑っていく。2本同時に光ると、どちらが現在地か読めなくなる。 */
-.nav-ink{
-  position:absolute;left:0;bottom:2px;width:0;height:1px;
-  background:var(--acid);box-shadow:0 0 10px var(--acid);
-  opacity:0;pointer-events:none;
-  transition:transform .44s cubic-bezier(.22,1,.36,1),
-             width .44s cubic-bezier(.22,1,.36,1),
-             opacity .28s ease;
-}
-.nav-ink.on{opacity:1}
 .nav-end{margin-left:auto;display:flex;align-items:center;gap:18px}
-
-/* キーボードでも居場所が分かるように */
-.nav a:focus-visible,.nav button:focus-visible{
-  outline:2px solid var(--acid);outline-offset:4px;border-radius:4px;
-}
-
-@media (prefers-reduced-motion: reduce){
-  .brand-mark img,.nav-ink{transition-duration:.01ms}
-  .brand:hover .brand-mark img{transform:none}
-}
 
 .cta{
   display:inline-block;text-align:center;
@@ -426,16 +359,16 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
 .deflist{margin:18px 0;display:grid;gap:1px;background:var(--line);border:1px solid var(--line);
   border-radius:10px;overflow:hidden}
 .deflist>div{display:grid;grid-template-columns:78px 1fr;gap:12px;padding:13px 15px;background:rgba(2,10,8,.8)}
-.deflist dt{font-size:12.5px;color:var(--acid)}
+.deflist dt{font-size:12.5px;color:#7cffc4}
 .deflist dd{margin:0;font-size:14px;line-height:1.7;color:#c2e4d6}
 .offline{margin:0;padding:16px;border:1px solid var(--line);border-radius:10px;
-  font-size:14px;line-height:1.9;color:#c2e4d6;background:rgba(0,255,0,.05)}
+  font-size:14px;line-height:1.9;color:#c2e4d6;background:rgba(0,255,156,.05)}
 
 /* フォーム */
 .field{margin-bottom:22px;border:0;padding:0;min-width:0}
-.label{display:block;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--acid)}
+.label{display:block;margin-bottom:10px;font-size:13px;font-weight:700;color:#7cffc4}
 .label em{font-style:normal;margin-left:8px;padding:2px 7px;border-radius:4px;font-size:11px;
-  background:rgba(0,255,0,.14);border:1px solid var(--line-2);color:var(--acid)}
+  background:rgba(0,255,156,.14);border:1px solid var(--line-2);color:#7cffc4}
 .rating{display:flex;gap:7px}
 .rate{flex:1;display:flex;flex-direction:column;align-items:center;gap:9px;
   padding:14px 4px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.35);
@@ -443,9 +376,9 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
 .rate i{width:14px;height:14px;border-radius:4px;border:1px solid var(--line-2);transition:all .2s}
 .rate u{text-decoration:none;font-size:11.5px;color:var(--muted);text-align:center}
 .rate:hover{border-color:var(--line-2)}
-.rate.on{border-color:var(--acid);background:rgba(0,255,0,.1)}
-.rate.on i{background:var(--acid);border-color:var(--acid);box-shadow:0 0 16px rgba(0,255,0,.7)}
-.rate.on u{color:var(--acid)}
+.rate.on{border-color:var(--acid);background:rgba(0,255,156,.1)}
+.rate.on i{background:var(--acid);border-color:var(--acid);box-shadow:0 0 16px rgba(0,255,156,.7)}
+.rate.on u{color:#b6ffdd}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{padding:10px 18px;border:1px solid var(--line);border-radius:999px;
   font-size:14px;color:#a3aeaa;background:rgba(255,255,255,.03);transition:all .2s}
@@ -543,6 +476,6 @@ html.novt body.leaving{
   transition:opacity .3s ease, transform .42s cubic-bezier(.22,1,.36,1);
 }
 .camreset.on{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
-.camreset:hover{border-color:var(--acid);color:var(--acid)}
+.camreset:hover{border-color:var(--acid);color:#b6ffdd}
 .camreset svg{width:15px;height:15px}
 @media (prefers-reduced-motion: reduce){ .camreset{transition-duration:.01ms} }
