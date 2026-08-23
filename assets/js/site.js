@@ -79,7 +79,58 @@
     w.addEventListener('pageshow', function () { d.body.classList.remove('leaving'); });
   }
 
+  /* =====================================================
+     ナビの下線
+     下線は全体で1本だけ持つ。狙ったタブへ、いまいる場所から
+     滑って動く。狙うのをやめたら現在地へ戻る。
+     ===================================================== */
+  function navInk() {
+    var host = d.querySelector('.nav-links');
+    if (!host) return;
+    var items = Array.prototype.slice.call(host.querySelectorAll('a,button'));
+    if (!items.length) return;
+
+    var ink = d.createElement('span');
+    ink.className = 'nav-ink';
+    ink.setAttribute('aria-hidden', 'true');
+    host.appendChild(ink);
+
+    var current = null;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].classList.contains('is-on')) { current = items[i]; break; }
+    }
+
+    function moveTo(target, animate) {
+      if (!target) { ink.classList.remove('on'); return; }
+      if (!animate) ink.style.transition = 'none';
+      ink.style.width = target.offsetWidth + 'px';
+      ink.style.transform = 'translateX(' + target.offsetLeft + 'px)';
+      ink.classList.add('on');
+      if (!animate) { void ink.offsetWidth; ink.style.transition = ''; }
+    }
+
+    /* 書体が届く前に測ると幅がずれるので、届いてから置き直す */
+    moveTo(current, false);
+    if (d.fonts && d.fonts.ready) d.fonts.ready.then(function () { moveTo(current, false); });
+
+    items.forEach(function (b) {
+      b.addEventListener('pointerenter', function () { moveTo(b, true); });
+      b.addEventListener('focus', function () { moveTo(b, true); });
+    });
+    host.addEventListener('pointerleave', function () { moveTo(current, true); });
+    host.addEventListener('focusout', function (e) {
+      if (!host.contains(e.relatedTarget)) moveTo(current, true);
+    });
+
+    var t;
+    w.addEventListener('resize', function () {
+      clearTimeout(t);
+      t = setTimeout(function () { moveTo(current, false); }, 120);
+    }, { passive: true });
+  }
+
   function start() {
+    navInk();
     var host = d.getElementById('stars');
     if (host) {
       stars(host);

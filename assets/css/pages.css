@@ -77,7 +77,7 @@ body.no-video .filmbg video { display: none; }
   padding: 22px 46px 22px 0; font-size: clamp(15px, 1.7vw, 17.5px); font-weight: 700;
   line-height: 1.6; transition: color .2s; }
 .qa summary::-webkit-details-marker { display: none; }
-.qa summary:hover { color: #7cffc4; }
+.qa summary:hover { color: var(--acid); }
 .qa summary::after { content: ""; position: absolute; right: 8px; top: 50%;
   width: 13px; height: 13px; margin-top: -7px;
   border-right: 2px solid var(--acid); border-bottom: 2px solid var(--acid);
@@ -140,7 +140,7 @@ body.no-video .filmbg video { display: none; }
 .thanks-mark { position: relative; width: 64px; height: 64px; display: grid; place-items: center;
   border-radius: 50%; border: 1px solid rgba(255,255,255,.16); margin-bottom: 6px; }
 .thanks-mark i { width: 34px; height: 34px; border-radius: 50%;
-  border: 2px solid var(--acid); box-shadow: 0 0 24px rgba(0,255,156,.5); display: block; }
+  border: 2px solid var(--acid); box-shadow: 0 0 24px rgba(0,255,0,.5); display: block; }
 .thanks-mark b { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px;
   margin: -15px 0 0 -15px; border-radius: 50%; background: #000; }
 
@@ -156,8 +156,8 @@ body.no-video .filmbg video { display: none; }
 /* =============== アンケートの細部 =============== */
 .hintline { margin: 10px 0 0; font-size: 12.5px; color: var(--faint); }
 .thanks-echo { margin: 14px 0 0; padding: 12px 16px; border-radius: 10px;
-  border: 1px solid rgba(0,255,156,.24); background: rgba(0,255,156,.06);
-  font-size: 13px; line-height: 1.8; color: #b6ffdd; max-width: 460px; }
+  border: 1px solid rgba(0,255,0,.24); background: rgba(0,255,0,.06);
+  font-size: 13px; line-height: 1.8; color: var(--acid); max-width: 460px; }
 .thanks-echo.warn { border-color: rgba(255,196,110,.3); background: rgba(255,196,110,.07);
   color: #ffdca8; }
 .chips .chip.on { background: #fff; color: #04140e; border-color: #fff; font-weight: 700; }
