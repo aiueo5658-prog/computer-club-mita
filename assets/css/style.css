@@ -17,7 +17,7 @@
   --font-num:Archivo,system-ui,sans-serif;
 
   --pad:clamp(20px,3.4vw,56px);
-  --navh:clamp(76px,5.2vw,92px);
+  --navh:clamp(72px,4.4vw,84px);
 
   /* app.js が実測して書き込む */
   --cx:56vw; --cy:52vh; --R:245px; --K:1;
@@ -69,13 +69,17 @@ a{color:var(--acid);text-decoration:none}
   display:flex;align-items:center;gap:clamp(18px,2.4vw,34px);
   padding:0 var(--pad);
 }
-/* バーの地は単色の黒。ロゴの地と同じ色なので、アイコンの外形が
-   切り抜きの縁として出ない。グラデーションで透かすと、そこだけ
-   明るさが違ってアイコンの丸が浮いてしまう。 */
+/* ロゴが乗る上側は黒のまま。ここが半透明だと、アイコンの丸い外形が
+   切り抜きの縁として立ってしまう。ただし下端まで真っ黒で断ち切ると
+   バーが「蓋」に見えて窮屈なので、最後の2割だけ溶かして地に落とす。
+   境界線も引かない。線を1本引くだけで箱に見える。 */
 .nav::before{
-  content:"";position:absolute;inset:0;pointer-events:none;
+  content:"";position:absolute;inset:0 0 -34px 0;pointer-events:none;
   background:#000;
-  border-bottom:1px solid rgba(255,255,255,.07);
+  /* 溶けるのはバーの外側の 34px。バーの中はどこも真っ黒なので、
+     ロゴがフェードに掛かることがない。 */
+  -webkit-mask:linear-gradient(180deg,#000 0,#000 calc(100% - 34px),transparent 100%);
+          mask:linear-gradient(180deg,#000 0,#000 calc(100% - 34px),transparent 100%);
 }
 .nav > *{position:relative}
 
@@ -83,7 +87,7 @@ a{color:var(--acid);text-decoration:none}
 /* アイコンは背景を透過させた PNG。丸く切り抜いたり黒地を敷いたり
    しないので、バーの上でも動画の上でも浮かずに馴染む。 */
 .brand-mark{
-  width:clamp(36px,2.7vw,52px);aspect-ratio:1;flex:none;display:block;
+  width:clamp(34px,2.4vw,46px);aspect-ratio:1;flex:none;display:block;
   color:var(--acid);
 }
 .brand-mark svg{width:100%;height:100%;display:block}
