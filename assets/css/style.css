@@ -66,20 +66,82 @@ a{color:#7cffc4;text-decoration:none}
 /* =============== ナビ =============== */
 .nav{
   position:fixed;left:0;right:0;top:0;height:var(--navh);z-index:80;
-  display:flex;align-items:center;gap:clamp(16px,2.4vw,30px);
+  display:flex;align-items:center;gap:clamp(18px,2.4vw,34px);
   padding:0 var(--pad);
 }
-.brand{display:flex;align-items:center;gap:11px}
-.brand-mark{width:30px;height:30px;color:var(--acid);display:block;
-  border-radius:50%;overflow:hidden;background:#000;
-  box-shadow:0 0 0 1px rgba(255,255,255,.14)}
-.brand-mark svg,.brand-mark img{width:100%;height:100%;display:block;object-fit:cover}
-.brand-txt{font-weight:700;font-size:15.5px;letter-spacing:-.01em}
-.nav-links{display:flex;gap:clamp(14px,2vw,28px);margin-left:14px}
-.nav-links a,.nav-links button{font-size:14px;color:#93a09b;transition:color .2s}
+/* 透けたままだと、アイコンの黒地だけが四角く浮いて見える。
+   上から下へ溶ける膜を敷いて、地と一続きにする。膜そのものも
+   下端でマスクして切るので、バーの輪郭が出ない。 */
+.nav::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg, rgba(2,8,6,.86) 0%, rgba(2,8,6,.58) 58%, rgba(2,8,6,0) 100%);
+  backdrop-filter:blur(16px) saturate(125%);
+  -webkit-backdrop-filter:blur(16px) saturate(125%);
+  -webkit-mask:linear-gradient(180deg,#000 0%,#000 55%,transparent 100%);
+          mask:linear-gradient(180deg,#000 0%,#000 55%,transparent 100%);
+}
+.nav > *{position:relative}
+
+.brand{display:flex;align-items:center;gap:clamp(10px,.9vw,14px)}
+/* アイコンは背景を透過させた PNG。丸く切り抜いたり黒地を敷いたり
+   しないので、バーの上でも動画の上でも浮かずに馴染む。 */
+.brand-mark{
+  width:clamp(34px,2.5vw,44px);aspect-ratio:1;flex:none;display:block;
+  color:var(--acid);
+}
+.brand-mark svg{width:100%;height:100%;display:block}
+.brand-mark img{
+  width:100%;height:100%;display:block;object-fit:contain;
+  filter:drop-shadow(0 0 9px rgba(0,255,156,.3));
+  transition:transform .7s cubic-bezier(.22,1,.36,1), filter .35s ease;
+}
+.brand:hover .brand-mark img{
+  transform:rotate(24deg);
+  filter:drop-shadow(0 0 18px rgba(0,255,156,.62));
+}
+
+.brand-txt{
+  display:inline-flex;align-items:baseline;gap:.3em;
+  font-weight:700;font-size:clamp(14.5px,1.05vw,16.5px);letter-spacing:-.01em;
+}
+.brand-slash{
+  font-style:normal;font-family:var(--font-num);font-weight:600;
+  color:var(--acid);letter-spacing:-.04em;
+  transition:opacity .35s ease;
+}
+.brand:hover .brand-slash{opacity:.55}
+
+.nav-links{display:flex;gap:clamp(16px,2vw,30px);margin-left:clamp(6px,1.2vw,18px)}
+.nav-links a,.nav-links button{
+  position:relative;font-size:14px;color:#93a09b;
+  padding:7px 1px;transition:color .25s ease;
+}
+/* 下線は右から消え、左から引かれる。行き先が決まる感じを出す。 */
+.nav-links a::after,.nav-links button::after{
+  content:"";position:absolute;left:0;right:0;bottom:2px;height:1px;
+  background:var(--acid);transform:scaleX(0);transform-origin:100% 50%;
+  transition:transform .4s cubic-bezier(.22,1,.36,1);
+}
 .nav-links a:hover,.nav-links button:hover,
 .nav-links a.is-on,.nav-links button.is-on{color:#fff}
+.nav-links a:hover::after,.nav-links button:hover::after,
+.nav-links a.is-on::after,.nav-links button.is-on::after{
+  transform:scaleX(1);transform-origin:0 50%;
+}
+.nav-links a.is-on::after,.nav-links button.is-on::after{
+  box-shadow:0 0 10px var(--acid);
+}
 .nav-end{margin-left:auto;display:flex;align-items:center;gap:18px}
+
+/* キーボードでも居場所が分かるように */
+.nav a:focus-visible,.nav button:focus-visible{
+  outline:2px solid var(--acid);outline-offset:4px;border-radius:4px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .brand-mark img,.nav-links a::after,.nav-links button::after{transition-duration:.01ms}
+  .brand:hover .brand-mark img{transform:none}
+}
 
 .cta{
   display:inline-block;text-align:center;
