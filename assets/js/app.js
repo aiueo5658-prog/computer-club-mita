@@ -15,6 +15,13 @@
   function el(tag, cls) { var n = d.createElement(tag); if (cls) n.className = cls; return n; }
   var SVGNS = 'http://www.w3.org/2000/svg';
   function svgEl(tag, cls) { var n = d.createElementNS(SVGNS, tag); if (cls) n.setAttribute('class', cls); return n; }
+
+  /* 実サムネイルが無い作品の代替。thumbs.js の CCMThumbs.make に
+     渡すだけの薄いラッパー。作品名＋制作者を種にするので、
+     同じ作品にはいつも同じ絵が出る。 */
+  function drawThumb(wk, cat) {
+    return w.CCMThumbs.make(wk.title + '/' + wk.author, 160, { hue: cat.hue });
+  }
   function safeUrl(u) { u = String(u || '').trim(); return /^https?:\/\//i.test(u) ? u : ''; }
   function hue(h) { return 'oklch(0.86 0.15 ' + h + ')'; }
   function hash(s) {
