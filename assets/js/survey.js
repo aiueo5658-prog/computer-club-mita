@@ -89,7 +89,12 @@
       box.classList.add('warn');
     }
     $('#survey-form').hidden = true;
-    $('#thanks').hidden = false;
+    var thanks = $('#thanks');
+    thanks.hidden = false;
+    /* クラスを付け直すことで、同じセッション内で二回送っても
+       食が欠けるところから毎回やり直す。 */
+    thanks.classList.remove('in'); void thanks.offsetWidth;
+    thanks.classList.add('in');
     $('#submit-btn').disabled = false;
     w.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -143,9 +148,24 @@
     });
   }
 
+  /* 選んだ瞬間だけ弾ませる。押しごたえを添えるだけで、選択状態の
+     判定そのものには関わらない。 */
+  function pop(b) {
+    b.classList.remove('pop'); void b.offsetWidth;
+    b.classList.add('pop');
+    b.addEventListener('animationend', function once() {
+      b.classList.remove('pop'); b.removeEventListener('animationend', once);
+    });
+  }
+
   function start() {
     live = !!safeUrl((CFG.survey || {}).formAction);
     fillWorks();
+
+    d.querySelector('.sv-grid').addEventListener('click', function (e) {
+      var b = e.target.closest('.rate.on, .chip.on');
+      if (b) pop(b);
+    });
 
     $('#rating').addEventListener('click', function (e) {
       var b = e.target.closest('.rate'); if (!b) return;

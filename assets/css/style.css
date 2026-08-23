@@ -79,22 +79,36 @@ a{color:#7cffc4;text-decoration:none}
 .nav-links a.is-on,.nav-links button.is-on{color:#fff}
 .nav-end{margin-left:auto;display:flex;align-items:center;gap:18px}
 
+.cta,.ghost{
+  position:relative;overflow:hidden;
+  transform:translate(var(--mx,0px),var(--my,0px));
+  transition:transform .35s cubic-bezier(.22,1,.36,1);
+}
 .cta{
   display:inline-block;text-align:center;
   background:#fff;color:#05130e;font-weight:700;border-radius:999px;
   font-size:14px;padding:11px 24px;
-  transition:transform .2s,box-shadow .2s;
+  transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .2s;
 }
-.cta:hover{transform:translateY(-1px);box-shadow:0 8px 26px rgba(255,255,255,.2)}
+.cta:hover{transform:translate(var(--mx,0px),calc(var(--my,0px) - 1px));box-shadow:0 8px 26px rgba(255,255,255,.2)}
 .ghost{
   display:inline-flex;align-items:center;gap:9px;
   border:1px solid var(--line-2);border-radius:999px;
   color:#dbe5e1;background:rgba(255,255,255,.03);
   font-size:13.5px;font-weight:500;padding:11px 19px;
-  transition:border-color .2s,color .2s;
+  transition:transform .35s cubic-bezier(.22,1,.36,1),border-color .2s,color .2s;
 }
 .ghost svg{width:15px;height:15px}
 .ghost:hover{border-color:rgba(255,255,255,.4);color:#fff}
+
+/* クリックした点から広がって消える輪。当たり判定には関わらない。 */
+.ripple{
+  position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 72%);
+  transform:scale(0);animation:rippleOut .6s cubic-bezier(.22,1,.36,1) both;
+}
+.ghost .ripple{background:radial-gradient(circle, rgba(0,255,0,.4) 0%, rgba(0,255,0,0) 72%)}
+@keyframes rippleOut{ to{ transform:scale(1); opacity:0 } }
 
 /* =============== 左の見出し =============== */
 .hero{
@@ -286,9 +300,12 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
   border:1px solid rgba(255,255,255,.09);border-bottom:0;border-radius:22px 22px 0 0;
   background:rgba(8,14,12,.72);backdrop-filter:blur(24px);
   display:grid;grid-template-columns:330px repeat(3,1fr);
-  transition:opacity .5s ease;pointer-events:none;
+  transition:opacity .5s ease, transform .6s cubic-bezier(.22,1,.36,1);
+  pointer-events:none;
 }
 .guide.off{opacity:0}
+/* 開いた瞬間だけ、下からそっと持ち上がる */
+body:not(.ready) .guide{opacity:0;transform:translateY(28px)}
 .guide-brand{padding:26px 28px;display:flex;align-items:center;gap:18px}
 .guide-mark{position:relative;width:78px;height:78px;border-radius:50%;
   border:1px solid rgba(255,255,255,.12);display:grid;place-items:center;flex:none}
@@ -318,6 +335,56 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .player-acts{margin-left:auto;display:flex;align-items:center;gap:16px;flex:none}
 .player-by{font-size:13.5px;color:var(--muted)}
+
+/* =========================================================
+   いいね
+   輪郭のハートが、押した瞬間だけ弾んで塗りつぶされる。
+   バネのような動きは、ふつうの ease ではなく、行き過ぎてから
+   戻る2段のキーフレームで作る。
+   ========================================================= */
+.like-btn{
+  position:relative;width:40px;height:40px;flex:none;display:grid;place-items:center;
+  border-radius:50%;color:#c2d2cd;
+  transition:color .25s ease, background .25s ease;
+}
+.like-btn:hover{background:rgba(255,255,255,.06);color:#fff}
+.like-icon{width:20px;height:20px;transition:transform .2s ease}
+.like-btn.on{color:var(--acid)}
+.like-btn.on .like-icon{fill:var(--acid)}
+.like-btn.burst .like-icon{animation:likeSpring .5s cubic-bezier(.19,1,.22,1) both}
+@keyframes likeSpring{
+  0%{transform:scale(1)}
+  32%{transform:scale(1.5)}
+  55%{transform:scale(.86)}
+  80%{transform:scale(1.12)}
+  100%{transform:scale(1)}
+}
+/* 押した中心から、光の粒が数個だけ散る */
+.like-burst{position:absolute;inset:0;pointer-events:none;opacity:0}
+.like-btn.burst .like-burst{opacity:1;animation:burstFade .6s ease both}
+.like-burst::before,.like-burst::after{
+  content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:50%;
+  background:var(--acid);box-shadow:0 0 6px var(--acid);
+  transform:translate(-50%,-50%);
+}
+.like-btn.burst .like-burst::before{animation:burstA .55s cubic-bezier(.22,1,.36,1) both}
+.like-btn.burst .like-burst::after{animation:burstB .55s cubic-bezier(.22,1,.36,1) both}
+@keyframes burstFade{ 0%{opacity:1} 70%{opacity:1} 100%{opacity:0} }
+@keyframes burstA{ to{ transform:translate(calc(-50% - 15px), calc(-50% - 11px)) scale(.3) } }
+@keyframes burstB{ to{ transform:translate(calc(-50% + 16px), calc(-50% - 8px)) scale(.3) } }
+
+/* =========================================================
+   共有：リンクのアイコンが、コピーできたらチェックに入れ替わる
+   ========================================================= */
+#p-share{position:relative;overflow:visible}
+#p-share .share-icon{width:15px;height:15px}
+#p-share.done{border-color:rgba(0,255,0,.4);color:var(--acid)}
+#p-share .share-check{color:var(--acid)}
+
+@media (prefers-reduced-motion: reduce){
+  .like-btn.burst .like-icon,.like-btn.burst .like-burst,
+  .like-btn.burst .like-burst::before,.like-btn.burst .like-burst::after{animation:none}
+}
 .player-stage{display:grid;place-items:center;padding:clamp(16px,3vh,34px) var(--pad);min-height:0;min-width:0}
 .frame{position:relative;border:1px solid color-mix(in oklab, var(--c,#fff) 42%, transparent);
   background:#04100c;display:grid;place-items:center;
@@ -479,3 +546,45 @@ html.novt body.leaving{
 .camreset:hover{border-color:var(--acid);color:#b6ffdd}
 .camreset svg{width:15px;height:15px}
 @media (prefers-reduced-motion: reduce){ .camreset{transition-duration:.01ms} }
+
+
+/* =========================================================
+   スクロールで現れる（[data-reveal] は site.js の reveal() が担当）
+   子に data-reveal-item を付けると、その中で順番にずらして出す。
+   ========================================================= */
+[data-reveal-item]{
+  opacity:0;transform:translateY(22px);
+  transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1);
+  transition-delay:calc(var(--ri, 0) * 70ms);
+}
+[data-reveal].in [data-reveal-item]{opacity:1;transform:none}
+[data-reveal]:not(:has([data-reveal-item])){
+  opacity:0;transform:translateY(22px);
+  transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1);
+}
+[data-reveal].in:not(:has([data-reveal-item])){opacity:1;transform:none}
+
+@media (prefers-reduced-motion: reduce){
+  [data-reveal-item],[data-reveal]{opacity:1 !important;transform:none !important;transition:none !important}
+}
+
+
+/* =========================================================
+   アンケートの選択：押した瞬間だけ弾む
+   ========================================================= */
+.rate,.chip{ animation:none; }
+.rate.pop{ animation:selectPop .38s cubic-bezier(.22,1,.36,1); }
+.chip.pop{ animation:selectPopSm .34s cubic-bezier(.22,1,.36,1); }
+@keyframes selectPop{
+  0%{ transform:scale(1) }
+  40%{ transform:scale(1.07) }
+  100%{ transform:scale(1) }
+}
+@keyframes selectPopSm{
+  0%{ transform:scale(1) }
+  45%{ transform:scale(1.09) }
+  100%{ transform:scale(1) }
+}
+@media (prefers-reduced-motion: reduce){
+  .rate.pop,.chip.pop{ animation:none }
+}

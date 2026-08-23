@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260823200545">
-<link rel="stylesheet" href="assets/css/pages.css?v=20260823200545">
+<link rel="stylesheet" href="assets/css/style.css?v=20260824003726">
+<link rel="stylesheet" href="assets/css/pages.css?v=20260824003726">
 </head>
 <body class="page-home">
 
@@ -49,20 +49,20 @@
   </div>
 </header>
 
-<main class="home">
-  <p class="home-badge">
+<main class="home" data-reveal>
+  <p class="home-badge" data-reveal-item>
     <span class="dot" aria-hidden="true"></span>
     三田国際科学学園 学園祭 2026 ・ 10/30 → 10/31
   </p>
 
-  <h1 class="home-title">つくったもの、<br>ぜんぶここに。</h1>
+  <h1 class="home-title" data-reveal-item>つくったもの、<br>ぜんぶここに。</h1>
 
-  <p class="home-lede">
+  <p class="home-lede" data-reveal-item>
     部員が1年かけて作ったゲーム・映像・音楽・3Dモデル。<br>
     <b>この画面でそのまま遊べます。</b>
   </p>
 
-  <div class="home-acts">
+  <div class="home-acts" data-reveal-item>
     <a class="cta big" href="works.html">
       作品を探検する
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
@@ -70,28 +70,46 @@
     <a class="ghost big" href="qa.html">よくある質問</a>
   </div>
 
-  <ul class="home-facts" id="home-facts">
-    <li><b>–</b><span>作品</span></li>
-    <li><b>–</b><span>制作者</span></li>
-    <li><b>5</b><span>ジャンル</span></li>
-    <li><b>2</b><span>日間</span></li>
+  <ul class="home-facts" id="home-facts" data-reveal-item>
+    <li><b data-count="0">0</b><span>作品</span></li>
+    <li><b data-count="0">0</b><span>制作者</span></li>
+    <li><b data-count="5">0</b><span>ジャンル</span></li>
+    <li><b data-count="2">0</b><span>日間</span></li>
   </ul>
 </main>
 
 <p class="home-theme" aria-hidden="true">ECLIPSE&nbsp;&nbsp;2026</p>
 
-<script src="assets/js/site.js?v=20260823200545"></script>
-<script src="assets/js/config.js?v=20260823200545"></script>
-<script src="assets/js/data.js?v=20260823200545"></script>
+<script src="assets/js/site.js?v=20260824003726"></script>
+<script src="assets/js/config.js?v=20260824003726"></script>
+<script src="assets/js/data.js?v=20260824003726"></script>
 <script>
-/* 数字だけデータから拾う。読めなくてもページは成立する。 */
 (function () {
-  if (!window.CCMData) return;
-  window.CCMData.load().then(function () {
-    var f = document.getElementById('home-facts').children;
-    f[0].querySelector('b').textContent = window.CCMData.works.length;
-    f[1].querySelector('b').textContent = window.CCMData.authors().length;
+  var facts = document.getElementById('home-facts');
+  /* ジャンル・日間は静的な数なので、出てきた瞬間に数え上げる。
+     作品・制作者はデータが届いてから、同じ数え上げで差し替える。 */
+  function countAll() {
+    if (!window.CCMSite) return;
+    [].forEach.call(facts.querySelectorAll('b'), function (b) {
+      window.CCMSite.countTo(b, b.getAttribute('data-count'), 900);
+    });
+  }
+  facts.addEventListener('transitionend', function once(e) {
+    if (e.propertyName !== 'opacity') return;
+    facts.removeEventListener('transitionend', once);
+    countAll();
   });
+  /* 動きを控える設定では transitionend が来ないので、すぐ数える */
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) countAll();
+
+  if (window.CCMData) {
+    window.CCMData.load().then(function () {
+      var f = facts.children;
+      f[0].querySelector('b').setAttribute('data-count', window.CCMData.works.length);
+      f[1].querySelector('b').setAttribute('data-count', window.CCMData.authors().length);
+      if (window.CCMSite) countAll();
+    });
+  }
   /* 映像が読めない環境では地の色に任せる */
   var v = document.getElementById('bgv');
   if (v) v.addEventListener('error', function () { document.body.classList.add('no-video'); });

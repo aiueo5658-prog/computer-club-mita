@@ -760,6 +760,30 @@
      ===================================================== */
   var playerWork = null, lastFocus = null;
 
+  /* =====================================================
+     いいね
+     部員どうしの投票ではなく、来場者が「気に入った」を残す
+     ためのもの。バックエンドが無いので、集計はせず、この
+     ブラウザだけが覚えている（ローカルストレージ）。
+     ===================================================== */
+  var LIKE_KEY = 'ccm-likes';
+  function likedSet() {
+    try { return new Set(JSON.parse(localStorage.getItem(LIKE_KEY) || '[]')); }
+    catch (e) { return new Set(); }
+  }
+  function saveLikes(set) {
+    /* Set は length を持たないので Array.prototype.slice.call では
+       空配列になってしまう。Array.from で正しく取り出す。 */
+    try { localStorage.setItem(LIKE_KEY, JSON.stringify(Array.from(set))); }
+    catch (e) { /* プライベートモードなどで書けなければ、覚えないだけで諦める */ }
+  }
+  function isLiked(slug) { return likedSet().has(slug); }
+  function setLiked(slug, on) {
+    var set = likedSet();
+    if (on) set.add(slug); else set.delete(slug);
+    saveLikes(set);
+  }
+
   function frameSize(kind) {
     if (kind === 'scratch') return 485 / 402;
     if (kind === 'audio-file') return 1;
@@ -779,6 +803,11 @@
 
     var url = safeUrl(wk.url), ext = $('#p-ext');
     if (url) { ext.href = url; ext.hidden = false; } else { ext.hidden = true; }
+
+    var likeBtn = $('#p-like');
+    likeBtn.classList.toggle('on', isLiked(wk.slug));
+    likeBtn.setAttribute('aria-pressed', isLiked(wk.slug) ? 'true' : 'false');
+    resetShareLabel();
 
     var stage = $('#p-stage');
     stage.innerHTML = '';
@@ -842,6 +871,16 @@
     var wpx = Math.min(r.width, r.height * ar);
     frame.style.width = Math.floor(wpx) + 'px';
     frame.style.height = Math.floor(wpx / ar) + 'px';
+  }
+
+  function resetShareLabel() {
+    var btn = $('#p-share');
+    if (!btn) return;
+    clearTimeout(btn._t);
+    btn.classList.remove('done');
+    $('.share-link', btn).style.display = '';
+    $('.share-check', btn).style.display = 'none';
+    $('.share-label', btn).textContent = '共有';
   }
 
   function closePlayer() {
@@ -966,6 +1005,41 @@
     $('#p-prev').addEventListener('click', function () { stepWork(-1); });
     $('#p-next').addEventListener('click', function () { stepWork(1); });
 
+    $('#p-like').addEventListener('click', function () {
+      if (!playerWork) return;
+      var on = !isLiked(playerWork.slug);
+      setLiked(playerWork.slug, on);
+      var b = this;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if (on) {
+        /* 弾んだ跡に、小さな光の粒を数個だけ散らす。数が多いと
+           安っぽく見えるので最小限に。 */
+        b.classList.remove('burst'); void b.offsetWidth; b.classList.add('burst');
+      }
+    });
+
+    $('#p-share').addEventListener('click', function () {
+      if (!playerWork) return;
+      var btn = this;
+      var url = location.origin + location.pathname + '#w/' + encodeURIComponent(playerWork.slug);
+      var done = function () {
+        btn.classList.add('done');
+        $('.share-link', btn).style.display = 'none';
+        $('.share-check', btn).style.display = '';
+        $('.share-label', btn).textContent = 'コピーしました';
+        clearTimeout(btn._t);
+        btn._t = setTimeout(resetShareLabel, 1800);
+      };
+      if (navigator.share) {
+        navigator.share({ title: playerWork.title, url: url }).catch(function () {});
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(function () {});
+      }
+    });
+
     d.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         if (!$('#player').hidden) closePlayer();
@@ -1012,6 +1086,35 @@
   /* =====================================================
      起動
      ===================================================== */
+  /* 開いた瞬間だけ、惑星を順番に浮かび上がらせる。トランジションを
+     使うので（キーフレームではない）、終わったあとは何も残らず、
+     ズームで惑星を隠す通常の挙動を後から邪魔しない。
+     ハッシュ付きで特定のジャンルへ直接来たときはやらない
+     （寄っていく途中で他の惑星が湧いて出ると目障りなため）。 */
+  function entrancePlanets() {
+    if (state.zoom) return;
+    if (w.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    $$('.sys > .seat').forEach(function (seat, i) {
+      var orbi = $('.unseat > .orbi', seat);
+      if (!orbi) return;
+      orbi.style.transition = 'none';
+      orbi.style.opacity = '0';
+      orbi.style.transform = 'translate(-50%,-50%) scale(.4)';
+      void orbi.offsetWidth;
+      orbi.style.transitionDelay = (i * 70) + 'ms';
+      orbi.style.transition = '';
+      requestAnimationFrame(function () {
+        orbi.style.opacity = '';
+        orbi.style.transform = '';
+      });
+      orbi.addEventListener('transitionend', function clear(e) {
+        if (e.propertyName !== 'transform') return;
+        orbi.style.transitionDelay = '';
+        orbi.removeEventListener('transitionend', clear);
+      });
+    });
+  }
+
   function start() {
     Data.load().then(function (res) {
       if (!Data.works.length) return;
@@ -1020,10 +1123,14 @@
       wireDrag();
       readHash();
       /* 寸法が出るまで数フレーム試す。プレビュー枠は初期化が遅れることがある。 */
-      var tries = 0;
+      var tries = 0, entranced = false;
       (function settle() {
         var done = layout();
-        if (done) { stars(); render(); requestAnimationFrame(spin); return; }
+        if (done) {
+          stars(); render(); requestAnimationFrame(spin);
+          if (!entranced) { entranced = true; entrancePlanets(); }
+          return;
+        }
         if (++tries < 60) requestAnimationFrame(settle);
       })();
       if (res.source === 'seed' && (CFG.sheetCsvUrl || '').trim()) {
