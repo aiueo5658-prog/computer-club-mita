@@ -149,6 +149,7 @@
     var PULL = 10;
 
     d.addEventListener('pointermove', function (e) {
+      if (e.pointerType === 'touch') return;
       var b = e.target.closest(sel);
       if (!b || b.dataset.noMagnet) return;
       var r = b.getBoundingClientRect();

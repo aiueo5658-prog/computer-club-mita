@@ -83,6 +83,8 @@ a{color:#7cffc4;text-decoration:none}
   position:relative;overflow:hidden;
   transform:translate(var(--mx,0px),var(--my,0px));
   transition:transform .35s cubic-bezier(.22,1,.36,1);
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
 }
 .cta{
   display:inline-block;text-align:center;

@@ -70,10 +70,10 @@
       desc:'説明は準備中です。' },
 
     { title:'nocturne / 夜想', author:'1年 E', category:'音楽',
-      url:'https://www.youtube.com/watch?v=jNQXAC9IVRw',
+      url:'https://www.youtube.com/watch?v=20260825204949jNQXAC9IVRw',
       desc:'ピアノとシンセの小品。打ち込みは Domino、ミックスは Studio One。' },
     { title:'起動音のためのスケッチ', author:'3年 K', category:'音楽',
-      url:'https://www.youtube.com/watch?v=ScMzIvxBSi4',
+      url:'https://www.youtube.com/watch?v=20260825204949ScMzIvxBSi4',
       desc:'サイトの起動音を作るつもりで書いた3秒の曲。結局30秒に伸びました。' },
     { title:'テーマ曲「eclipse」', author:'2年 N', category:'音楽',
       url:'https://scratch.mit.edu/projects/171408186/',
@@ -94,13 +94,13 @@
       desc:'部の紋章を作り直しました。六角形は基板のイメージです。' },
 
     { title:'廊下のノイズ・スケッチ', author:'2年 T', category:'音楽',
-      url:'https://www.youtube.com/watch?v=YQHsXMglC9A',
+      url:'https://www.youtube.com/watch?v=20260825204949YQHsXMglC9A',
       desc:'休み時間の廊下を録って、素材として組み直しました。全部の音が校内の音です。' },
     { title:'8bitで組んだ校歌', author:'1年 U', category:'音楽',
-      url:'https://www.youtube.com/watch?v=OPf0YbXqDm0',
+      url:'https://www.youtube.com/watch?v=20260825204949OPf0YbXqDm0',
       desc:'校歌を矩形波3声とノイズ1声だけで再構成しました。' },
     { title:'部室のアンビエント', author:'3年 K', category:'音楽',
-      url:'https://www.youtube.com/watch?v=60ItHLz5WEA',
+      url:'https://www.youtube.com/watch?v=20260825204949ItHLz5WEA',
       desc:'放課後の部室で流すために書いた12分の曲。パソコンのファンの音に合わせています。' },
 
     { title:'部章の立体化', author:'2年 L', category:'モデリング',
@@ -139,7 +139,7 @@
     return m ? m[1] : null;
   }
   function youtubeId(url) {
-    var m = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/.exec(url || '');
+    var m = /(?:youtube\.com\/(?:watch\?v=20260825204949|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/.exec(url || '');
     return m ? m[1] : null;
   }
   function driveId(url) {
