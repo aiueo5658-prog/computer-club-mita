@@ -12,13 +12,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260825193251">
-<link rel="stylesheet" href="assets/css/pages.css?v=20260825193251">
+<link rel="stylesheet" href="assets/css/style.css?v=20260825200213">
+<link rel="stylesheet" href="assets/css/pages.css?v=20260825200213">
 </head>
 <body class="page-home">
 
 <!-- ===== 導入：ようこそ → ローディング（Tips）→ ホーム =====
-     一度見せたら、そのタブ内では出さない（sessionStorage）。
+     一度見せたら、二度と出さない（localStorage）。ホームのボタンを
+     何度押しても、最初の一回だけでいい。
      JS が読めない・動かない環境では最初から出さず、直接ホームへ。 -->
 <div class="intro" id="intro" hidden aria-hidden="true">
   <div class="stars" aria-hidden="true"></div>
@@ -38,11 +39,11 @@
 </div>
 <script>
 /* 一度見せたら、そのタブでは出さない。JS が動かない環境や、
-   sessionStorage が読めない環境（プライベートモードなど）では
+   localStorage が読めない環境（プライベートモードなど）では
    最初から出さず、そのままいつものホームへ。 */
 (function () {
   var KEY = 'ccm-intro-seen';
-  try { if (sessionStorage.getItem(KEY)) return; } catch (e) { return; }
+  try { if (localStorage.getItem(KEY)) return; } catch (e) { return; }
 
   var intro = document.getElementById('intro');
   intro.hidden = false;
@@ -78,7 +79,7 @@
       intro.classList.add('out');
       document.body.classList.remove('intro-lock');
       setTimeout(function () { intro.hidden = true; }, REDUCE ? 0 : 650);
-      try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+      try { localStorage.setItem(KEY, '1'); } catch (e) {}
     }, HOLD);
   });
 })();
@@ -148,9 +149,9 @@
 
 <p class="home-theme" aria-hidden="true">COMPUTER CLUB&nbsp;&nbsp;2026</p>
 
-<script src="assets/js/site.js?v=20260825193251"></script>
-<script src="assets/js/config.js?v=20260825193251"></script>
-<script src="assets/js/data.js?v=20260825193251"></script>
+<script src="assets/js/site.js?v=20260825200213"></script>
+<script src="assets/js/config.js?v=20260825200213"></script>
+<script src="assets/js/data.js?v=20260825200213"></script>
 <script>
 (function () {
   var facts = document.getElementById('home-facts');
