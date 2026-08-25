@@ -208,6 +208,11 @@ body.intro-lock{overflow:hidden}
   opacity:0;transform:translateY(14px);
   animation:introIn .7s cubic-bezier(.22,1,.36,1) .15s both;
 }
+/* hidden 属性のデフォルト（display:none）は、詳しさの低い UA スタイルなので
+   .intro-stage{display:flex} に上書きされてしまう。ここで勝たせておかないと、
+   ようこそ画面とローディング画面が重なって表示され、下のボタンを
+   上のカードが覆ってクリックできなくなる。 */
+.intro-stage[hidden]{display:none}
 @keyframes introIn{ to{ opacity:1; transform:none } }
 .intro-stage.leave{ animation:introOut .35s ease both }
 @keyframes introOut{ to{ opacity:0; transform:translateY(-10px) } }
