@@ -187,3 +187,55 @@ body.no-video .filmbg video { display: none; }
 
 /* display を後から当てているので、hidden を明示的に勝たせる */
 .sv-grid[hidden], .sv .thanks[hidden] { display: none !important; }
+
+
+/* =========================================================
+   導入：ようこそ → ローディング（Tips）→ ホーム
+   ========================================================= */
+.intro{
+  position:fixed;inset:0;z-index:300;background:#000;
+  display:grid;place-items:center;overflow:hidden;
+  opacity:1;transition:opacity .6s ease;
+}
+.intro.out{opacity:0;pointer-events:none}
+.intro .stars{position:absolute;inset:0}
+.intro .stars i{position:absolute;border-radius:50%;background:#dff5ec}
+body.intro-lock{overflow:hidden}
+
+.intro-stage{
+  position:relative;z-index:2;text-align:center;padding:0 24px;
+  display:flex;flex-direction:column;align-items:center;
+  opacity:0;transform:translateY(14px);
+  animation:introIn .7s cubic-bezier(.22,1,.36,1) .15s both;
+}
+@keyframes introIn{ to{ opacity:1; transform:none } }
+.intro-stage.leave{ animation:introOut .35s ease both }
+@keyframes introOut{ to{ opacity:0; transform:translateY(-10px) } }
+
+.intro-eyebrow{margin:0;font:600 12.5px var(--font-num);letter-spacing:.3em;color:var(--acid)}
+.intro-h{margin:18px 0 0;font-weight:900;line-height:1.14;letter-spacing:-.04em;
+  font-size:clamp(30px,5vw,58px)}
+.intro-go{margin-top:38px}
+
+.intro-ring{position:relative;width:56px;height:56px}
+.intro-ring i{position:absolute;inset:0;border-radius:50%;
+  border:2px solid rgba(255,255,255,.14);border-top-color:var(--acid);
+  animation:introSpin 1s linear infinite}
+@keyframes introSpin{ to{ transform:rotate(360deg) } }
+
+.intro-tip{
+  margin:28px 0 0;max-width:520px;min-height:3.4em;
+  font-size:14.5px;line-height:1.9;color:var(--ink-2);
+  transition:opacity .3s ease;
+}
+.intro-tip.swap{opacity:0}
+
+.intro-bar{margin-top:22px;width:220px;height:3px;border-radius:999px;
+  background:rgba(255,255,255,.1);overflow:hidden}
+.intro-bar i{display:block;height:100%;width:0%;background:var(--acid);
+  box-shadow:0 0 10px var(--acid);border-radius:999px;
+  transition:width linear}
+
+@media (prefers-reduced-motion: reduce){
+  .intro,.intro-stage,.intro-ring i,.intro-tip,.intro-bar i{animation-duration:.01ms !important;transition-duration:.01ms !important}
+}

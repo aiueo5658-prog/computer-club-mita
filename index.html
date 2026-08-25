@@ -12,10 +12,96 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260824014043">
-<link rel="stylesheet" href="assets/css/pages.css?v=20260824014043">
+<link rel="stylesheet" href="assets/css/style.css?v=20260825181139">
+<link rel="stylesheet" href="assets/css/pages.css?v=20260825181139">
 </head>
 <body class="page-home">
+
+<!-- ===== 導入：ようこそ → ローディング（Tips）→ ホーム =====
+     一度見せたら、そのタブ内では出さない（sessionStorage）。
+     JS が読めない・動かない環境では最初から出さず、直接ホームへ。 -->
+<div class="intro" id="intro" hidden aria-hidden="true">
+  <div class="stars" aria-hidden="true"></div>
+  <div class="intro-stage intro-welcome" id="intro-welcome">
+    <p class="intro-eyebrow">// 昆布観測島</p>
+    <h1 class="intro-h">コンピュータ部へ<br>ようこそ</h1>
+    <button class="cta big intro-go" id="intro-go" type="button">
+      特設サイトへ
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+  <div class="intro-stage intro-load" id="intro-load" hidden>
+    <div class="intro-ring" aria-hidden="true"><i></i></div>
+    <p class="intro-tip" id="intro-tip"></p>
+    <div class="intro-bar" aria-hidden="true"><i id="intro-bar-fill"></i></div>
+  </div>
+</div>
+<script>
+/* 一度見せたら、そのタブでは出さない。JS が動かない環境や、
+   sessionStorage が読めない環境（プライベートモードなど）では
+   最初から出さず、そのままいつものホームへ。 */
+(function () {
+  var KEY = 'ccm-intro-seen';
+  try { if (sessionStorage.getItem(KEY)) return; } catch (e) { return; }
+
+  var intro = document.getElementById('intro');
+  intro.hidden = false;
+  document.body.classList.add('intro-lock');
+  /* site.js はこの後に読み込まれる。星を撒く関数が届いてから使う。 */
+  (function waitStars() {
+    /* CCMSite が届いた直後は、まだレイアウトが整っていないことがある
+       （高さが 0 で星の数が 0 になる）。少し待ってから撒く。 */
+    if (!window.CCMSite) { setTimeout(waitStars, 30); return; }
+    setTimeout(function () { window.CCMSite.stars(intro.querySelector('.stars'), 4242); }, 60);
+  })();
+
+  var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var TIPS = [
+    '昆布は、コンピュータ部の略語として昔から愛されており、今もなお学校内ではコンピュータ部を昆布と呼びます。',
+    '今年の文化祭テーマは「eclipse」。作品一覧は、太陽が欠けていくように画面の中心へ寄っていきます。',
+    '作品はゲーム・映像・音楽・3Dモデルなど、ジャンルを問いません。',
+    '会場は三田国際科学学園 コンピュータ部の展示教室。10/30・31の2日間、開いています。'
+  ];
+
+  document.getElementById('intro-go').addEventListener('click', function () {
+    var welcome = document.getElementById('intro-welcome');
+    var load = document.getElementById('intro-load');
+    welcome.classList.add('leave');
+    setTimeout(function () {
+      welcome.hidden = true;
+      load.hidden = false;
+    }, REDUCE ? 0 : 320);
+
+    var tipEl = document.getElementById('intro-tip');
+    var bar = document.getElementById('intro-bar-fill');
+    var STEP = REDUCE ? 260 : 1400;
+    var i = 0;
+
+    function showTip() {
+      tipEl.classList.add('swap');
+      setTimeout(function () {
+        tipEl.textContent = TIPS[i % TIPS.length];
+        tipEl.classList.remove('swap');
+        i++;
+      }, REDUCE ? 0 : 160);
+    }
+    showTip();
+    var tipTimer = setInterval(showTip, STEP);
+
+    var total = STEP * TIPS.length;
+    bar.style.transitionDuration = total + 'ms';
+    requestAnimationFrame(function () { bar.style.width = '100%'; });
+
+    setTimeout(function () {
+      clearInterval(tipTimer);
+      intro.classList.add('out');
+      document.body.classList.remove('intro-lock');
+      setTimeout(function () { intro.hidden = true; }, REDUCE ? 0 : 650);
+      try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+    }, total);
+  });
+})();
+</script>
 
 <!-- 背景の映像。読めない環境では下の地の色だけが残る。 -->
 <div class="filmbg" aria-hidden="true">
@@ -80,9 +166,9 @@
 
 <p class="home-theme" aria-hidden="true">ECLIPSE&nbsp;&nbsp;2026</p>
 
-<script src="assets/js/site.js?v=20260824014043"></script>
-<script src="assets/js/config.js?v=20260824014043"></script>
-<script src="assets/js/data.js?v=20260824014043"></script>
+<script src="assets/js/site.js?v=20260825181139"></script>
+<script src="assets/js/config.js?v=20260825181139"></script>
+<script src="assets/js/data.js?v=20260825181139"></script>
 <script>
 (function () {
   var facts = document.getElementById('home-facts');
