@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260825181139">
-<link rel="stylesheet" href="assets/css/pages.css?v=20260825181139">
+<link rel="stylesheet" href="assets/css/style.css?v=20260825181912">
+<link rel="stylesheet" href="assets/css/pages.css?v=20260825181912">
 </head>
 <body class="page-home">
 
@@ -56,12 +56,9 @@
   })();
 
   var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var TIPS = [
-    '昆布は、コンピュータ部の略語として昔から愛されており、今もなお学校内ではコンピュータ部を昆布と呼びます。',
-    '今年の文化祭テーマは「eclipse」。作品一覧は、太陽が欠けていくように画面の中心へ寄っていきます。',
-    '作品はゲーム・映像・音楽・3Dモデルなど、ジャンルを問いません。',
-    '会場は三田国際科学学園 コンピュータ部の展示教室。10/30・31の2日間、開いています。'
-  ];
+  /* 豆知識はこれ一本だけ。読み切れる時間だけ止めてから進む。 */
+  var TIP = '昆布は、コンピュータ部の略語として昔から愛されており、今もなお学校内ではコンピュータ部を昆布と呼びます。';
+  var HOLD = REDUCE ? 200 : 2600;
 
   document.getElementById('intro-go').addEventListener('click', function () {
     var welcome = document.getElementById('intro-welcome');
@@ -72,33 +69,17 @@
       load.hidden = false;
     }, REDUCE ? 0 : 320);
 
-    var tipEl = document.getElementById('intro-tip');
+    document.getElementById('intro-tip').textContent = TIP;
     var bar = document.getElementById('intro-bar-fill');
-    var STEP = REDUCE ? 260 : 1400;
-    var i = 0;
-
-    function showTip() {
-      tipEl.classList.add('swap');
-      setTimeout(function () {
-        tipEl.textContent = TIPS[i % TIPS.length];
-        tipEl.classList.remove('swap');
-        i++;
-      }, REDUCE ? 0 : 160);
-    }
-    showTip();
-    var tipTimer = setInterval(showTip, STEP);
-
-    var total = STEP * TIPS.length;
-    bar.style.transitionDuration = total + 'ms';
+    bar.style.transitionDuration = HOLD + 'ms';
     requestAnimationFrame(function () { bar.style.width = '100%'; });
 
     setTimeout(function () {
-      clearInterval(tipTimer);
       intro.classList.add('out');
       document.body.classList.remove('intro-lock');
       setTimeout(function () { intro.hidden = true; }, REDUCE ? 0 : 650);
       try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
-    }, total);
+    }, HOLD);
   });
 })();
 </script>
@@ -166,9 +147,9 @@
 
 <p class="home-theme" aria-hidden="true">COMPUTER CLUB&nbsp;&nbsp;2026</p>
 
-<script src="assets/js/site.js?v=20260825181139"></script>
-<script src="assets/js/config.js?v=20260825181139"></script>
-<script src="assets/js/data.js?v=20260825181139"></script>
+<script src="assets/js/site.js?v=20260825181912"></script>
+<script src="assets/js/config.js?v=20260825181912"></script>
+<script src="assets/js/data.js?v=20260825181912"></script>
 <script>
 (function () {
   var facts = document.getElementById('home-facts');
