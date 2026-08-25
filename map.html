@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<title>マップ — // 昆布観測島 作品展 2026</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta name="description" content="三田国際科学学園 昆布観測島 作品展 2026。会場の配置と、各企画の紹介。">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=20260825183637">
+<link rel="stylesheet" href="assets/css/map.css?v=2">
+</head>
+<body class="page-map">
+
+<noscript>
+  <div class="noscript">
+    <h1>三田国際科学学園 // 昆布観測島 作品展 2026</h1>
+    <p>このページは JavaScript を使って会場マップを表示します。ブラウザの設定で JavaScript を有効にしてください。</p>
+  </div>
+</noscript>
+
+<!-- ===== 背景 ===== -->
+<div class="bg" aria-hidden="true">
+  <div class="limb"><i class="limb-glow"></i><i class="limb-core"></i></div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<!-- ===== ナビ ===== -->
+<header class="nav">
+  <a class="brand" href="index.html">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none">
+        <path d="M16 2.6 28 9.3v13.4L16 29.4 4 22.7V9.3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M20.6 12.2a5.6 5.6 0 1 0 0 7.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <span class="brand-txt">// 昆布観測島</span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html">ホーム</a>
+    <a href="works.html">作品一覧</a>
+    <a href="qa.html">Q&amp;A</a>
+    <a href="map.html" class="is-on">マップ</a>
+  </nav>
+  <div class="nav-end">
+    <a class="cta" href="survey.html">アンケート</a>
+  </div>
+</header>
+
+<!-- ===== 左：見出し ===== -->
+<div class="hero map-hero">
+  <p class="hero-kick">ECLIPSE 2026</p>
+  <h1 class="hero-title">マップ</h1>
+  <p class="hero-lede">会場をぐるっと回せます。<br>丸をクリックすると、企画の説明が出ます。</p>
+  <button class="ghost hero-back" id="map-reset" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+    視点をリセット
+  </button>
+</div>
+
+<!-- ===== 3D ステージ ===== -->
+<main class="mapstage" id="mapstage" aria-label="会場の3Dマップ"></main>
+
+<!-- ===== ゾーンの説明 ===== -->
+<aside class="zonecard off" id="zonecard">
+  <button class="x" type="button" id="zone-close" aria-label="閉じる">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+  <p class="zonecard-kick" id="zone-kick"></p>
+  <h2 class="zonecard-title" id="zone-title"></h2>
+  <p class="zonecard-desc" id="zone-desc"></p>
+  <div class="zonecard-gear" id="zone-gear"></div>
+  <p class="zonecard-staff" id="zone-staff"></p>
+</aside>
+
+<!-- ===== 順路 ===== -->
+<div class="route" id="route" aria-label="順路"></div>
+
+<script src="assets/js/site.js?v=20260825183637"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module" src="assets/js/map.js?v=2"></script>
+</body>
+</html>
