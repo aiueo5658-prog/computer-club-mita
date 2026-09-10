@@ -197,6 +197,11 @@ body.no-video .filmbg video { display: none; }
   display:grid;place-items:center;overflow:hidden;
   opacity:1;transition:opacity .6s ease;
 }
+/* 二度目以降の訪問では JS が早期 return してこの導入を組み立てない。
+   その状態でも display:grid が hidden 属性に勝ってしまうと、
+   ようこそ画面だけが最前面に居座り、押しても何も起きない板になる。
+   （UA の [hidden]{display:none} はクラス指定より弱いので明示する） */
+.intro[hidden]{display:none}
 .intro.out{opacity:0;pointer-events:none}
 .intro .stars{position:absolute;inset:0}
 .intro .stars i{position:absolute;border-radius:50%;background:#dff5ec}

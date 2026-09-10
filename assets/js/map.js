@@ -122,7 +122,9 @@ const U = {
 const FADE = `
   float depthFade(vec3 w){
     float d = length(cameraPosition - w);
-    return 1.0 - smoothstep(3.5, 15.0, d);
+    /* 近寄ったときに部屋ごと消えてしまわないよう、
+       減衰が効きはじめるのは十分に遠くなってから。 */
+    return mix(0.45, 1.0, 1.0 - smoothstep(11.0, 30.0, d));
   }
 `;
 
@@ -174,8 +176,10 @@ function makeFill(gain) {
         float lines = 0.5 + 0.5 * sin(vWorld.y * 150.0);
         float band = exp(-pow((vWorld.y - uSweep) * 5.0, 2.0));
 
-        float a = (0.009 * (0.12 + f * 2.0) * (0.72 + 0.28 * lines) + band * 0.024) * uGain;
-        vec3 c = uColor * (0.30 + f * 0.9 + band * 0.9);
+        /* 走査帯が来ていないときでも形が読めるよう、素の明るさを確保する。
+           帯はあくまで味付けで、主役にしない。 */
+        float a = (0.030 * (0.35 + f * 1.9) * (0.75 + 0.25 * lines) + band * 0.030) * uGain;
+        vec3 c = uColor * (0.42 + f * 0.9 + band * 0.8);
         gl_FragColor = vec4(c, a * depthFade(vWorld));
       }
     `,
@@ -198,8 +202,8 @@ function makeEdge(gain) {
       void main(){
         float band = exp(-pow((vWorld.y - uSweep) * 4.5, 2.0));
         float lines = 0.85 + 0.15 * sin(vWorld.y * 150.0);
-        float a = (0.075 + band * 0.20) * lines * uGain;
-        gl_FragColor = vec4(uColor * (0.42 + band * 1.2), a * depthFade(vWorld));
+        float a = (0.26 + band * 0.26) * lines * uGain;
+        gl_FragColor = vec4(uColor * (0.62 + band * 1.1), a * depthFade(vWorld));
       }
     `,
   });
@@ -256,7 +260,7 @@ function makeGrid() {
         float r = length((p - c) / vec2(9.0, 10.5));
         float fade = 1.0 - smoothstep(0.28, 1.0, r);
 
-        gl_FragColor = vec4(uColor * 0.75, g * fade * 0.20);
+        gl_FragColor = vec4(uColor * 0.75, g * fade * 0.30);
       }
     `,
   });

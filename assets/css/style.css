@@ -25,6 +25,16 @@
 }
 
 *,*::before,*::after{box-sizing:border-box}
+
+/* hidden 属性は「この要素は無い扱いにしてくれ」という一番強い意思表示。
+   ところがブラウザ標準の [hidden]{display:none} は詳しさが最低なので、
+   .foo{display:flex} のような何気ない一行に静かに負ける。
+   負けると「見えているのに JS が何も繋いでいない板」が最前面に居座り、
+   押しても無反応、という気づきにくい壊れ方をする。
+   実際この不具合は .intro-stage / .thanks / .intro と三度起きているので、
+   個別に潰すのをやめて、ここで一度だけ勝たせておく。 */
+[hidden]{display:none !important}
+
 html,body{height:100%}
 body{
   margin:0; background:#000; color:var(--ink);
