@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260910233021">
-<link rel="stylesheet" href="assets/css/pages.css?v=20260910233021">
+<link rel="stylesheet" href="assets/css/style.css?v=20260910235332">
+<link rel="stylesheet" href="assets/css/pages.css?v=20260910235332">
 </head>
 <body class="page-home">
 
@@ -38,12 +38,29 @@
   </div>
 </div>
 <script>
-/* 一度見せたら、そのタブでは出さない。JS が動かない環境や、
-   localStorage が読めない環境（プライベートモードなど）では
-   最初から出さず、そのままいつものホームへ。 */
+/* 導入を出すのは次の2つのとき。
+     1. はじめての訪問
+     2. ブラウザの再読み込み（F5 など）
+   サイト内のリンクで「ホーム」に戻ってきただけのときは出さない。
+   毎回あの黒画面から始まると、行き来するのが煩わしくなるため。
+   一方、わざわざ再読み込みするのは「もう一度最初から見たい」という
+   意思表示なので、そのときは何度でも見せる。
+
+   JS が動かない環境や localStorage が読めない環境（プライベートモード
+   など）では、最初から出さずそのままいつものホームへ。 */
 (function () {
   var KEY = 'ccm-intro-seen';
-  try { if (localStorage.getItem(KEY)) return; } catch (e) { return; }
+
+  /* 再読み込みかどうかを見分ける。新しい API が無いブラウザでは
+     古い performance.navigation に落とす（1 が再読み込み）。 */
+  var isReload = false;
+  try {
+    var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    isReload = nav ? nav.type === 'reload'
+                   : !!(performance.navigation && performance.navigation.type === 1);
+  } catch (e) {}
+
+  try { if (localStorage.getItem(KEY) && !isReload) return; } catch (e) { return; }
 
   var intro = document.getElementById('intro');
   intro.hidden = false;
@@ -149,9 +166,9 @@
 
 <p class="home-theme" aria-hidden="true">COMPUTER CLUB&nbsp;&nbsp;2026</p>
 
-<script src="assets/js/site.js?v=20260910233021"></script>
-<script src="assets/js/config.js?v=20260910233021"></script>
-<script src="assets/js/data.js?v=20260910233021"></script>
+<script src="assets/js/site.js?v=20260910235332"></script>
+<script src="assets/js/config.js?v=20260910235332"></script>
+<script src="assets/js/data.js?v=20260910235332"></script>
 <script>
 (function () {
   var facts = document.getElementById('home-facts');
