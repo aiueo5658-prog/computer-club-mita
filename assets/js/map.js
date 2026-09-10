@@ -1,500 +1,455 @@
 /* =========================================================
    map.js — 会場マップ（three.js）
 
-   部員が清書した見取り図（展示エリア／体験エリアの色分け図）を
-   もとに、区画の位置・大きさをそのまま床のエリアとして再現している。
-   什器（PC・ホワイトボード・モニターなど）は簡易な3Dモデル。
-   単位はメートルのつもり。
+   教室（教室棟 多目的3）を Blender で実測どおりに組んだものを
+   assets/models/room.glb として読み込み、企画ごとの目印を置く。
+   モデルの座標系は Blender の実寸そのまま（1 単位 = 1m）。
+     three.js の x = 教室の左右（0〜7.5m）
+     three.js の z = 教室の奥行き（0〜-9.0m ※Y-up 書き出しで符号が反転）
    ========================================================= */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const GREEN = 0x00ff9c;   /* 体験・配信 */
-const BLUE  = 0x4fd0e8;   /* 展示 */
+const ROOM = { w: 7.5, d: 9.0, h: 2.6 };
 
-/* 部屋：多目的3。出口＝左上、入口＝左下。 */
-var ROOM = { xMin: -5, xMax: 5, zMin: -6.5, zMax: 6.5, wallH: 2.6 };
-var DOOR_OUT = { x: ROOM.xMin, z: -5.3, w: 1.2 };  /* 出口 */
-var DOOR_IN  = { x: ROOM.xMin, z: 4.4,  w: 1.2 };  /* 入口 */
-
-/* 入口 → 出口の順。rect は床の区画（清書図の箱をそのまま）。
-   furnAt は什器を置く位置（区画の中心からのずれ）。 */
-const ZONES = [
-  { key:'stream', type:'配信', color:GREEN, furn:'stream',
-    rect:{ x1:-4.8, x2:-1.7, z1:3.9, z2:5.4 },
-    name:'配信スペース', sub:'配信・スイッチャー等',
-    desc:'配信や映像のスイッチングをする裏方スペースです。会場の様子を、この場所から送り出します。',
-    gear:['PC', '配信スイッチャー'] },
-  { key:'vtuber', type:'体験', color:GREEN, furn:'pc+wb',
-    rect:{ x1:-1.3, x2:1.7, z1:3.9, z2:5.4 },
-    name:'VTuber体験', sub:'VTuber体験コーナー',
-    desc:'来場者の動きを、その場でアバターがコピーします。モニターに映る自分の分身は、まるで鏡に映っているかのようです。',
-    gear:['ホワイトボード', 'PC', 'モニター'] },
-  { key:'switch', type:'体験', color:GREEN, furn:'switch',
-    rect:{ x1:1.9, x2:4.8, z1:3.9, z2:5.4 },
-    name:'スイッチ体験', sub:'スイッチ体験コーナー',
-    desc:'Nintendo Switch を使った体験コーナーです。',
-    gear:['Nintendo Switch', 'モニター'] },
-  { key:'vocaloid', type:'体験', color:GREEN, furn:'midi',
-    rect:{ x1:-4.4, x2:1.2, z1:0.7, z2:2.5 },
-    name:'VOCALOID体験', sub:'体験コーナー',
-    desc:'合成音声の技術を、実際にさわって確かめられます。MIDIキーボードを弾くと、その場で声に変わります。',
-    gear:['MIDIキーボード', 'PC'] },
-  { key:'wallmon', type:'展示', color:BLUE, furn:'wallmon',
-    rect:{ x1:3.9, x2:4.85, z1:-3.8, z2:2.4 },
-    name:'モニター・展示', sub:'壁面',
-    desc:'右の壁にモニターを並べた展示です。順路のあいだ、ずっと横に見えています。',
-    gear:['モニター（壁掛け）'] },
-  { key:'works1', type:'展示', color:BLUE, furn:'pcrow3',
-    rect:{ x1:-4.35, x2:2.35, z1:-2.4, z2:-1.2 },
-    name:'展示スペース', sub:'ポスター・作品展示など',
-    desc:'部員のポスターや作品を並べる展示スペースです。',
-    gear:['ポスター', 'PC'] },
-  { key:'wallmon2', type:'展示', color:BLUE, furn:'monitorbox',
-    rect:{ x1:2.7, x2:4.5, z1:-6.3, z2:-4.8 },
-    name:'モニター展示', sub:'展示エリア',
-    desc:'映像作品などをモニターで流す展示コーナーです。',
-    gear:['モニター'] },
-  { key:'works2', type:'展示', color:BLUE, furn:'pcrow2',
-    rect:{ x1:-2.2, x2:1.8, z1:-6.3, z2:-4.8 },
-    name:'展示スペース', sub:'ポスター・作品展示など',
-    desc:'出口そばの展示スペースです。ポスターや作品を並べます。',
-    gear:['ポスター', 'PC'] }
-];
-
-var host = document.getElementById('mapstage');
-var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-var scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x020a07, 0.018);
-
-var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-var HOME = new THREE.Vector3(3, 14, 16);
-var TARGET_HOME = new THREE.Vector3(0, 0, -0.3);
-camera.position.copy(HOME);
-
-var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-host.appendChild(renderer.domElement);
-
-var controls = new OrbitControls(camera, renderer.domElement);
-controls.target.copy(TARGET_HOME);
-controls.enablePan = false;
-controls.minDistance = 6;
-controls.maxDistance = 28;
-controls.maxPolarAngle = Math.PI / 2.15;
-controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.autoRotate = !REDUCE;
-controls.autoRotateSpeed = 0.35;
-controls.update();
-
-['pointerdown', 'wheel'].forEach(function (ev) {
-  renderer.domElement.addEventListener(ev, function () { controls.autoRotate = false; }, { once: true, passive: true });
-});
-
-function resize() {
-  var r = host.getBoundingClientRect();
-  camera.aspect = r.width / r.height;
-  camera.updateProjectionMatrix();
-  renderer.setSize(r.width, r.height);
-}
-resize();
-addEventListener('resize', resize);
-
-scene.add(new THREE.AmbientLight(0x9fe8c8, 0.6));
-var key = new THREE.DirectionalLight(0xdfffe9, 0.55);
-key.position.set(6, 10, 8);
-scene.add(key);
-
-/* ---- 床 ---- */
-var floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(ROOM.xMax - ROOM.xMin, ROOM.zMax - ROOM.zMin),
-  new THREE.MeshStandardMaterial({ color: 0x081a13, roughness: 0.95 })
-);
-floor.rotation.x = -Math.PI / 2;
-floor.position.set((ROOM.xMin + ROOM.xMax) / 2, 0, (ROOM.zMin + ROOM.zMax) / 2);
-scene.add(floor);
-
-var grid = new THREE.GridHelper(14, 28, 0x0c3324, 0x0c3324);
-grid.position.y = 0.004;
-scene.add(grid);
-
-/* ---- 区画：清書図の箱をそのまま床の色分けにする ---- */
-function zoneFloor(rect, color) {
-  var w = rect.x2 - rect.x1, d = rect.z2 - rect.z1;
-  var g = new THREE.Group();
-  var fill = new THREE.Mesh(
-    new THREE.PlaneGeometry(w, d),
-    new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.1 })
-  );
-  fill.rotation.x = -Math.PI / 2;
-  fill.position.set(0, 0.008, 0);
-  g.add(fill);
-  var edge = new THREE.LineLoop(
-    new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-w / 2, 0.01, -d / 2), new THREE.Vector3(w / 2, 0.01, -d / 2),
-      new THREE.Vector3(w / 2, 0.01, d / 2), new THREE.Vector3(-w / 2, 0.01, d / 2)
-    ]),
-    new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.7 })
-  );
-  g.add(edge);
-  g.position.set((rect.x1 + rect.x2) / 2, 0, (rect.z1 + rect.z2) / 2);
-  return g;
-}
-
-/* ---- 壁：入口・出口はすき間を空ける ---- */
-function wallPanel(x1, z1, x2, z2, h) {
-  var len = Math.hypot(x2 - x1, z2 - z1);
-  var m = new THREE.Mesh(
-    new THREE.PlaneGeometry(len, h),
-    new THREE.MeshStandardMaterial({ color: 0x0e2b20, roughness: 1, transparent: true, opacity: 0.55, side: THREE.DoubleSide })
-  );
-  m.position.set((x1 + x2) / 2, h / 2, (z1 + z2) / 2);
-  m.rotation.y = -Math.atan2(z2 - z1, x2 - x1);
-  return m;
-}
-function wallEdge(x1, z1, x2, z2, h) {
-  var pts = [
-    new THREE.Vector3(x1, 0, z1), new THREE.Vector3(x1, h, z1),
-    new THREE.Vector3(x2, h, z2), new THREE.Vector3(x2, 0, z2)
-  ];
-  return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
-    new THREE.LineBasicMaterial({ color: GREEN, transparent: true, opacity: 0.4 }));
-}
-var H = ROOM.wallH;
-scene.add(wallPanel(ROOM.xMin, ROOM.zMin, ROOM.xMin, DOOR_OUT.z - DOOR_OUT.w / 2, H));
-scene.add(wallPanel(ROOM.xMin, DOOR_OUT.z + DOOR_OUT.w / 2, ROOM.xMin, DOOR_IN.z - DOOR_IN.w / 2, H));
-scene.add(wallPanel(ROOM.xMin, DOOR_IN.z + DOOR_IN.w / 2, ROOM.xMin, ROOM.zMax, H));
-scene.add(wallPanel(ROOM.xMin, ROOM.zMax, ROOM.xMax, ROOM.zMax, H));
-scene.add(wallPanel(ROOM.xMax, ROOM.zMax, ROOM.xMax, ROOM.zMin, H));
-scene.add(wallPanel(ROOM.xMin, ROOM.zMin, ROOM.xMax, ROOM.zMin, H));
-[[ROOM.xMin, ROOM.zMin, ROOM.xMax, ROOM.zMin], [ROOM.xMin, ROOM.zMax, ROOM.xMax, ROOM.zMax],
- [ROOM.xMax, ROOM.zMax, ROOM.xMax, ROOM.zMin]].forEach(function (s) {
-  scene.add(wallEdge(s[0], s[1], s[2], s[3], H));
-});
-
-function makeFlatLabel(text, x, z, size) {
-  var c = document.createElement('canvas'); c.width = 256; c.height = 96;
-  var g = c.getContext('2d');
-  g.font = '700 42px "Zen Kaku Gothic New", sans-serif';
-  g.fillStyle = 'rgba(210,255,230,.75)';
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(text, 128, 48);
-  var tex = new THREE.CanvasTexture(c);
-  var geo = new THREE.PlaneGeometry(size || 1.6, (size || 1.6) * 0.375);
-  var m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
-  m.rotation.x = -Math.PI / 2;
-  m.position.set(x, 0.02, z);
-  return m;
-}
-scene.add(makeFlatLabel('出口', DOOR_OUT.x + 1.15, DOOR_OUT.z));
-scene.add(makeFlatLabel('入口', DOOR_IN.x + 1.15, DOOR_IN.z));
-
-/* ---- ホワイトボード：下の壁に据え付け ---- */
-function wallWhiteboard(x, z, w) {
-  var g = new THREE.Group();
-  var board = new THREE.Mesh(new THREE.BoxGeometry(w, 1.0, 0.05),
-    new THREE.MeshStandardMaterial({ color: 0xeef4ee, roughness: 0.5 }));
-  board.position.set(0, 1.3, 0);
-  g.add(board);
-  g.add(makeFlatLabel('WB', 0, 0.55, 0.8));
-  g.position.set(x, 0, z);
-  return g;
-}
-scene.add(wallWhiteboard(0, ROOM.zMax - 0.05, 3.2));
-
-/* ---- 天井の照明・機材（丸印）。清書図の○を、そのまま点在させる。 ---- */
-function ceilLight(x, z) {
-  var m = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 10),
-    new THREE.MeshBasicMaterial({ color: 0xdfffe9, transparent: true, opacity: 0.85 }));
-  m.position.set(x, 2.35, z);
-  return m;
-}
-[[-3.4, 5.6], [0.2, 5.6], [3.4, 5.6], [-3.7, -1.0], [-2.4, -1.0], [-1.1, -1.0], [0.2, -1.0], [1.5, -1.0],
- [-3.2, 1.1], [-1.9, 1.1], [-0.6, 1.1], [0.7, 1.1], [-1.4, -4.8], [-0.2, -4.8], [1.0, -4.8], [3.4, -4.8]]
- .forEach(function (p) { scene.add(ceilLight(p[0], p[1])); });
+/* 平面図(Blender)の座標を three.js の座標へ。奥行きは符号が反転する。 */
+const P = (x, y, z = 0) => new THREE.Vector3(x, z, -y);
 
 /* =========================================================
-   什器
+   企画の一覧（順路の順に並べる）
    ========================================================= */
-function screenTexture(label) {
-  var c = document.createElement('canvas'); c.width = 128; c.height = 96;
-  var g = c.getContext('2d');
-  g.fillStyle = '#04140e'; g.fillRect(0, 0, 128, 96);
-  g.strokeStyle = 'rgba(0,255,156,.9)'; g.lineWidth = 3;
-  g.strokeRect(10, 10, 108, 76);
-  g.fillStyle = 'rgba(0,255,156,.8)'; g.font = '700 15px sans-serif';
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(label || '', 64, 48);
-  return new THREE.CanvasTexture(c);
-}
-function pcDesk(label) {
-  var g = new THREE.Group();
-  var desk = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.72, 0.62),
-    new THREE.MeshStandardMaterial({ color: 0x1c231f, roughness: 0.8 }));
-  desk.position.y = 0.36;
-  g.add(desk);
-  var monitor = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.34, 0.03),
-    new THREE.MeshBasicMaterial({ map: screenTexture(label || 'PC') }));
-  monitor.position.set(0, 0.9, -0.14);
-  g.add(monitor);
-  var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.18, 6),
-    new THREE.MeshStandardMaterial({ color: 0x222 }));
-  neck.position.set(0, 0.72, -0.14);
-  g.add(neck);
-  var kb = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.02, 0.13),
-    new THREE.MeshStandardMaterial({ color: 0x161a18 }));
-  kb.position.set(0, 0.735, 0.12);
-  g.add(kb);
-  return g;
-}
-function whiteboardStand() {
-  var g = new THREE.Group();
-  var board = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.9, 0.05),
-    new THREE.MeshStandardMaterial({ color: 0xeef4ee, roughness: 0.5 }));
-  board.position.y = 1.2;
-  g.add(board);
-  [-0.6, 0.6].forEach(function (dx) {
-    var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 6),
-      new THREE.MeshStandardMaterial({ color: 0x2a2f2c }));
-    leg.position.set(dx, 0.6, 0);
-    g.add(leg);
-  });
-  return g;
-}
-function tvOnStand(label) {
-  var g = new THREE.Group();
-  var stand = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.55, 0.4),
-    new THREE.MeshStandardMaterial({ color: 0x1c231f, roughness: 0.8 }));
-  stand.position.y = 0.28;
-  g.add(stand);
-  var tv = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.55, 0.04),
-    new THREE.MeshBasicMaterial({ map: screenTexture(label || '') }));
-  tv.position.set(0, 0.85, -0.16);
-  g.add(tv);
-  return g;
-}
-function midiDesk() {
-  var g = new THREE.Group();
-  g.add(pcDesk('VOCALOID'));
-  var c = document.createElement('canvas'); c.width = 256; c.height = 32;
-  var ctx = c.getContext('2d');
-  ctx.fillStyle = '#111'; ctx.fillRect(0, 0, 256, 32);
-  ctx.fillStyle = '#eee';
-  for (var i = 0; i < 24; i++) ctx.fillRect(i * (256 / 24) + 1, 0, 256 / 24 - 2, 32);
-  var midi = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.05, 0.16),
-    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c) }));
-  midi.position.set(0, 0.75, 0.24);
-  g.add(midi);
-  return g;
-}
-function switchSetup() {
-  var g = new THREE.Group();
-  var t = tvOnStand('Switch'); g.add(t);
-  [[-0.35, 0.9], [0.35, 0.9]].forEach(function (p) {
-    var pad = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.2),
-      new THREE.MeshStandardMaterial({ color: 0x2b2b2b }));
-    pad.position.set(p[0], 0.32, p[1]);
-    g.add(pad);
-  });
-  return g;
-}
-function streamDesk() {
-  var g = new THREE.Group();
-  g.add(pcDesk('LIVE'));
-  var mixer = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.22),
-    new THREE.MeshStandardMaterial({ color: 0x14201a }));
-  mixer.position.set(0.42, 0.75, 0.1);
-  g.add(mixer);
-  return g;
-}
-function pcRow(n) {
-  var g = new THREE.Group();
-  var gap = 1.5;
-  for (var i = 0; i < n; i++) {
-    var d = pcDesk('作品展');
-    d.position.x = (i - (n - 1) / 2) * gap;
-    g.add(d);
-  }
-  return g;
-}
-function monitorBox() {
-  var g = new THREE.Group();
-  g.add(tvOnStand('作品映像'));
-  return g;
-}
-function wallMonitors() {
-  var g = new THREE.Group();
-  for (var i = 0; i < 3; i++) {
-    var m = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.32, 0.04),
-      new THREE.MeshBasicMaterial({ map: screenTexture('') }));
-    m.rotation.y = Math.PI / 2;
-    m.position.set(0.2, 1.1, -1.6 + i * 1.6);
-    g.add(m);
-  }
-  return g;
-}
+const ZONES = [
+  {
+    key: 'vtuber', name: 'VTuber体験', kick: 'ZONE 01', color: '#d9a2e8',
+    at: [3.51, 0.88], look: [3.51, 2.6], height: 1.15,
+    desc: 'カメラの前に立つと、画面の中のキャラクターが同じように動きます。表情も声も、そのまま乗ります。',
+    gear: ['iPhone', 'MacBook Air', 'VTubeStudio', '配信用マイク'],
+  },
+  {
+    key: 'studio', name: 'スタジオ体験', kick: 'ZONE 02', color: '#6ee7a8',
+    at: [6.87, 2.09], look: [5.2, 2.6], height: 1.35,
+    desc: 'グリーンバックの前に立って、背景を自由に差し替えます。合成した映像はその場でモニターに出ます。',
+    gear: ['グリーンバック', '照明', 'ビデオカメラ', '合成用PC'],
+  },
+  {
+    key: 'pc-mid', name: 'PC展示', kick: 'ZONE 03', color: '#7ee081',
+    at: [1.86, 3.62], look: [3.4, 3.62], height: 1.2,
+    desc: '部員が作ったゲームやアプリを、実際にその場で触って遊べます。ソースコードも見せます。',
+    gear: ['MacBook Air ×8', 'ゲームパッド', '作品の解説パネル'],
+  },
+  {
+    key: 'vocaloid', name: 'VOCALOID体験', kick: 'ZONE 04', color: '#5ad2e8',
+    at: [1.86, 5.42], look: [3.4, 5.42], height: 1.2,
+    desc: '打ち込んだメロディーに歌詞をのせて、その場で歌わせます。作った曲は持ち帰れます。',
+    gear: ['MIDIキーボード', 'モニター', 'ヘッドホン', 'MacBook Air'],
+  },
+  {
+    key: 'model3d', name: '3Dモデル展示', kick: 'ZONE 05', color: '#f0b25e',
+    at: [5.85, 7.79], look: [5.85, 6.3], height: 1.2,
+    desc: 'Blender で作ったモデルと、3Dプリンターで出力した実物を並べています。手に取って見られます。',
+    gear: ['3Dプリント出力物', '展示台', 'モデル閲覧用モニター'],
+  },
+  {
+    key: 'pc-top', name: 'PC展示', kick: 'ZONE 06', color: '#7ee081',
+    at: [2.55, 7.79], look: [2.55, 6.3], height: 1.2,
+    desc: '映像作品と、部員が半年かけて作ったゲームの展示です。こちらも自由に遊べます。',
+    gear: ['MacBook Air ×6', '映像作品', '作品の解説パネル'],
+  },
+];
 
-var FURN = {
-  'pc+wb': function () { var g = new THREE.Group(); var d = pcDesk('VTuber'); d.position.z = 0.15; g.add(d);
-    var wb = whiteboardStand(); wb.position.set(0, 0, -0.75); g.add(wb); return g; },
-  'switch': switchSetup,
-  'midi': midiDesk,
-  'stream': streamDesk,
-  'wallmon': wallMonitors,
-  'pcrow3': function () { return pcRow(3); },
-  'pcrow2': function () { return pcRow(2); },
-  'monitorbox': monitorBox
+/* 入口・出口（順路の起点と終点。カードは出さず、視点だけ動かす） */
+const DOORS = {
+  in: { name: '入口', at: [0.0, 1.74] },
+  out: { name: '出口', at: [0.0, 7.85] },
 };
 
-/* ---- クリックの標的（区画の中心に浮かべる） ---- */
-var markers = [];
-var raycaster = new THREE.Raycaster();
-var pointer = new THREE.Vector2();
+/* =========================================================
+   下ごしらえ
+   ========================================================= */
+const stage = document.getElementById('mapstage');
+const card = document.getElementById('zonecard');
+const routeBar = document.getElementById('route');
 
-ZONES.forEach(function (zone, i) {
-  var cx = (zone.rect.x1 + zone.rect.x2) / 2;
-  var cz = (zone.rect.z1 + zone.rect.z2) / 2;
+const scene = new THREE.Scene();
+scene.background = null;
 
-  scene.add(zoneFloor(zone.rect, zone.color));
+const camera = new THREE.PerspectiveCamera(46, 1, 0.05, 200);
+const HOME = { pos: P(3.75, -4.6, 5.0), target: P(3.75, 4.6, 0.8) };
+camera.position.copy(HOME.pos);
 
-  var group = new THREE.Group();
-  group.position.set(cx, 0, cz);
-  var build = FURN[zone.furn];
-  if (build) group.add(build());
-  scene.add(group);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+stage.appendChild(renderer.domElement);
 
-  var mark = new THREE.Group();
-  mark.position.set(cx, 0, cz + (zone.rect.z2 - zone.rect.z1) / 2 - 0.3);
-  var ring = new THREE.Mesh(new THREE.RingGeometry(0.32, 0.4, 32),
-    new THREE.MeshBasicMaterial({ color: zone.color, transparent: true, opacity: 0.6, side: THREE.DoubleSide }));
-  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02;
-  mark.add(ring);
-  var head = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 0),
-    new THREE.MeshBasicMaterial({ color: zone.color }));
-  head.position.y = 1.7;
-  head.userData.zoneIndex = i;
-  mark.add(head);
-  var beam = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1.7, 6),
-    new THREE.MeshBasicMaterial({ color: zone.color, transparent: true, opacity: 0.35 }));
-  beam.position.y = 0.85;
-  mark.add(beam);
-  var numTag = makeFlatLabel(String(i + 1), 0, 0, 0.55);
-  numTag.position.y = 0.021;
-  mark.add(numTag);
-  scene.add(mark);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.075;
+controls.target.copy(HOME.target);
+controls.minDistance = 1.6;
+controls.maxDistance = 22;
+controls.maxPolarAngle = Math.PI * 0.495;   // 床下へ潜らせない
+controls.enablePan = true;
+controls.panSpeed = 0.6;
 
-  markers.push({ zone: zone, head: head, cx: cx, cz: cz });
+/* ---- 照明：教室の蛍光灯に寄せる ----
+   three.js は r155 以降、光の強さが物理単位（カンデラ）なので
+   点光源はそれなりに大きな値を入れないと部屋が暗いままになる。 */
+scene.add(new THREE.AmbientLight(0xdfe9f5, 1.1));
+scene.add(new THREE.HemisphereLight(0xeaf2ff, 0x4a5058, 2.2));
+
+const key = new THREE.DirectionalLight(0xfff6e8, 2.0);
+key.position.copy(P(5.2, 2.4, 5.2));
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(0xcfe0ff, 1.1);
+fill.position.copy(P(1.0, 7.5, 4.0));
+scene.add(fill);
+
+/* 天井の照明3列を、点光源で置き換える */
+[1.45, 3.75, 6.05].forEach((x) => {
+  [1.9, 4.6, 7.3].forEach((y) => {
+    const l = new THREE.PointLight(0xfff4e2, 26, 11, 2);
+    l.position.copy(P(x, y, 2.42));
+    scene.add(l);
+  });
 });
 
-/* ---- 順路：入口から出口まで、区画をつなぐ曲線 ---- */
-var routeThrough = [
-  new THREE.Vector3(DOOR_IN.x + 0.6, 0.05, DOOR_IN.z)
-].concat(markers.map(function (m) { return new THREE.Vector3(m.cx, 0.05, m.cz); }))
- .concat([new THREE.Vector3(DOOR_OUT.x + 0.6, 0.05, DOOR_OUT.z)]);
-var curve = new THREE.CatmullRomCurve3(routeThrough, false, 'catmullrom', 0.4);
-var routeGeo = new THREE.TubeGeometry(curve, 200, 0.025, 6, false);
-var routeMesh = new THREE.Mesh(routeGeo, new THREE.MeshBasicMaterial({ color: GREEN, transparent: true, opacity: 0.55 }));
-scene.add(routeMesh);
+/* =========================================================
+   目印（クリックできる丸）
+   ========================================================= */
+const markers = [];
+const markerGroup = new THREE.Group();
+scene.add(markerGroup);
 
-/* ---- クリックで選ぶ ---- */
-function pickAt(clientX, clientY) {
-  var r = renderer.domElement.getBoundingClientRect();
-  pointer.x = ((clientX - r.left) / r.width) * 2 - 1;
-  pointer.y = -((clientY - r.top) / r.height) * 2 + 1;
-  raycaster.setFromCamera(pointer, camera);
-  var heads = markers.map(function (m) { return m.head; });
-  var hit = raycaster.intersectObjects(heads, false)[0];
-  if (hit) openZone(hit.object.userData.zoneIndex, true);
-}
-var downAt = null;
-renderer.domElement.addEventListener('pointerdown', function (e) { downAt = [e.clientX, e.clientY]; });
-renderer.domElement.addEventListener('pointerup', function (e) {
-  if (!downAt) return;
-  var moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]);
-  if (moved < 6) pickAt(e.clientX, e.clientY);
-  downAt = null;
-});
+function makeMarker(zone, i) {
+  const col = new THREE.Color(zone.color);
+  const g = new THREE.Group();
+  g.position.copy(P(zone.at[0], zone.at[1], zone.height));
 
-/* ---- カメラをゾーンへ寄せる ---- */
-var tween = null;
-function flyTo(pos, look, ms) {
-  if (REDUCE) { camera.position.copy(pos); controls.target.copy(look); controls.update(); return; }
-  tween = { t0: null, dur: ms || 700, p0: camera.position.clone(), p1: pos.clone(),
-            l0: controls.target.clone(), l1: look.clone() };
-}
-function tickTween(now) {
-  if (!tween) return;
-  if (tween.t0 === null) tween.t0 = now;
-  var k = Math.min(1, (now - tween.t0) / tween.dur);
-  var e = 1 - Math.pow(1 - k, 3);
-  camera.position.lerpVectors(tween.p0, tween.p1, e);
-  controls.target.lerpVectors(tween.l0, tween.l1, e);
-  if (k >= 1) tween = null;
+  const ball = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(0.17, 2),
+    new THREE.MeshStandardMaterial({
+      color: col, emissive: col, emissiveIntensity: 0.85,
+      roughness: 0.35, metalness: 0.1,
+    })
+  );
+  g.add(ball);
+
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.30, 0.014, 8, 40),
+    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.85 })
+  );
+  ring.rotation.x = Math.PI / 2;
+  g.add(ring);
+
+  /* 床まで伸びる細い光の柱 */
+  const beam = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.022, 0.022, zone.height, 6, 1, true),
+    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.32 })
+  );
+  beam.position.y = -zone.height / 2;
+  g.add(beam);
+
+  /* 当たり判定は大きめの見えない球で取る（小さい玉は押しにくい） */
+  const hit = new THREE.Mesh(
+    new THREE.SphereGeometry(0.42, 12, 10),
+    new THREE.MeshBasicMaterial({ visible: false })
+  );
+  hit.userData.index = i;
+  g.add(hit);
+
+  markerGroup.add(g);
+  markers.push({ group: g, ball, ring, hit, zone, index: i });
+  return g;
 }
 
-/* ---- ゾーンの説明カード ---- */
-var current = -1;
-var card = document.getElementById('zonecard');
-function openZone(i, fly) {
+ZONES.forEach(makeMarker);
+
+/* =========================================================
+   壁の出し入れ
+
+   壁は 8cm の厚みがある板なので、裏面だけ描いても透けない。
+   そこで「カメラと部屋の間に来た壁」をまるごと隠す。
+   壁に付いている物（ホワイトボード・ロッカー・窓）も一緒に隠さないと、
+   壁だけ消えて板が宙に浮いて見えてしまう。
+   ========================================================= */
+const walls = { near: [], far: [], left: [], right: [] };
+
+function wallSideOf(name) {
+  if (name === '壁_手前' || name.startsWith('WB_') || name.startsWith('SPK_')) return 'near';
+  if (name === '壁_奥' || name.startsWith('LOCKER') || name.startsWith('BIN_')) return 'far';
+  if (name.startsWith('壁_左') || name.startsWith('枠_') ||
+      name.startsWith('PART_') || name.startsWith('POSTER_左')) return 'left';
+  if (name === '壁_右' || name.startsWith('WIN_') ||
+      name.startsWith('CURTAIN') || name.startsWith('POSTER_右')) return 'right';
+  return null;
+}
+
+const CENTER = P(ROOM.w / 2, ROOM.d / 2, 0);
+
+function updateWalls() {
+  const c = camera.position;
+  const show = {
+    near: c.z < CENTER.z + 0.2,     /* 手前側から見ているときは手前の壁を消す */
+    far: c.z > CENTER.z - 0.2,
+    left: c.x > CENTER.x - 0.2,
+    right: c.x < CENTER.x + 0.2,
+  };
+  for (const side of ['near', 'far', 'left', 'right']) {
+    for (const o of walls[side]) o.visible = show[side];
+  }
+}
+
+/* =========================================================
+   モデルの読み込み
+   ========================================================= */
+let roomReady = false;
+const loader = new GLTFLoader();
+loader.load(
+  'assets/models/room.glb',
+  (gltf) => {
+    const room = gltf.scene;
+
+    /* 上から覗き込む地図なので、天井の板そのものは消す。
+       照明器具や吹き出し口は残すので、天井の様子は分かる。 */
+    const done = new Set();
+
+    room.traverse((o) => {
+      if (o.isMesh) {
+        o.castShadow = false;
+        o.receiveShadow = false;
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach((m) => {
+          if (!m || done.has(m.uuid)) return;
+          done.add(m.uuid);
+          if (m.map) m.map.anisotropy = 4;
+          if (m.emissive && m.emissiveIntensity > 0) m.emissiveIntensity = 1.0;
+        });
+      }
+
+      /* 材質が複数あるものは Mesh ではなく Group で入ってくるので、
+         Mesh に限らず「名前」で判定する。 */
+      if (o.name === '天井') o.visible = false;
+      const side = wallSideOf(o.name);
+      if (side) walls[side].push(o);
+    });
+
+    scene.add(room);
+    roomReady = true;
+    updateWalls();
+    stage.classList.add('is-ready');
+
+    /* 実際に読み込めた範囲を測って、目印がずれていないか確かめられるようにする */
+    const box = new THREE.Box3().setFromObject(room);
+    console.info('[map] room bounds',
+      box.min.toArray().map((v) => v.toFixed(2)).join(', '), '→',
+      box.max.toArray().map((v) => v.toFixed(2)).join(', '));
+  },
+  undefined,
+  (err) => {
+    console.error('room.glb を読み込めませんでした', err);
+    stage.classList.add('is-error');
+  }
+);
+
+/* =========================================================
+   カメラの移動（自前の簡単なイージング）
+   ========================================================= */
+let fly = null;
+function flyTo(pos, target, ms = 900) {
+  fly = { t: 0, ms, p0: camera.position.clone(), p1: pos.clone(), t0: controls.target.clone(), t1: target.clone() };
+}
+const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+
+/* =========================================================
+   説明カード
+   ========================================================= */
+let current = -1;
+
+function openZone(i, move = true) {
+  const z = ZONES[i];
+  if (!z) return;
   current = i;
-  var m = markers[i], z = m.zone;
-  document.getElementById('zone-kick').textContent = z.type + ' ・ ' + z.sub;
-  document.getElementById('zone-kick').style.color = '#' + z.color.toString(16).padStart(6, '0');
+
+  document.getElementById('zone-kick').textContent = z.kick;
   document.getElementById('zone-title').textContent = z.name;
   document.getElementById('zone-desc').textContent = z.desc;
-  var gear = document.getElementById('zone-gear');
-  gear.innerHTML = '';
-  z.gear.forEach(function (g) { var s = document.createElement('span'); s.textContent = g; gear.appendChild(s); });
+  document.getElementById('zone-gear').innerHTML =
+    z.gear.map((g) => `<span>${g}</span>`).join('');
   document.getElementById('zone-staff').textContent = '担当は決まり次第、ここに載せます。';
   card.classList.remove('off');
-  document.querySelectorAll('.route-chip').forEach(function (c, idx) { c.classList.toggle('on', idx === i); });
+
+  /* 入口・出口も .route-chip なので、企画のチップだけを選び直す */
+  routeBar.querySelectorAll('.route-chip[data-zone]').forEach((c) => {
+    c.classList.toggle('on', Number(c.dataset.zone) === i);
+  });
+
+  markers.forEach((m) => {
+    const on = m.index === i;
+    m.ball.material.emissiveIntensity = on ? 1.5 : 0.85;
+    m.ring.material.opacity = on ? 1.0 : 0.85;
+  });
+
+  if (move) {
+    /* 目印を斜め上から見下ろす位置へ。
+       室内に潜り込むと壁が消えて白い空洞になるので、
+       水平方向に十分離し、高さは天井より上に置く。 */
+    const to = P(z.at[0], z.at[1], 0.95);
+    const dir = P(z.look[0], z.look[1], 0).sub(P(z.at[0], z.at[1], 0));
+    dir.y = 0;
+    if (dir.lengthSq() < 1e-4) dir.set(0, 0, 1);
+    dir.normalize().multiplyScalar(5.4);
+    const eye = to.clone().add(dir);
+    eye.y = 4.0;
+    flyTo(eye, to);
+  }
+}
+
+function closeZone() {
+  current = -1;
+  card.classList.add('off');
+  routeBar.querySelectorAll('.route-chip[data-zone]').forEach((c) => c.classList.remove('on'));
+  markers.forEach((m) => {
+    m.ball.material.emissiveIntensity = 0.85;
+    m.ring.material.opacity = 0.85;
+  });
+}
+
+document.getElementById('zone-close').addEventListener('click', closeZone);
+document.getElementById('map-reset').addEventListener('click', () => {
+  closeZone();
+  flyTo(HOME.pos, HOME.target);
+});
+
+/* =========================================================
+   順路のチップ
+   ========================================================= */
+function buildRoute() {
+  const frag = document.createDocumentFragment();
+
+  const doorChip = (d) => {
+    const s = document.createElement('span');
+    s.className = 'route-chip route-door';
+    s.textContent = d.name;
+    return s;
+  };
+
+  frag.appendChild(doorChip(DOORS.in));
+  ZONES.forEach((z, i) => {
+    const arrow = document.createElement('span');
+    arrow.className = 'route-arrow';
+    arrow.textContent = '›';
+    frag.appendChild(arrow);
+
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'route-chip';
+    b.dataset.zone = String(i);
+    b.style.setProperty('--c', z.color);
+    b.innerHTML = `<b>${i + 1}</b>${z.name}`;
+    b.addEventListener('click', () => openZone(i));
+    frag.appendChild(b);
+  });
+  const arrow = document.createElement('span');
+  arrow.className = 'route-arrow';
+  arrow.textContent = '›';
+  frag.appendChild(arrow);
+  frag.appendChild(doorChip(DOORS.out));
+
+  routeBar.appendChild(frag);
+}
+buildRoute();
+
+/* =========================================================
+   クリックで目印を選ぶ
+   ========================================================= */
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+let downAt = null;
+
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  downAt = { x: e.clientX, y: e.clientY };
+});
+
+renderer.domElement.addEventListener('pointerup', (e) => {
+  /* ドラッグで視点を回した時は選択しない */
+  if (!downAt) return;
+  const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
+  downAt = null;
+  if (moved > 6) return;
+
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+  ndc.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+  ray.setFromCamera(ndc, camera);
+
+  const hits = ray.intersectObjects(markers.map((m) => m.hit), false);
+  if (hits.length) openZone(hits[0].object.userData.index);
+});
+
+/* 目印の上ではカーソルを指の形に */
+renderer.domElement.addEventListener('pointermove', (e) => {
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+  ndc.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(markers.map((m) => m.hit), false).length > 0;
+  renderer.domElement.style.cursor = hit ? 'pointer' : 'grab';
+});
+
+/* キーボードでも閉じられるように */
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeZone();
+});
+
+/* =========================================================
+   画面サイズ
+   ========================================================= */
+function resize() {
+  const w = stage.clientWidth || innerWidth;
+  const h = stage.clientHeight || innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+}
+addEventListener('resize', resize);
+resize();
+
+/* =========================================================
+   毎フレーム
+   ========================================================= */
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clock = new THREE.Clock();
+
+function tick() {
+  requestAnimationFrame(tick);
+  const dt = clock.getDelta();
+  const t = clock.elapsedTime;
 
   if (fly) {
-    var look = new THREE.Vector3(m.cx, 0.8, m.cz);
-    var w = z.rect.x2 - z.rect.x1, d = z.rect.z2 - z.rect.z1;
-    var reach = Math.max(w, d) * 0.9 + 2.5;
-    var pos = new THREE.Vector3(m.cx + reach * 0.4, reach * 0.75, m.cz + reach * 0.75);
-    flyTo(pos, look, 750);
+    fly.t += dt * 1000;
+    const k = Math.min(1, fly.t / fly.ms);
+    const e = easeInOut(k);
+    camera.position.lerpVectors(fly.p0, fly.p1, e);
+    controls.target.lerpVectors(fly.t0, fly.t1, e);
+    if (k >= 1) fly = null;
   }
-}
-document.getElementById('zone-close').addEventListener('click', function () {
-  card.classList.add('off'); current = -1;
-  document.querySelectorAll('.route-chip').forEach(function (c) { c.classList.remove('on'); });
-});
-document.getElementById('map-reset').addEventListener('click', function () {
-  card.classList.add('off'); current = -1;
-  document.querySelectorAll('.route-chip').forEach(function (c) { c.classList.remove('on'); });
-  flyTo(HOME, TARGET_HOME, 800);
-});
 
-/* ---- 下：順路の一覧 ---- */
-var routeHost = document.getElementById('route');
-ZONES.forEach(function (z, i) {
-  if (i > 0) {
-    var ar = document.createElement('span'); ar.className = 'route-arrow'; ar.textContent = '→';
-    routeHost.appendChild(ar);
+  if (!REDUCE) {
+    markers.forEach((m, i) => {
+      m.group.children[0].rotation.y += dt * 0.55;
+      m.ring.rotation.z = t * 0.5 + i;
+      const s = 1 + Math.sin(t * 1.9 + i * 1.3) * 0.06;
+      m.ring.scale.setScalar(s);
+    });
   }
-  var b = document.createElement('button');
-  b.type = 'button'; b.className = 'route-chip';
-  b.style.setProperty('--c', '#' + z.color.toString(16).padStart(6, '0'));
-  b.innerHTML = '<b>' + (i + 1) + '</b><span></span>';
-  b.querySelector('span').textContent = z.name;
-  b.addEventListener('click', function () { openZone(i, true); });
-  routeHost.appendChild(b);
-});
 
-/* ---- 描画ループ ---- */
-function tick(now) {
-  requestAnimationFrame(tick);
-  tickTween(now);
-  markers.forEach(function (m, i) {
-    var pulse = current === i ? 1.4 : 1;
-    var s = pulse * (1 + Math.sin(now / 500 + i) * 0.06);
-    m.head.scale.setScalar(s);
-  });
   controls.update();
+  if (roomReady) updateWalls();
   renderer.render(scene, camera);
 }
-requestAnimationFrame(tick);
+tick();
