@@ -264,7 +264,12 @@
       var put = 0;
       shells.forEach(function (sh, i) {
         for (var j = 0; j < sh.count; j++) {
-          var n = c.works[put++].node;
+          /* planShells が使えないときの控え（geo.shells）は、この
+             ジャンルの作品数に合わせて作られたものとは限らない。
+             用意された席のほうが多いことがあるので、必ず数を確かめる。 */
+          var wk = c.works[put++];
+          if (!wk) break;
+          var n = wk.node;
           n.r = sh.r;
           n.s0 = j / sh.count + sh.ph;
           n.period = 150 + i * 46;          /* 外の輪ほどゆっくり回る */
@@ -791,6 +796,92 @@
     saveLikes(set);
   }
 
+  /* =====================================================
+     ハートの数と、ひとこと（コメント）
+
+     裏側（config.js の apiUrl）が未設定なら、数は出さず
+     コメント欄も丸ごと隠す。押した記録はこれまで通り
+     この端末のなかに残るので、見た目は今までと変わらない。
+     ===================================================== */
+  var Cloud = window.CCMCloud || null;
+  var heartCounts = {};
+
+  function loadHeartCounts() {
+    if (!Cloud || !Cloud.enabled) return;
+    Cloud.hearts().then(function (map) {
+      heartCounts = map || {};
+      if (playerWork) showHeart(playerWork.slug);
+    });
+  }
+
+  function showHeart(slug) {
+    var n = $('#p-like-n');
+    if (!n) return;
+    if (!Cloud || !Cloud.enabled) { n.textContent = ''; return; }
+    var c = heartCounts[slug];
+    n.textContent = (typeof c === 'number' && c > 0) ? String(c) : '';
+  }
+
+  function whenText(iso) {
+    if (!iso) return '';
+    var t = new Date(iso);
+    if (isNaN(t)) return '';
+    var diff = (Date.now() - t.getTime()) / 1000;
+    if (diff < 60) return 'たった今';
+    if (diff < 3600) return Math.floor(diff / 60) + '分前';
+    if (diff < 86400) return Math.floor(diff / 3600) + '時間前';
+    return (t.getMonth() + 1) + '/' + t.getDate();
+  }
+
+  function renderComments(items) {
+    var list = $('#cmt-list'), cnt = $('#cmt-count');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!items) {
+      cnt.textContent = '';
+      var p = el('li', 'cmt-empty');
+      p.textContent = 'いま読み込めませんでした。';
+      list.appendChild(p);
+      return;
+    }
+    cnt.textContent = items.length ? items.length + '件' : '';
+    if (!items.length) {
+      var e0 = el('li', 'cmt-empty');
+      e0.textContent = 'まだありません。最初のひとことをどうぞ。';
+      list.appendChild(e0);
+      return;
+    }
+    items.forEach(function (it) {
+      var li = el('li');
+      var who = el('span', 'cmt-who');
+      who.textContent = it.name || 'ななし';
+      var at = el('span', 'cmt-at');
+      at.textContent = whenText(it.at);
+      var body = el('p', 'cmt-body');
+      /* 受け取った文字はそのまま textContent に入れる。
+         HTML として解釈させないので、タグを書かれても安全。 */
+      body.textContent = it.text || '';
+      li.appendChild(who); li.appendChild(at); li.appendChild(body);
+      list.appendChild(li);
+    });
+  }
+
+  function loadComments(slug) {
+    var box = $('#cmt');
+    if (!box) return;
+    if (!Cloud || !Cloud.enabled) { box.hidden = true; return; }
+    box.hidden = false;
+    $('#cmt-note').textContent = '';
+    $('#cmt-note').classList.remove('bad');
+    $('#cmt-list').innerHTML = '';
+    $('#cmt-count').textContent = '';
+    Cloud.comments(slug).then(function (items) {
+      /* 読んでいる間に別の作品へ移っていたら、その結果は捨てる */
+      if (!playerWork || playerWork.slug !== slug) return;
+      renderComments(items);
+    });
+  }
+
   function frameSize(kind) {
     if (kind === 'scratch') return 485 / 402;
     if (kind === 'audio-file') return 1;
@@ -814,6 +905,8 @@
     var likeBtn = $('#p-like');
     likeBtn.classList.toggle('on', isLiked(wk.slug));
     likeBtn.setAttribute('aria-pressed', isLiked(wk.slug) ? 'true' : 'false');
+    showHeart(wk.slug);
+    loadComments(wk.slug);
     resetShareLabel();
 
     var stage = $('#p-stage');
@@ -1014,17 +1107,65 @@
 
     $('#p-like').addEventListener('click', function () {
       if (!playerWork) return;
-      var on = !isLiked(playerWork.slug);
-      setLiked(playerWork.slug, on);
+      var slug = playerWork.slug;
+      var on = !isLiked(slug);
+      setLiked(slug, on);
       var b = this;
       b.classList.toggle('on', on);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
+
+      /* 数は先に動かしておく。通信を待たせると、押した手応えが鈍る。
+         裏側が答えたら、そちらの数で上書きする。 */
+      if (Cloud && Cloud.enabled) {
+        var now = heartCounts[slug] || 0;
+        heartCounts[slug] = Math.max(0, now + (on ? 1 : -1));
+        showHeart(slug);
+        Cloud.heart(slug, on).then(function (count) {
+          if (typeof count !== 'number') return;
+          heartCounts[slug] = count;
+          if (playerWork && playerWork.slug === slug) showHeart(slug);
+        });
+      }
+
       if (on) {
         /* 弾んだ跡に、小さな光の粒を数個だけ散らす。数が多いと
            安っぽく見えるので最小限に。 */
         b.classList.remove('burst'); void b.offsetWidth; b.classList.add('burst');
       }
     });
+
+    /* ---- ひとこと（コメント）を送る ---- */
+    var cmtForm = $('#cmt-form');
+    if (cmtForm) {
+      cmtForm.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        if (!playerWork || !Cloud || !Cloud.enabled) return;
+
+        var slug = playerWork.slug;
+        var text = $('#cmt-text').value.trim();
+        var name = $('#cmt-name').value.trim();
+        var note = $('#cmt-note');
+        if (!text) { note.textContent = 'ひとこと書いてください。'; note.classList.add('bad'); return; }
+
+        var send = $('#cmt-send');
+        send.disabled = true;
+        note.classList.remove('bad');
+        note.textContent = '送っています…';
+
+        Cloud.addComment(slug, name, text).then(function (ok) {
+          send.disabled = false;
+          if (!ok) {
+            note.textContent = '送れませんでした。少し待ってもう一度どうぞ。';
+            note.classList.add('bad');
+            return;
+          }
+          $('#cmt-text').value = '';
+          note.textContent = 'ありがとうございました。';
+          /* 書いたものがすぐ見えるように読み直す */
+          if (playerWork && playerWork.slug === slug) loadComments(slug);
+        });
+      });
+    }
 
     $('#p-share').addEventListener('click', function () {
       if (!playerWork) return;
@@ -1129,6 +1270,8 @@
       wire();
       wireDrag();
       readHash();
+      /* ハートの数は、作品の表示を止めない。届いたときに反映する。 */
+      loadHeartCounts();
       /* 寸法が出るまで数フレーム試す。プレビュー枠は初期化が遅れることがある。 */
       var tries = 0, entranced = false;
       (function settle() {

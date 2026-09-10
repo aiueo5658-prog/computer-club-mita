@@ -17,7 +17,8 @@
   var NOTE = 'いただいた声は部員のみが集計に利用します。個人が特定される情報は集めていません。';
 
   var answers = { rating:'', who:'', favWork:'', genre:'', interest:'', found:'', comment:'' };
-  var live = false;   /* Google フォームに繋がっているか */
+  var live = false;   /* 送信先に繋がっているか */
+  var Cloud = window.CCMCloud || null;   /* スプレッドシート（apiUrl） */
 
   function setNote(msg, err) {
     var n = $('#form-note');
@@ -109,6 +110,20 @@
     $('#submit-btn').disabled = true;
     setNote('送信中…', false);
 
+    /* スプレッドシートへ直接送れるなら、そちらを使う。
+       結果が読めるので「送れなかった」ときに正直に伝えられる。 */
+    if (Cloud && Cloud.enabled) {
+      Cloud.survey(answers).then(function (ok) {
+        if (!ok) {
+          $('#submit-btn').disabled = false;
+          setNote('送れませんでした。通信を確かめて、もう一度お願いします。', true);
+          return;
+        }
+        finish();
+      });
+      return;
+    }
+
     if (live) {
       /* 隠し iframe を宛先にした通常の form POST。CORS を回避できる。 */
       var s = CFG.survey;
@@ -159,7 +174,9 @@
   }
 
   function start() {
-    live = !!safeUrl((CFG.survey || {}).formAction);
+    /* config.js の apiUrl があればそちらへ。無ければ従来の Google フォームへ。
+       どちらも無ければ「未設定」として、送らずに知らせる。 */
+    live = (Cloud && Cloud.enabled) || !!safeUrl((CFG.survey || {}).formAction);
     fillWorks();
 
     d.querySelector('.sv-grid').addEventListener('click', function (e) {
