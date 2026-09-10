@@ -56,7 +56,7 @@ window.CCM = {
      空のままでも、サイトは普通に動きます。
      コメント欄とハートの数が出なくなるだけです。
      --------------------------------------------------------- */
-  apiUrl: '',
+  apiUrl: 'https://script.google.com/macros/s/AKfycbzlYFN6gtceG_TjTQJ73EJMKE4w3bMgKkobKmg8Oh5AB6EjgTfbRJcKHAhXMznCKEwxSA/exec',
 
   /* ---------------------------------------------------------
      アンケートの送信先（Google フォーム）

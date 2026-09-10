@@ -166,7 +166,10 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
 .ec-logo{
   border:0;
   background:url(../logo-eclipse.webp) center/contain no-repeat;
-  filter:drop-shadow(0 0 26px rgba(0,255,156,.30));
+  /* 黒を抜いた画像は自然と透ける薄さになるので、光暈も控えめに。
+     不透明度は画像側（webp のアルファ）を落として作ってある。 */
+  filter:drop-shadow(0 0 18px rgba(0,255,156,.18));
+  opacity:.72;
   animation:ecLogoSpin 150s linear infinite;
   pointer-events:none;
 }
