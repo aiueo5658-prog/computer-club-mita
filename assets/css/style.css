@@ -157,8 +157,21 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
 .ring.ghost{border-color:rgba(255,255,255,.07);background:none}
 .ec{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%);
   border:1px solid rgba(255,255,255,.22)}
-.ec-rim{border:2px solid #fff;box-shadow:0 0 70px rgba(160,255,220,.4)}
+/* 光の縁はロゴの三日月が担うので、この輪は後ろのぼんやりした光だけにする。
+   白い線を二重に描くと、ロゴの三日月とぶつかって濁る。 */
+.ec-rim{border:0;box-shadow:0 0 70px rgba(160,255,220,.34)}
 .ec-disc{background:#000;border:0}
+
+/* 部のロゴ。黒を抜いた発光画像なので、背景の星やリムグローの上に自然に乗る。 */
+.ec-logo{
+  border:0;
+  background:url(../logo-eclipse.webp) center/contain no-repeat;
+  filter:drop-shadow(0 0 26px rgba(0,255,156,.30));
+  animation:ecLogoSpin 150s linear infinite;
+  pointer-events:none;
+}
+@keyframes ecLogoSpin{ to{ transform:translate(-50%,-50%) rotate(360deg) } }
+@media (prefers-reduced-motion: reduce){ .ec-logo{ animation:none } }
 .ec-cap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   font:600 12px var(--font-num);letter-spacing:.3em;color:#a8b4b0;pointer-events:none}
 
