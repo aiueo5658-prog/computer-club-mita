@@ -866,20 +866,57 @@
     });
   }
 
+  function updateCmtBadge(n) {
+    var b = $('#cmt-badge');
+    if (b) b.textContent = (typeof n === 'number' && n > 0) ? String(n) : '';
+  }
+
+  /* ---- ひとこと欄の開け閉め ----
+     右上のアイコンを押したときだけ、フローティングのカードが滑り出す。
+     クリックするまでは書き込めない（＝欄が見えない）ので、
+     「押して初めてコメントできる」という見た目のふるまいになる。 */
+  function isCmtOpen() {
+    var p = $('#cmt-panel');
+    return !!(p && p.classList.contains('on'));
+  }
+  function closeCmt() {
+    var p = $('#cmt-panel'), t = $('#cmt-toggle');
+    if (p) { p.classList.remove('on'); p.setAttribute('aria-hidden', 'true'); }
+    if (t) { t.classList.remove('on'); t.setAttribute('aria-expanded', 'false'); }
+  }
+  function openCmt() {
+    var p = $('#cmt-panel'), t = $('#cmt-toggle');
+    if (!p || p.hidden) return;
+    if (t && t.hidden) return;
+    p.classList.add('on'); p.setAttribute('aria-hidden', 'false');
+    if (t) { t.classList.add('on'); t.setAttribute('aria-expanded', 'true'); }
+    setTimeout(function () { var f = $('#cmt-text'); if (f) f.focus(); }, 260);
+  }
+
+  /* 一覧と件数バッジだけを読み直す。「ひとこと」欄の下のメッセージ
+     （送信後の「ありがとうございました。」など）には触れない。
+     loadComments がここも毎回空にしてしまうと、送信直後にこの
+     メッセージを読む間もなく消えてしまうため、分けてある。 */
+  function refreshComments(slug) {
+    return Cloud.comments(slug).then(function (items) {
+      /* 読んでいる間に別の作品へ移っていたら、その結果は捨てる */
+      if (!playerWork || playerWork.slug !== slug) return;
+      renderComments(items);
+      updateCmtBadge(items ? items.length : null);
+    });
+  }
+
   function loadComments(slug) {
-    var box = $('#cmt');
-    if (!box) return;
-    if (!Cloud || !Cloud.enabled) { box.hidden = true; return; }
-    box.hidden = false;
+    var toggle = $('#cmt-toggle');
+    if (!toggle) return;
+    if (!Cloud || !Cloud.enabled) { toggle.hidden = true; return; }
+    toggle.hidden = false;
     $('#cmt-note').textContent = '';
     $('#cmt-note').classList.remove('bad');
     $('#cmt-list').innerHTML = '';
     $('#cmt-count').textContent = '';
-    Cloud.comments(slug).then(function (items) {
-      /* 読んでいる間に別の作品へ移っていたら、その結果は捨てる */
-      if (!playerWork || playerWork.slug !== slug) return;
-      renderComments(items);
-    });
+    updateCmtBadge(null);
+    refreshComments(slug);
   }
 
   function frameSize(kind) {
@@ -906,6 +943,7 @@
     likeBtn.classList.toggle('on', isLiked(wk.slug));
     likeBtn.setAttribute('aria-pressed', isLiked(wk.slug) ? 'true' : 'false');
     showHeart(wk.slug);
+    closeCmt();               /* 作品が替わるたびに、ひとこと欄は閉じた状態から */
     loadComments(wk.slug);
     resetShareLabel();
 
@@ -986,6 +1024,7 @@
   function closePlayer() {
     var pl = $('#player');
     if (pl.hidden) return;
+    closeCmt();
     $('#p-stage').innerHTML = '';
     pl.hidden = true;
     playerWork = null;
@@ -1134,6 +1173,16 @@
       }
     });
 
+    /* ---- ひとこと（コメント）を開け閉め ---- */
+    var cmtToggle = $('#cmt-toggle');
+    if (cmtToggle) {
+      cmtToggle.addEventListener('click', function () {
+        if (isCmtOpen()) closeCmt(); else openCmt();
+      });
+    }
+    var cmtPanelClose = $('#cmt-panel-close');
+    if (cmtPanelClose) cmtPanelClose.addEventListener('click', closeCmt);
+
     /* ---- ひとこと（コメント）を送る ---- */
     var cmtForm = $('#cmt-form');
     if (cmtForm) {
@@ -1161,8 +1210,9 @@
           }
           $('#cmt-text').value = '';
           note.textContent = 'ありがとうございました。';
-          /* 書いたものがすぐ見えるように読み直す */
-          if (playerWork && playerWork.slug === slug) loadComments(slug);
+          /* 書いたものがすぐ見えるように読み直す。loadComments だと
+             この note の文言まで空にしてしまうので、一覧だけ読み直す。 */
+          if (playerWork && playerWork.slug === slug) refreshComments(slug);
         });
       });
     }
@@ -1190,7 +1240,8 @@
 
     d.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
-        if (!$('#player').hidden) closePlayer();
+        if (isCmtOpen()) closeCmt();
+        else if (!$('#player').hidden) closePlayer();
         else if (openSheet) hideSheet();
         else if (state.openSlug) openWork(null);
         else if (state.zoom) surface();

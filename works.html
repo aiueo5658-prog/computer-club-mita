@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260911004225">
+<link rel="stylesheet" href="assets/css/style.css?v=20260911074109">
 </head>
 <body>
 
@@ -125,12 +125,22 @@
       <b id="p-title"></b>
     </div>
     <div class="player-acts">
-      <button class="like-btn" id="p-like" type="button" aria-pressed="false" aria-label="いいね">
-        <svg class="like-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12 20.7C7 17.2 3 13.7 3 9.4 3 6.4 5.3 4 8.3 4c1.8 0 3.2 1 3.7 2.3C12.5 5 13.9 4 15.7 4 18.7 4 21 6.4 21 9.4c0 4.3-4 7.8-9 11.3z"/>
-        </svg>
-        <i class="like-burst" aria-hidden="true"></i>
+      <div class="like-wrap">
+        <button class="like-btn" id="p-like" type="button" aria-pressed="false" aria-label="いいね">
+          <svg class="like-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 20.7C7 17.2 3 13.7 3 9.4 3 6.4 5.3 4 8.3 4c1.8 0 3.2 1 3.7 2.3C12.5 5 13.9 4 15.7 4 18.7 4 21 6.4 21 9.4c0 4.3-4 7.8-9 11.3z"/>
+          </svg>
+          <i class="like-burst" aria-hidden="true"></i>
+        </button>
         <span class="like-n" id="p-like-n" aria-hidden="true"></span>
+      </div>
+      <!-- ひとこと。裏側(config.js の apiUrl)が未設定なら丸ごと隠れる。 -->
+      <button class="cmt-toggle" id="cmt-toggle" type="button" hidden
+              aria-haspopup="true" aria-expanded="false" aria-controls="cmt-panel" aria-label="ひとこと">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+        </svg>
+        <span class="cmt-badge" id="cmt-badge" aria-hidden="true"></span>
       </button>
       <button class="ghost" id="p-share" type="button" data-no-magnet>
         <svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -146,29 +156,34 @@
   <div class="player-stage" id="p-stage"></div>
   <div class="player-foot">
     <p id="p-desc"></p>
-
-    <!-- ひとこと。裏側(config.js の apiUrl)が未設定なら丸ごと隠れる。 -->
-    <section class="cmt" id="cmt" hidden>
-      <div class="cmt-head">
-        <h3 class="cmt-title">ひとこと</h3>
-        <span class="cmt-count" id="cmt-count"></span>
-      </div>
-      <form class="cmt-form" id="cmt-form">
-        <input class="cmt-name" id="cmt-name" type="text" maxlength="20"
-               placeholder="なまえ（任意）" autocomplete="nickname">
-        <input class="cmt-text" id="cmt-text" type="text" maxlength="200"
-               placeholder="感想をひとこと" required>
-        <button class="cta cmt-send" id="cmt-send" type="submit">送る</button>
-      </form>
-      <p class="cmt-note" id="cmt-note" role="status"></p>
-      <ul class="cmt-list" id="cmt-list"></ul>
-    </section>
-
     <div class="player-steps">
       <button class="ghost" id="p-prev" type="button">前の作品</button>
       <button class="ghost" id="p-next" type="button">次の作品</button>
     </div>
   </div>
+
+  <!-- ひとこと。右上のアイコン(#cmt-toggle)を押したときだけ滑り出す。
+       フッターの行に混ぜていた頃は、フォームや一覧の高さぶん
+       前後の作品ボタンまで動いてレイアウトが崩れていたため、
+       独立したフローティングカードに切り出した。 -->
+  <aside class="cmt-panel" id="cmt-panel" aria-hidden="true">
+    <div class="cmt-head">
+      <h3 class="cmt-title">ひとこと</h3>
+      <span class="cmt-count" id="cmt-count"></span>
+      <button class="cmt-panel-close" id="cmt-panel-close" type="button" aria-label="閉じる">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <form class="cmt-form" id="cmt-form">
+      <input class="cmt-name" id="cmt-name" type="text" maxlength="20"
+             placeholder="なまえ（任意）" autocomplete="nickname">
+      <input class="cmt-text" id="cmt-text" type="text" maxlength="200"
+             placeholder="感想をひとこと" required>
+      <button class="cta cmt-send" id="cmt-send" type="submit">送る</button>
+    </form>
+    <p class="cmt-note" id="cmt-note" role="status"></p>
+    <ul class="cmt-list" id="cmt-list"></ul>
+  </aside>
 </div>
 
 <!-- ===== アイコンの版下 ===== -->
@@ -182,11 +197,11 @@
 
 <iframe name="gform-sink" title="form sink" style="display:none" aria-hidden="true"></iframe>
 
-<script src="assets/js/site.js?v=20260911004225"></script>
-<script src="assets/js/config.js?v=20260911004225"></script>
-<script src="assets/js/cloud.js?v=20260911004225"></script>
-<script src="assets/js/data.js?v=20260911004225"></script>
-<script src="assets/js/thumbs.js?v=20260911004225"></script>
-<script src="assets/js/app.js?v=20260911004225"></script>
+<script src="assets/js/site.js?v=20260911074109"></script>
+<script src="assets/js/config.js?v=20260911074109"></script>
+<script src="assets/js/cloud.js?v=20260911074109"></script>
+<script src="assets/js/data.js?v=20260911074109"></script>
+<script src="assets/js/thumbs.js?v=20260911074109"></script>
+<script src="assets/js/app.js?v=20260911074109"></script>
 </body>
 </html>
