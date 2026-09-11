@@ -979,7 +979,6 @@
     loadHeartFor(wk.slug);
     closeCmt();               /* 作品が替わるたびに、ひとこと欄は閉じた状態から */
     loadComments(wk.slug);
-    resetShareLabel();
 
     var stage = $('#p-stage');
     stage.innerHTML = '';
@@ -1045,15 +1044,6 @@
     frame.style.height = Math.floor(wpx / ar) + 'px';
   }
 
-  function resetShareLabel() {
-    var btn = $('#p-share');
-    if (!btn) return;
-    clearTimeout(btn._t);
-    btn.classList.remove('done');
-    $('.share-link', btn).style.display = '';
-    $('.share-check', btn).style.display = 'none';
-    $('.share-label', btn).textContent = '共有';
-  }
 
   function closePlayer() {
     var pl = $('#player');
@@ -1257,27 +1247,6 @@
         });
       });
     }
-
-    $('#p-share').addEventListener('click', function () {
-      if (!playerWork) return;
-      var btn = this;
-      var url = location.origin + location.pathname + '#w/' + encodeURIComponent(playerWork.slug);
-      var done = function () {
-        btn.classList.add('done');
-        $('.share-link', btn).style.display = 'none';
-        $('.share-check', btn).style.display = '';
-        $('.share-label', btn).textContent = 'コピーしました';
-        clearTimeout(btn._t);
-        btn._t = setTimeout(resetShareLabel, 1800);
-      };
-      if (navigator.share) {
-        navigator.share({ title: playerWork.title, url: url }).catch(function () {});
-        return;
-      }
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(done).catch(function () {});
-      }
-    });
 
     d.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {

@@ -76,7 +76,22 @@
   var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   /* 豆知識はこれ一本だけ。読み切れる時間だけ止めてから進む。 */
   var TIP = '昆布は、コンピュータ部の略語として昔から愛されており、今もなお学校内ではコンピュータ部を昆布と呼びます。';
-  var HOLD = REDUCE ? 200 : 2600;
+
+  var REVEAL_DELAY = 320;   /* ようこそ画面が消えて、ローディング画面が出てくるまで */
+  /* 本物のダウンロードっぽく見せるため、一定速度ではなく段階ごとに
+     速さを変える。はじめは勢いよく伸び、中盤で伸び悩み、最後にスッと
+     100%へ決着する。ここの ms 合計がローディング画面の表示時間（約3秒）。 */
+  var STAGES = [
+    { to: 22,  ms: 260, ease: 'ease-out' },
+    { to: 46,  ms: 420, ease: 'ease-in-out' },
+    { to: 66,  ms: 520, ease: 'ease-in-out' },
+    { to: 81,  ms: 640, ease: 'ease-out' },
+    { to: 92,  ms: 760, ease: 'ease-out' },
+    { to: 100, ms: 400, ease: 'ease-in' }
+  ];
+  var BAR_MS = STAGES.reduce(function (sum, s) { return sum + s.ms; }, 0);
+  var HOLD_BUFFER = 200;   /* 100%になってから、次の画面へ移るまでの一呼吸 */
+  var HOLD = REDUCE ? 200 : (REVEAL_DELAY + BAR_MS + HOLD_BUFFER);
 
   document.getElementById('intro-go').addEventListener('click', function () {
     var welcome = document.getElementById('intro-welcome');
@@ -85,12 +100,35 @@
     setTimeout(function () {
       welcome.hidden = true;
       load.hidden = false;
-    }, REDUCE ? 0 : 320);
 
-    document.getElementById('intro-tip').textContent = TIP;
-    var bar = document.getElementById('intro-bar-fill');
-    bar.style.transitionDuration = HOLD + 'ms';
-    requestAnimationFrame(function () { bar.style.width = '100%'; });
+      document.getElementById('intro-tip').textContent = TIP;
+      var bar = document.getElementById('intro-bar-fill');
+
+      if (REDUCE) {
+        bar.style.transitionDuration = '0s';
+        bar.style.width = '100%';
+        return;
+      }
+
+      /* 直前まで hidden（display:none）だった要素は、幅を変えても
+         トランジションが再生されない（描画されていないため）。
+         表示された直後の2フレーム待ってから、0%を起点に段階を刻む。 */
+      bar.style.transitionDuration = '0s';
+      bar.style.width = '0%';
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          var t = 0;
+          STAGES.forEach(function (s) {
+            setTimeout(function () {
+              bar.style.transitionTimingFunction = s.ease;
+              bar.style.transitionDuration = s.ms + 'ms';
+              bar.style.width = s.to + '%';
+            }, t);
+            t += s.ms;
+          });
+        });
+      });
+    }, REDUCE ? 0 : REVEAL_DELAY);
 
     setTimeout(function () {
       intro.classList.add('out');
