@@ -64,16 +64,28 @@ window.CCMCloud = (function () {
     });
   }
 
-  /* ---- ハートを付ける・外す。新しい数を返す ---- */
+  /* ---- ハートを付ける・外す。新しい数を返す ----
+     裏側は「この端末の最後の操作」だけを数えるので、連打で複数の
+     リクエストが同時に飛ぶと、届いた順序が送った順序と入れ替わる
+     ことがあり、最終状態が逆転してしまう（例：好き→取消の順で押した
+     のに、通信の遅れで 取消→好き の順に届き、結局「好き」のまま
+     集計される）。作品ごとに前の送信が終わるまで次を送らないよう
+     直列化し、届く順序＝押した順序を保証する。 */
+  var heartQueue = {};
   function heart(slug, on) {
-    return post({ action: 'heart', slug: slug, on: !!on, id: deviceId() })
-      .then(function (res) {
-        if (res && res.ok && typeof res.count === 'number') {
-          if (heartsCache) heartsCache[slug] = res.count;
-          return res.count;
-        }
-        return null;
-      });
+    var wait = heartQueue[slug] || Promise.resolve();
+    var run = wait['catch'](function () {}).then(function () {
+      return post({ action: 'heart', slug: slug, on: !!on, id: deviceId() })
+        .then(function (res) {
+          if (res && res.ok && typeof res.count === 'number') {
+            if (heartsCache) heartsCache[slug] = res.count;
+            return res.count;
+          }
+          return null;
+        });
+    });
+    heartQueue[slug] = run;
+    return run;
   }
 
   /* ---- コメントを読む ---- */
