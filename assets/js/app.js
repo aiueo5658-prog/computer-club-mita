@@ -813,6 +813,8 @@
   var Cloud = window.CCMCloud || null;
   var Hearts = window.CCMHearts || null;
   var HeartsOn = !!((Hearts && Hearts.enabled) || (Cloud && Cloud.enabled));
+  var Comments = window.CCMComments || null;
+  var CommentsOn = !!((Comments && Comments.enabled) || (Cloud && Cloud.enabled));
   var heartCounts = {};
   var heartBaseSlug = null;   /* 今、基準値が揃っている作品 */
 
@@ -929,7 +931,8 @@
      loadComments がここも毎回空にしてしまうと、送信直後にこの
      メッセージを読む間もなく消えてしまうため、分けてある。 */
   function refreshComments(slug) {
-    return Cloud.comments(slug).then(function (items) {
+    var read = (Comments && Comments.enabled) ? Comments.list(slug) : Cloud.comments(slug);
+    return read.then(function (items) {
       /* 読んでいる間に別の作品へ移っていたら、その結果は捨てる */
       if (!playerWork || playerWork.slug !== slug) return;
       renderComments(items);
@@ -940,7 +943,7 @@
   function loadComments(slug) {
     var toggle = $('#cmt-toggle');
     if (!toggle) return;
-    if (!Cloud || !Cloud.enabled) { toggle.hidden = true; return; }
+    if (!CommentsOn) { toggle.hidden = true; return; }
     toggle.hidden = false;
     $('#cmt-note').textContent = '';
     $('#cmt-note').classList.remove('bad');
@@ -1221,7 +1224,7 @@
     if (cmtForm) {
       cmtForm.addEventListener('submit', function (ev) {
         ev.preventDefault();
-        if (!playerWork || !Cloud || !Cloud.enabled) return;
+        if (!playerWork || !CommentsOn) return;
 
         var slug = playerWork.slug;
         var text = $('#cmt-text').value.trim();
@@ -1234,7 +1237,12 @@
         note.classList.remove('bad');
         note.textContent = '送っています…';
 
-        Cloud.addComment(slug, name, text).then(function (ok) {
+        /* 表示に使うのは Firebase（速い）。スプレッドシートには
+           記録として裏で残すだけで、表示の成否には関わらせない。 */
+        var write = (Comments && Comments.enabled) ? Comments.add(slug, name, text) : Cloud.addComment(slug, name, text);
+        if (Comments && Comments.enabled && Cloud && Cloud.enabled) Cloud.addComment(slug, name, text);
+
+        write.then(function (ok) {
           send.disabled = false;
           if (!ok) {
             note.textContent = '送れませんでした。少し待ってもう一度どうぞ。';

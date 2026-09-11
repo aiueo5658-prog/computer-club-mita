@@ -10,6 +10,16 @@
           ".validate": "newData.isNumber() && newData.val() >= 0"
         }
       }
+    },
+    "comments": {
+      "$slug": {
+        ".read": true,
+        ".indexOn": "at",
+        "$id": {
+          ".write": "!data.exists()",
+          ".validate": "newData.hasChildren(['name', 'text', 'at']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 200 && newData.child('at').val() == now"
+        }
+      }
     }
   }
 }
