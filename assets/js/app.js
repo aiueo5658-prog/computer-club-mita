@@ -775,25 +775,19 @@
   /* =====================================================
      いいね
      部員どうしの投票ではなく、来場者が「気に入った」を残す
-     ためのもの。バックエンドが無いので、集計はせず、この
-     ブラウザだけが覚えている（ローカルストレージ）。
-     ===================================================== */
-  var LIKE_KEY = 'ccm-likes';
-  function likedSet() {
-    try { return new Set(JSON.parse(localStorage.getItem(LIKE_KEY) || '[]')); }
-    catch (e) { return new Set(); }
-  }
-  function saveLikes(set) {
-    /* Set は length を持たないので Array.prototype.slice.call では
-       空配列になってしまう。Array.from で正しく取り出す。 */
-    try { localStorage.setItem(LIKE_KEY, JSON.stringify(Array.from(set))); }
-    catch (e) { /* プライベートモードなどで書けなければ、覚えないだけで諦める */ }
-  }
-  function isLiked(slug) { return likedSet().has(slug); }
+     ためのもの。集計はスプレッドシート側（Cloud.heart）が持つので、
+     この「押した/押していない」の見た目はページを開いている間だけ
+     覚えていれば十分。会場では一台の端末を何人もの来場者が入れ替わり
+     使うため、あえて localStorage には残さない——残すと、前の人が
+     押した状態がリロード後もずっと表示され続け、次の人には「もう
+     押されている」ように見えてしまう（押し直すと今度は誤って
+     解除＝マイナス集計になる）。メモリ上の Set はリロードのたびに
+     まっさらになるので、スプレッドシートの数字はそのまま、見た目
+     だけが次の来場者のためにリセットされる。 */
+  var liked = new Set();
+  function isLiked(slug) { return liked.has(slug); }
   function setLiked(slug, on) {
-    var set = likedSet();
-    if (on) set.add(slug); else set.delete(slug);
-    saveLikes(set);
+    if (on) liked.add(slug); else liked.delete(slug);
   }
 
   /* =====================================================
