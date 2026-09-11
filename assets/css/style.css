@@ -356,6 +356,14 @@ body:not(.ready) .guide{opacity:0;transform:translateY(28px)}
   animation:fsIn .42s cubic-bezier(.22,1,.36,1) both;
 }
 .player[hidden]{display:none}
+.player-loading{position:absolute;inset:0;z-index:50;display:grid;place-items:center;
+  background:#000;transition:opacity .25s ease}
+.player-loading[hidden]{display:none}
+.loading-ring{width:40px;height:40px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.12);border-top-color:var(--acid);
+  animation:loadingSpin .8s linear infinite}
+@keyframes loadingSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.loading-ring{animation:none}}
 .player-bar{display:flex;align-items:center;gap:20px;padding:20px var(--pad);
   border-bottom:1px solid rgba(255,255,255,.1);min-width:0}
 .player-id{min-width:0}

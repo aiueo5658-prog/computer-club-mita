@@ -796,36 +796,51 @@
      裏側（config.js の apiUrl）が未設定なら、数は出さず
      コメント欄も丸ごと隠す。押した記録はこれまで通り
      この端末のなかに残るので、見た目は今までと変わらない。
+
+     数字は「作品を開いたときに一度だけ」裏側から取りに行く。
+     以前は起動時にまとめて一度取り、押すたびにも裏側の返り値で
+     上書きしていたが、Apps Script の応答は速さがまちまちなので、
+     複数の応答が前後して届くと数字が行ったり来たりしてしまって
+     いた。押した/外した瞬間の表示は、届いたばかりの基準値に
+     対して単純に ±1 するだけにし、裏側の返り値では表示を
+     動かさない（裏側には記録だけ飛ばす）。次に基準値を取り直すのは、
+     その作品をまた開いたとき（＝一覧に戻ってから開き直したとき）
+     だけにする。
      ===================================================== */
   var Cloud = window.CCMCloud || null;
   var heartCounts = {};
-  /* heart() の応答で数字が確定した作品は、あとから遅れて届く
-     まとめ取得（loadHeartCounts）で上書きさせない。
-     まとめ取得は起動時に一度だけ投げるが、Apps Script は数秒かかる
-     ことがあり、その間に来場者がハートを押すと heart() の応答の方が
-     先に届いて数字が確定する。にもかかわらず、あとから届いた古い
-     まとめ取得の結果でまるごと heartCounts を差し替えていたため、
-     せっかく確定した数字が古い値に巻き戻ったり、集計に載っていない
-     （＝0扱いで表示が消える）ことがあった。 */
-  var heartConfirmed = {};
-
-  function loadHeartCounts() {
-    if (!Cloud || !Cloud.enabled) return;
-    Cloud.hearts().then(function (map) {
-      map = map || {};
-      Object.keys(map).forEach(function (slug) {
-        if (!heartConfirmed[slug]) heartCounts[slug] = map[slug];
-      });
-      if (playerWork) showHeart(playerWork.slug);
-    });
-  }
+  var heartBaseSlug = null;   /* 今、基準値が揃っている作品 */
 
   function showHeart(slug) {
     var n = $('#p-like-n');
     if (!n) return;
-    if (!Cloud || !Cloud.enabled) { n.textContent = ''; return; }
+    if (!Cloud || !Cloud.enabled || heartBaseSlug !== slug) { n.textContent = ''; return; }
     var c = heartCounts[slug];
     n.textContent = (typeof c === 'number' && c > 0) ? String(c) : '';
+  }
+
+  /* 作品を開くたびに呼ぶ。基準値が揃うまで #p-loading で画面を覆い、
+     数字だけが遅れてポツンと現れるのを防ぐ。通信が固まっても
+     待たせすぎないよう、上限つきで諦める。 */
+  function loadHeartFor(slug) {
+    heartBaseSlug = null;
+    var overlay = $('#p-loading');
+    if (!Cloud || !Cloud.enabled) { if (overlay) overlay.hidden = true; return; }
+    if (overlay) overlay.hidden = false;
+
+    var done = false;
+    function settle(count) {
+      if (done) return;
+      done = true;
+      if (!playerWork || playerWork.slug !== slug) return;   /* 待つ間に他の作品へ移っていたら捨てる */
+      heartCounts[slug] = typeof count === 'number' ? count : (heartCounts[slug] || 0);
+      heartBaseSlug = slug;
+      showHeart(slug);
+      if (overlay) overlay.hidden = true;
+    }
+
+    Cloud.hearts(true).then(function (map) { settle(map && map[slug]); });
+    setTimeout(function () { settle(heartCounts[slug]); }, 4000);   /* 待ちきれなければ、今ある値で諦めて開放する */
   }
 
   function whenText(iso) {
@@ -948,7 +963,7 @@
     var likeBtn = $('#p-like');
     likeBtn.classList.toggle('on', isLiked(wk.slug));
     likeBtn.setAttribute('aria-pressed', isLiked(wk.slug) ? 'true' : 'false');
-    showHeart(wk.slug);
+    loadHeartFor(wk.slug);
     closeCmt();               /* 作品が替わるたびに、ひとこと欄は閉じた状態から */
     loadComments(wk.slug);
     resetShareLabel();
@@ -1159,19 +1174,16 @@
       b.classList.toggle('on', on);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
 
-      /* 数は先に動かしておく。通信を待たせると、押した手応えが鈍る。
-         裏側が答えたら、そちらの数で上書きする。 */
-      if (Cloud && Cloud.enabled) {
-        var now = heartCounts[slug] || 0;
-        heartCounts[slug] = Math.max(0, now + (on ? 1 : -1));
+      /* 表示は、開いたときに取った基準値に対して単純に ±1 するだけ。
+         裏側の返り値では動かさない（複数の通信が前後して届くと、
+         そちらで上書きするたびに数字が行ったり来たりしていたため）。
+         裏側には記録だけ飛ばし、正しい数字は次にこの作品を開いた
+         ときにまた基準値として取り直す。 */
+      if (Cloud && Cloud.enabled && heartBaseSlug === slug) {
+        heartCounts[slug] = Math.max(0, (heartCounts[slug] || 0) + (on ? 1 : -1));
         showHeart(slug);
-        Cloud.heart(slug, on).then(function (count) {
-          if (typeof count !== 'number') return;
-          heartCounts[slug] = count;
-          heartConfirmed[slug] = true;
-          if (playerWork && playerWork.slug === slug) showHeart(slug);
-        });
       }
+      if (Cloud && Cloud.enabled) Cloud.heart(slug, on);
 
       if (on) {
         /* 弾んだ跡に、小さな光の粒を数個だけ散らす。数が多いと
@@ -1328,8 +1340,6 @@
       wire();
       wireDrag();
       readHash();
-      /* ハートの数は、作品の表示を止めない。届いたときに反映する。 */
-      loadHeartCounts();
       /* 寸法が出るまで数フレーム試す。プレビュー枠は初期化が遅れることがある。 */
       var tries = 0, entranced = false;
       (function settle() {

@@ -115,6 +115,10 @@
 
 <!-- ===== 全画面再生 ===== -->
 <div class="player" id="player" hidden role="dialog" aria-modal="true" aria-labelledby="p-title">
+  <!-- 作品を開いた直後、ハートの数が裏側から届くまでの間だけ覆う。
+       数字だけが後から遅れてポツンと現れるとバグって見えるため、
+       用意ができるまでは丸ごと隠しておき、揃ってから一度に出す。 -->
+  <div class="player-loading" id="p-loading" hidden aria-hidden="true"><span class="loading-ring"></span></div>
   <div class="player-bar">
     <button class="ghost" id="p-close" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
