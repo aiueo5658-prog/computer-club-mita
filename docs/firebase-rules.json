@@ -1,0 +1,15 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "hearts": {
+      "$slug": {
+        ".read": true,
+        "count": {
+          ".write": true,
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        }
+      }
+    }
+  }
+}

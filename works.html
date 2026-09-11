@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260911074109">
+<link rel="stylesheet" href="assets/css/style.css?v=20260911120000">
 </head>
 <body>
 
@@ -201,11 +201,16 @@
 
 <iframe name="gform-sink" title="form sink" style="display:none" aria-hidden="true"></iframe>
 
-<script src="assets/js/site.js?v=20260911074109"></script>
-<script src="assets/js/config.js?v=20260911074109"></script>
-<script src="assets/js/cloud.js?v=20260911074109"></script>
-<script src="assets/js/data.js?v=20260911074109"></script>
-<script src="assets/js/thumbs.js?v=20260911074109"></script>
-<script src="assets/js/app.js?v=20260911074109"></script>
+<script src="assets/js/site.js?v=20260911120000"></script>
+<script src="assets/js/config.js?v=20260911120000"></script>
+<!-- ハートの即時カウント用。config.js の firebase.databaseURL が
+     空なら firebase-hearts.js 側が黙って無効化する。 -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="assets/js/firebase-hearts.js?v=20260911120000"></script>
+<script src="assets/js/cloud.js?v=20260911120000"></script>
+<script src="assets/js/data.js?v=20260911120000"></script>
+<script src="assets/js/thumbs.js?v=20260911120000"></script>
+<script src="assets/js/app.js?v=20260911120000"></script>
 </body>
 </html>

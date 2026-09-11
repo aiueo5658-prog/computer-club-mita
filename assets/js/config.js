@@ -55,8 +55,43 @@ window.CCM = {
 
      空のままでも、サイトは普通に動きます。
      コメント欄とハートの数が出なくなるだけです。
+
+     ハートの数え上げだけは、下の firebase 設定がある場合そちらを
+     優先します（Apps Script は応答が数秒かかることがあり、押すたびに
+     待たせてしまうため）。この apiUrl には引き続き「押された」記録が
+     1行ずつ飛び、スプレッドシート側の記録として残り続けます。
      --------------------------------------------------------- */
   apiUrl: 'https://script.google.com/macros/s/AKfycbzlYFN6gtceG_TjTQJ73EJMKE4w3bMgKkobKmg8Oh5AB6EjgTfbRJcKHAhXMznCKEwxSA/exec',
+
+  /* ---------------------------------------------------------
+     ハートの即時カウント（Firebase Realtime Database）
+
+     Apps Script は起動が遅く、ハートを押すたびに待たせてしまうため、
+     数字の表示・加減算はこちら（数十ms〜で返る）を使う。
+     押された記録そのものは、引き続き上の apiUrl 経由でスプレッドシート
+     にも残るので、「集計はFirebase／記録はスプレッドシート」という
+     二本立てになる。
+
+     手順:
+       1. https://console.firebase.google.com/ でプロジェクトを作る
+       2. 「Realtime Database」を作成
+       3. プロジェクトの設定 > マイアプリ > ウェブアプリを追加
+          して出てくる設定オブジェクトを、下にそのまま転記する
+       4. Realtime Database の「ルール」タブで、docs/firebase-rules.json
+          の中身を貼って公開する
+
+     空のままなら、ハートは今まで通り apiUrl（スプレッドシート）だけで
+     数える（表示のたびに待たされる、元の遅い動作に戻る）。
+     --------------------------------------------------------- */
+  firebase: {
+    apiKey: 'AIzaSyAAGW3EBGgpblpUiF4gkZAMpMVNsLwtUTA',
+    authDomain: 'computerclub-8c911.firebaseapp.com',
+    databaseURL: 'https://computerclub-8c911-default-rtdb.asia-southeast1.firebasedatabase.app',
+    projectId: 'computerclub-8c911',
+    storageBucket: 'computerclub-8c911.firebasestorage.app',
+    messagingSenderId: '962712134058',
+    appId: '1:962712134058:web:ddd533c4d50d20318a8bd3'
+  },
 
   /* ---------------------------------------------------------
      アンケートの送信先（Google フォーム）

@@ -793,39 +793,45 @@
   /* =====================================================
      ハートの数と、ひとこと（コメント）
 
-     裏側（config.js の apiUrl）が未設定なら、数は出さず
-     コメント欄も丸ごと隠す。押した記録はこれまで通り
-     この端末のなかに残るので、見た目は今までと変わらない。
+     裏側（config.js の apiUrl）が未設定なら、コメント欄は
+     丸ごと隠す。押した記録はこれまで通りこの端末のなかにも
+     残るので、見た目は今までと変わらない。
 
-     数字は「作品を開いたときに一度だけ」裏側から取りに行く。
-     以前は起動時にまとめて一度取り、押すたびにも裏側の返り値で
-     上書きしていたが、Apps Script の応答は速さがまちまちなので、
-     複数の応答が前後して届くと数字が行ったり来たりしてしまって
-     いた。押した/外した瞬間の表示は、届いたばかりの基準値に
-     対して単純に ±1 するだけにし、裏側の返り値では表示を
-     動かさない（裏側には記録だけ飛ばす）。次に基準値を取り直すのは、
-     その作品をまた開いたとき（＝一覧に戻ってから開き直したとき）
-     だけにする。
+     数字そのものは Firebase Realtime Database（CCMHearts）から
+     即座に取る。Apps Script は応答が数秒かかることがあり、それを
+     基準値にしていた頃は押すたびに数字が行ったり来たりしていた
+     ため、Firebase 側が使えるならそちらを優先し、apiUrl の方は
+     「押された」記録をスプレッドシートに残すためだけに裏で叩く
+     （表示には一切関わらせない）。Firebase が未設定の会場では、
+     今まで通り Apps Script のまとめ取得にフォールバックする。
+
+     数字は「作品を開いたときに一度だけ」取りに行く。押した/外した
+     瞬間の表示は、そのとき届いた基準値に対して単純に ±1 するだけ。
+     次に基準値を取り直すのは、その作品をまた開いたとき
+     （＝一覧に戻ってから開き直したとき）だけにする。
      ===================================================== */
   var Cloud = window.CCMCloud || null;
+  var Hearts = window.CCMHearts || null;
+  var HeartsOn = !!((Hearts && Hearts.enabled) || (Cloud && Cloud.enabled));
   var heartCounts = {};
   var heartBaseSlug = null;   /* 今、基準値が揃っている作品 */
 
   function showHeart(slug) {
     var n = $('#p-like-n');
     if (!n) return;
-    if (!Cloud || !Cloud.enabled || heartBaseSlug !== slug) { n.textContent = ''; return; }
+    if (!HeartsOn || heartBaseSlug !== slug) { n.textContent = ''; return; }
     var c = heartCounts[slug];
     n.textContent = (typeof c === 'number' && c > 0) ? String(c) : '';
   }
 
   /* 作品を開くたびに呼ぶ。基準値が揃うまで #p-loading で画面を覆い、
      数字だけが遅れてポツンと現れるのを防ぐ。通信が固まっても
-     待たせすぎないよう、上限つきで諦める。 */
+     待たせすぎないよう、上限つきで諦める（Firebase は普段ここまで
+     待つことはほぼない）。 */
   function loadHeartFor(slug) {
     heartBaseSlug = null;
     var overlay = $('#p-loading');
-    if (!Cloud || !Cloud.enabled) { if (overlay) overlay.hidden = true; return; }
+    if (!HeartsOn) { if (overlay) overlay.hidden = true; return; }
     if (overlay) overlay.hidden = false;
 
     var done = false;
@@ -839,7 +845,11 @@
       if (overlay) overlay.hidden = true;
     }
 
-    Cloud.hearts(true).then(function (map) { settle(map && map[slug]); });
+    if (Hearts && Hearts.enabled) {
+      Hearts.get(slug).then(settle);
+    } else {
+      Cloud.hearts(true).then(function (map) { settle(map && map[slug]); });
+    }
     setTimeout(function () { settle(heartCounts[slug]); }, 4000);   /* 待ちきれなければ、今ある値で諦めて開放する */
   }
 
@@ -1175,14 +1185,18 @@
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
 
       /* 表示は、開いたときに取った基準値に対して単純に ±1 するだけ。
-         裏側の返り値では動かさない（複数の通信が前後して届くと、
-         そちらで上書きするたびに数字が行ったり来たりしていたため）。
-         裏側には記録だけ飛ばし、正しい数字は次にこの作品を開いた
-         ときにまた基準値として取り直す。 */
-      if (Cloud && Cloud.enabled && heartBaseSlug === slug) {
+         どちらの裏側の返り値でも動かさない（複数の通信が前後して
+         届くと、そちらで上書きするたびに数字が行ったり来たりして
+         いたため）。正しい数字は次にこの作品を開いたときにまた
+         基準値として取り直す。
+         Firebase には数え上げ用の加算を、スプレッドシートには
+         「押された」の記録を、それぞれ裏で飛ばす（どちらも表示は
+         待たない）。 */
+      if (HeartsOn && heartBaseSlug === slug) {
         heartCounts[slug] = Math.max(0, (heartCounts[slug] || 0) + (on ? 1 : -1));
         showHeart(slug);
       }
+      if (Hearts && Hearts.enabled) Hearts.bump(slug, on ? 1 : -1);
       if (Cloud && Cloud.enabled) Cloud.heart(slug, on);
 
       if (on) {
