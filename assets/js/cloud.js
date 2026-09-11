@@ -54,13 +54,17 @@ window.CCMCloud = (function () {
       .catch(function () { return null; });
   }
 
-  /* ---- ハートの数をまとめて取る（作品一覧の表示用）---- */
+  /* ---- ハートの数をまとめて取る（作品一覧の表示用）----
+     取得に失敗しても（Apps Script が固まった、圏外だった等）、
+     空のキャッシュを確定として覚えてしまうと、以後ずっと数字が
+     出なくなる。失敗した回は覚えず、次に呼ばれたときにもう一度
+     取りに行けるようにする。 */
   var heartsCache = null;
   function hearts(force) {
     if (heartsCache && !force) return Promise.resolve(heartsCache);
     return get({ action: 'summary' }).then(function (res) {
-      heartsCache = (res && res.ok && res.hearts) ? res.hearts : {};
-      return heartsCache;
+      if (res && res.ok && res.hearts) heartsCache = res.hearts;
+      return heartsCache || {};
     });
   }
 

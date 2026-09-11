@@ -799,11 +799,23 @@
      ===================================================== */
   var Cloud = window.CCMCloud || null;
   var heartCounts = {};
+  /* heart() の応答で数字が確定した作品は、あとから遅れて届く
+     まとめ取得（loadHeartCounts）で上書きさせない。
+     まとめ取得は起動時に一度だけ投げるが、Apps Script は数秒かかる
+     ことがあり、その間に来場者がハートを押すと heart() の応答の方が
+     先に届いて数字が確定する。にもかかわらず、あとから届いた古い
+     まとめ取得の結果でまるごと heartCounts を差し替えていたため、
+     せっかく確定した数字が古い値に巻き戻ったり、集計に載っていない
+     （＝0扱いで表示が消える）ことがあった。 */
+  var heartConfirmed = {};
 
   function loadHeartCounts() {
     if (!Cloud || !Cloud.enabled) return;
     Cloud.hearts().then(function (map) {
-      heartCounts = map || {};
+      map = map || {};
+      Object.keys(map).forEach(function (slug) {
+        if (!heartConfirmed[slug]) heartCounts[slug] = map[slug];
+      });
       if (playerWork) showHeart(playerWork.slug);
     });
   }
@@ -1156,6 +1168,7 @@
         Cloud.heart(slug, on).then(function (count) {
           if (typeof count !== 'number') return;
           heartCounts[slug] = count;
+          heartConfirmed[slug] = true;
           if (playerWork && playerWork.slug === slug) showHeart(slug);
         });
       }
