@@ -315,6 +315,56 @@
     w.addEventListener('resize', place, { passive: true });
   }
 
+  /* =====================================================
+     スマホのメニュー
+     狭い画面ではナビのリンクが隠れるので、右上のボタンから全画面で開く。
+     中身はナビのリンクを写すだけ（ページごとに書き足さなくてよい）。
+     ===================================================== */
+  function mobileMenu() {
+    var links = d.querySelector('.nav-links'), end = d.querySelector('.nav-end');
+    if (!links || !end) return;
+    var btn = d.createElement('button');
+    btn.type = 'button'; btn.className = 'menu-btn';
+    btn.setAttribute('aria-expanded', 'false'); btn.setAttribute('aria-controls', 'menu-sheet');
+    btn.innerHTML = '<span class="sr">メニュー</span><i></i><i></i>';
+    end.appendChild(btn);
+
+    var sheet = d.createElement('nav');
+    sheet.className = 'menu-sheet'; sheet.id = 'menu-sheet';
+    sheet.setAttribute('aria-label', 'メニュー'); sheet.hidden = true;
+    var list = d.createElement('ol');
+    var items = [].slice.call(links.querySelectorAll('a, button'));
+    var survey = end.querySelector('a.cta');
+    if (survey) items.push(survey);
+    items.forEach(function (el, i) {
+      var a = d.createElement('a');
+      /* 作品一覧のページでは、ナビの「作品一覧」がボタンなのでリンクに直す */
+      a.href = el.getAttribute('href') || 'works.html';
+      a.textContent = el.textContent.trim();
+      a.style.setProperty('--mi', i);
+      if (el.classList.contains('is-on') || el.getAttribute('aria-current')) a.setAttribute('aria-current', 'page');
+      var li = d.createElement('li'); li.appendChild(a); list.appendChild(li);
+    });
+    sheet.appendChild(list);
+    var foot = d.createElement('p'); foot.className = 'menu-foot';
+    foot.textContent = '// MIF 2026  10月31日(土)・11月1日(日)';
+    sheet.appendChild(foot);
+    d.body.appendChild(sheet);
+
+    function set(open) {
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      d.documentElement.classList.toggle('menu-open', open);
+      if (open) { sheet.hidden = false; requestAnimationFrame(function () { sheet.classList.add('on'); });
+        var first = sheet.querySelector('a'); if (first) setTimeout(function () { first.focus(); }, 60); }
+      else { sheet.classList.remove('on'); setTimeout(function () { if (!sheet.classList.contains('on')) sheet.hidden = true; }, REDUCE ? 0 : 320); }
+    }
+    btn.addEventListener('click', function () { set(btn.getAttribute('aria-expanded') !== 'true'); });
+    d.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true') { set(false); btn.focus(); }
+    });
+    w.addEventListener('resize', function () { if (w.innerWidth > 820) set(false); }, { passive: true });
+  }
+
   function start() {
     var host = d.getElementById('stars');
     if (host) {
@@ -331,6 +381,7 @@
     splits();
     pointer();
     navInk();
+    mobileMenu();
     requestAnimationFrame(function () { d.body.classList.add('ready'); });
   }
 

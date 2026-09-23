@@ -797,3 +797,36 @@ html::after{content:"";position:fixed;inset:-50%;z-index:9990;pointer-events:non
   .bg .stars,.bg .limb{transform:none}
   .nav-ink{transition:none}
 }
+
+/* =============== スマホのメニュー（site.js の mobileMenu） =============== */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.menu-btn{display:none;position:relative;width:44px;height:44px;border-radius:50%;
+  border:1px solid var(--line-2);z-index:95}
+.menu-btn i{position:absolute;left:13px;right:13px;height:1.5px;background:#fff;
+  transition:transform .35s cubic-bezier(.22,1,.36,1)}
+.menu-btn i:nth-of-type(1){top:17px}
+.menu-btn i:nth-of-type(2){top:25px}
+.menu-open .menu-btn i:nth-of-type(1){transform:translateY(4px) rotate(45deg)}
+.menu-open .menu-btn i:nth-of-type(2){transform:translateY(-4px) rotate(-45deg)}
+.menu-sheet{position:fixed;inset:0;z-index:90;background:#000;
+  display:flex;flex-direction:column;justify-content:center;padding:calc(var(--navh) + 20px) var(--pad) 40px;
+  opacity:0;transition:opacity .3s ease}
+.menu-sheet.on{opacity:1}
+.menu-sheet ol{list-style:none;margin:0;padding:0}
+.menu-sheet li{border-bottom:1px solid var(--line)}
+.menu-sheet a{display:block;padding:16px 0;color:#fff;font-family:var(--font-display);
+  font-size:clamp(30px,9vw,44px);line-height:1.2;
+  opacity:0;transform:translateY(14px);transition:opacity .45s ease,transform .5s cubic-bezier(.2,.9,.2,1)}
+.menu-sheet.on a{opacity:1;transform:none;transition-delay:calc(var(--mi) * 50ms + 60ms)}
+.menu-sheet a[aria-current]{color:var(--acid)}
+.menu-sheet a[aria-current]::before{content:"// ";font-family:var(--font-mono);font-size:.5em;vertical-align:.3em}
+.menu-foot{margin:28px 0 0;font:400 12.5px var(--font-mono);color:var(--muted)}
+.menu-open body{overflow:hidden}
+@media (max-width:820px){
+  .menu-btn{display:block}
+  .nav-end .cta{display:none}      /* アンケートはメニューの中へ */
+}
+@media (prefers-reduced-motion: reduce){
+  .menu-sheet,.menu-sheet a,.menu-btn i{transition:none}
+}
+.menu-open .nav{z-index:100}   /* 開いている間は閉じるボタンをシートの上に */
