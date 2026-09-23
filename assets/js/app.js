@@ -148,8 +148,17 @@
     var maxN = 1;
     cats.forEach(function (c) { if (c.works.length > maxN) maxN = c.works.length; });
 
-    var R = Math.min(vw * 0.22, vh * 0.32, 245);
-    for (var guard = 0; guard < 80; guard++) {
+    var R = Math.min(vw * 0.22, vh * 0.32, 245), guard = 0;
+    /* スマホ幅では見出しの横に並べる余地がない。見出しの下、画面の中央に置く。 */
+    if (vw < 700) {
+      var half = (0.25 + maxN * 0.041) / 2;
+      R = Math.min((vw / 2 - pad - 64) / (1 + half), vh * 0.2, 150);
+      geo.cx = Math.round(vw / 2);
+      geo.cy = Math.round(Math.min(vh - guideRoom - R * (1 + half) - 40,
+                                   Math.max(vh * 0.62, 340 + R * (1 + half))));
+      guard = 99;
+    }
+    for (; guard < 80; guard++) {
       var pd = R * (0.25 + maxN * 0.041);
       var cx = Math.max(vw * 0.5, heroRight + R + pd / 2);
       var cy = Math.max(topRoom + R + pd / 2,
@@ -689,8 +698,8 @@
     $('#hero-title').style.fontSize = zc && zc.jp.length > 5
       ? 'clamp(30px,' + (380 / zc.jp.length / 16) + 'rem,' + Math.floor(380 / zc.jp.length) + 'px)' : '';
     $('#hero-lede').innerHTML = zc
-      ? 'まるい絵ひとつが作品です。<br>横に引くと回ります。クリックで説明が出ます。'
-      : 'ジャンルごとに作品を探検しよう。<br>まるい絵をクリックすると、その中の作品が並びます。';
+      ? 'まるい絵ひとつが作品です。<br>横に引くと回ります。押すと説明が出ます。'
+      : 'ジャンルごとに作品を探検しよう。<br>まるい絵を押すと、その中の作品が並びます。';
     $('#hero-back').hidden = !zc;
 
     /* 右の一覧 */
@@ -718,11 +727,17 @@
     }
 
     /* 吹き出し */
+    var sheet = sheetHost();
+    sheet.innerHTML = '';
     Data.works.forEach(function (wk) {
       if (!wk.node) return;
       wk.node.callHost.innerHTML = '';
+      if (state.openSlug !== wk.slug) return;
+      /* スマホ幅では衛星の横に吹き出しを出す余地がないので、
+         説明は画面下からのシートにする。 */
+      if (vp().w < 700) sheet.appendChild(buildPanel(wk));
       /* 開いた衛星は place() が最前面へ持ち上げる。 */
-      if (state.openSlug === wk.slug) wk.node.callHost.appendChild(buildCallout(wk));
+      else wk.node.callHost.appendChild(buildCallout(wk));
     });
 
     if (!state.zoom) { cam.yaw = 0; cam.pitch = PITCH0; tween = null; }
@@ -737,12 +752,29 @@
     return null;
   }
 
+  function sheetHost() {
+    var s = d.getElementById('csheet');
+    if (!s) {
+      s = el('div', 'csheet'); s.id = 'csheet';
+      s.addEventListener('click', function (e) { e.stopPropagation(); });
+      s.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+      d.body.appendChild(s);
+    }
+    return s;
+  }
+
   function buildCallout(wk) {
     var box = el('div', 'callout');
     box.style.setProperty('--c', wk.node.color);
     box.addEventListener('click', function (e) { e.stopPropagation(); });
+    box.innerHTML = '<i class="cdot"></i><i class="cdiag"></i><i class="chorz"></i>';
+    box.appendChild(buildPanel(wk));
+    return box;
+  }
 
+  function buildPanel(wk) {
     var panel = el('div', 'cpanel');
+    panel.style.setProperty('--c', wk.node.color);
     var kick = el('div', 'kick'); kick.textContent = wk.node.cat.label;
     var h4 = el('h4'); h4.textContent = wk.title;
     var by = el('div', 'by'); by.textContent = wk.author;
@@ -759,10 +791,7 @@
     acts.appendChild(play); acts.appendChild(close);
     panel.appendChild(kick); panel.appendChild(h4); panel.appendChild(by);
     panel.appendChild(p); panel.appendChild(acts);
-
-    box.innerHTML = '<i class="cdot"></i><i class="cdiag"></i><i class="chorz"></i>';
-    box.appendChild(panel);
-    return box;
+    return panel;
   }
 
   function openWork(slug) { state.openSlug = slug; render(); }

@@ -171,9 +171,15 @@ body.no-video .scope-lens video { display: none; }
   margin: 0 auto; padding: calc(var(--navh) + clamp(40px, 8vh, 90px)) var(--pad) 120px; }
 /* 本文の列の後ろだけ、惑星の光を落とす。光る縁と文字が重なると読めないため。 */
 .page-doc .doc::before { content: ""; position: absolute; z-index: -1; pointer-events: none;
-  top: 0; bottom: 0; left: -40px; right: -40px;
+  top: 0; bottom: 0; left: max(-40px, calc((100% - 100vw) / 2)); right: max(-40px, calc((100% - 100vw) / 2));
   background: linear-gradient(90deg, transparent, rgba(0,0,0,.72) 10%, rgba(0,0,0,.72) 90%, transparent); }
 .doc-narrow { max-width: 720px; }
+/* Q&A の分類へ飛ぶ見出し。長いページを下まで送らずに済む。 */
+.qa-jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+.qa-jump a { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px;
+  font-size: 13px; color: var(--muted); text-decoration: none; transition: color .2s, border-color .2s; }
+.qa-jump a:hover, .qa-jump a:focus-visible { color: var(--acid); border-color: rgba(var(--acid-rgb), .5); }
+.qa-group { scroll-margin-top: 96px; }
 .doc-kick { margin: 0; font: 400 12.5px var(--font-mono); letter-spacing: .12em; color: var(--acid); }
 .doc-kick::before { content: "// "; opacity: .55; }
 .doc-title { margin: 18px 0 0; font-weight: 900; line-height: 1.08;
