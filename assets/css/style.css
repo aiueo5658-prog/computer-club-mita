@@ -64,6 +64,16 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 a{color:var(--acid);text-decoration:none}
 :focus-visible{outline:2px solid var(--acid);outline-offset:3px;border-radius:6px}
 
+/* キーボード操作の最初の一手。見えるのは Tab を押したときだけ。 */
+.skip-link{
+  position:fixed;left:16px;top:-60px;z-index:200;
+  background:#0a130f;color:#fff;padding:12px 20px;border-radius:10px;
+  font:600 14px var(--font-num);letter-spacing:.02em;
+  border:1px solid rgba(var(--acid-rgb),.5);
+  transition:top .2s ease;
+}
+.skip-link:focus{top:16px}
+
 .noscript{position:relative;z-index:5;max-width:640px;margin:14vh auto;padding:0 24px;text-align:center}
 .noscript h1{font-size:26px;font-weight:900}
 .noscript p{color:var(--ink-2);font-size:15px;line-height:1.9}
