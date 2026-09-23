@@ -26,16 +26,25 @@ body.page-home, body.page-doc { overflow: auto; }
 .scope::after { content: ""; position: absolute; inset: -5%; border-radius: 50%;
   border: 1px solid rgba(255,255,255,.07); pointer-events: none; }
 
+/* 窓と縁はひとかたまりで、カーソルの方へ少し傾く。中の映像は逆へずれて奥行きが出る */
+.scope-body { position: absolute; inset: 0;
+  transform: perspective(1400px) rotateY(calc(var(--px, 0) * 7deg)) rotateX(calc(var(--py, 0) * -6deg)); }
+
+/* 窓の座標。会期の日付を天体の座標に見立てた読み出し */
+.scope-coord { position: absolute; left: 4%; top: 6%; margin: 0; z-index: 2; display: flex; gap: 16px;
+  font: 400 11.5px var(--font-mono); letter-spacing: .04em; color: rgba(var(--acid-rgb), .72); white-space: nowrap; }
+
 .scope-lens { position: absolute; left: 25.5%; top: 25.5%; width: 49%; height: 49%;
   border-radius: 50%; overflow: hidden; isolation: isolate;
   /* 映像が無いときは、この地の色だけで窓が成立する */
   background: radial-gradient(circle at 38% 32%, #0d3a27 0%, #03140d 62%, #010604 100%);
   box-shadow: 0 0 0 1px rgba(var(--acid-rgb), .5), 0 0 70px rgba(var(--acid-rgb), .16); }
 .scope-lens video { position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: cover; transform: scale(1.16); pointer-events: none; }
+  object-fit: cover; pointer-events: none;
+  transform: scale(1.22) translate3d(calc(var(--px, 0) * -12px), calc(var(--py, 0) * -9px), 0); }
 body.no-video .scope-lens video { display: none; }
 /* 窓のガラス：走査線と、縁ほど暗くなる影 */
-.scope-lens::after { content: ""; position: absolute; inset: 0; border-radius: 50%; z-index: 1; pointer-events: none;
+.scope-lens::after { content: ""; position: absolute; inset: 0; border-radius: 50%; z-index: 2; pointer-events: none;
   background:
     repeating-linear-gradient(0deg, rgba(0,0,0,.2) 0 1px, transparent 1px 3px),
     radial-gradient(circle, transparent 52%, rgba(0,6,3,.78) 100%); }
@@ -46,7 +55,42 @@ body.no-video .scope-lens video { display: none; }
   filter: drop-shadow(0 0 16px rgba(var(--acid-rgb), .35));
   animation: scopeSpin 140s linear infinite; }
 @keyframes scopeSpin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .scope-ring { animation: none; } }
+
+/* ---- 開いた瞬間の見せ場：食の終わり ----
+   窓は月の影に覆われた状態から始まり、影が左下へ滑り去って映像が現れる。
+   最後の光が右上で一瞬ひかり（ダイヤモンドリング）、縁のロゴが回り込んで止まる。
+   導入画面（初回）の間は待ち、導入が明けてから始まる。 */
+.scope-moon, .scope-flare { display: none; }
+.js .scope-moon { display: block; position: absolute; inset: -3%; z-index: 1; border-radius: 50%;
+  background: radial-gradient(circle at 42% 40%, #07100b 0%, #020403 62%, #000 100%); }
+.js .scope-flare { display: block; position: absolute; z-index: 3; right: 1%; top: 3%;
+  width: 42%; height: 42%; border-radius: 50%; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  background: radial-gradient(circle, rgba(255,255,255,.95) 0%, rgba(210,255,210,.6) 12%,
+    rgba(var(--acid-rgb), .2) 34%, transparent 62%); }
+.js .scope-ring { opacity: 0; }
+.js body.ready:not(.intro-lock) .scope-moon { animation: egress 2.1s cubic-bezier(.66,0,.2,1) .35s both; }
+.js body.ready:not(.intro-lock) .scope-flare { animation: flare 1.7s ease-out .5s both; }
+.js body.ready:not(.intro-lock) .scope-ring {
+  animation: ringIn 2.3s cubic-bezier(.2,.8,.2,1) .15s both, scopeSpin 140s linear 2.45s infinite; }
+@keyframes egress { from { transform: translate(0, 0); } to { transform: translate(-118%, 52%); } }
+@keyframes flare { 0% { opacity: 0; transform: scale(.3); } 22% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.45); } }
+@keyframes ringIn { from { opacity: 0; rotate: -55deg; scale: .94; } to { opacity: 1; rotate: 0deg; scale: 1; } }
+
+/* 観測中のしるし。ゆっくり明滅する点 */
+.scope-log-k::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px;
+  border-radius: 50%; background: var(--acid); vertical-align: 1px;
+  box-shadow: 0 0 8px rgba(var(--acid-rgb), .8); animation: live 1.8s ease-in-out infinite; }
+@keyframes live { 50% { opacity: .25; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .scope-ring { animation: none; }
+  .js .scope-ring { opacity: 1; animation: none !important; }
+  .js .scope-moon, .js .scope-flare { display: none; }
+  .scope-body, .scope-lens video { transform: none; }
+  .scope-lens video { transform: scale(1.22); }
+  .scope-log-k::before { animation: none; }
+}
 
 /* 観測ログ：窓の下に、実際の作品名が順番に流れる */
 .scope-log { position: absolute; left: 50%; top: 93%; transform: translateX(-50%);
@@ -57,6 +101,7 @@ body.no-video .scope-lens video { display: none; }
   border-bottom: 1px solid rgba(255,255,255,.22); padding-bottom: 2px;
   transition: opacity .26s ease, color .2s, border-color .2s; }
 .scope-log-w:hover { color: var(--acid); border-color: var(--acid); }
+.scope-log-w .by { margin-left: 12px; color: #93a09b; }
 .scope-log-w.swap { opacity: 0; }
 
 /* 縦に置くしかない幅では、窓を上に、言葉を下に */
@@ -66,21 +111,26 @@ body.no-video .scope-lens video { display: none; }
   .scope { --S: min(96vw, 460px); position: relative; left: auto; top: auto; order: -1;
     margin: 0 auto 4vw; }
   .scope-log { top: 93%; }
-  /* 日数は折り返しで途中が切れないよう、行を分ける */
-  .home-count { display: block; margin-top: 4px; }
+  .scope-coord { top: 3%; }
   /* 画面下に貼り付いた飾り文字は、狭い画面では本文と重なるので出さない */
   .home-theme { display: none; }
 }
 
 /* 開催情報は「観測ログの1行」。枠やバッジにしない。 */
-.home-log { margin: 0; font: 400 13px var(--font-mono); letter-spacing: .06em; color: var(--acid); }
+/* 記号でつながず、間隔だけで区切る */
+.home-log { margin: 0; display: flex; flex-wrap: wrap; gap: 4px 20px;
+  font: 400 13px var(--font-mono); letter-spacing: .02em; color: var(--acid); }
+.home-log span:nth-child(2) { color: #dbe5e1; }
 .home-count { color: #fff; }
 
-/* 「ようこそ」は小さく、名前を大きく。大小の差で見出しに張りを出す */
-.home-title { margin: 22px 0 0; font-weight: 900; line-height: 1.02;
-  letter-spacing: -.05em; font-size: clamp(40px, 5.6vw, 84px); }
-.home-hello { display: block; margin-bottom: .2em; font-size: .44em; font-weight: 700;
-  letter-spacing: -.01em; color: #b9c9c3; }
+/* 「ようこそ」は小さく、名前を大きく。
+   ブランドの // は等幅の緑で、名前の前に置く（ロゴの組み） */
+.home-title { margin: 22px 0 0; line-height: 1.08; font-size: clamp(46px, 6.3vw, 98px); }
+.home-hello { display: block; margin-bottom: .16em; font-size: .4em; color: #b9c9c3; }
+/* 1文字ずつの箱（.ch）は上揃えなので、小さい // だけ行の上に浮いてしまう。
+   // をひとかたまりの箱にして、名前の字の真ん中の高さに置き直す */
+.home-slash { display: inline-block; font-family: var(--font-mono); color: var(--acid);
+  font-size: .5em; line-height: 1; margin-right: .3em; letter-spacing: 0; vertical-align: .52em; }
 .home-lede { margin: 26px 0 0; max-width: 520px; font-size: clamp(14px, 1.3vw, 16.5px);
   line-height: 1.95; color: #c2d2cd; }
 .home-lede b { color: #fff; font-weight: 700; }
@@ -175,8 +225,8 @@ body.no-video .scope-lens video { display: none; }
 .sv-side { position: sticky; top: calc(var(--navh) + clamp(20px, 3.4vh, 42px)); }
 .sv-side .doc-title { font-size: clamp(32px, 3.5vw, 56px); }
 .sv-side .doc-lede { margin-top: 22px; font-size: 14.5px; }
-.sv-meta { margin: 26px 0 0; font: 600 11.5px var(--font-num);
-  letter-spacing: .16em; color: var(--faint); }
+.sv-meta { margin: 26px 0 0; display: flex; flex-wrap: wrap; gap: 4px 16px;
+  font: 400 12px var(--font-mono); letter-spacing: .02em; color: var(--faint); }
 
 .sv-main { min-width: 0; }
 .sv-grid { margin-top: 0; display: grid; grid-template-columns: 1fr 1fr;

@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- JS が動く環境だけ、最初の一瞬から「月が窓を覆った状態」にしておく（動かない環境では覆わない） -->
+<script>document.documentElement.classList.add('js');</script>
 <meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
 <title>// 昆布観測島 作品展 2026</title>
@@ -11,9 +13,9 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260923112532">
-<link rel="stylesheet" href="assets/css/pages.css?v=20260923112532">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=20260923114645">
+<link rel="stylesheet" href="assets/css/pages.css?v=20260923114645">
 </head>
 <body class="page-home">
 
@@ -25,11 +27,8 @@
   <div class="stars" aria-hidden="true"></div>
   <div class="intro-stage intro-welcome" id="intro-welcome">
     <p class="intro-eyebrow">// 昆布観測島</p>
-    <h1 class="intro-h">コンピュータ部へ<br>ようこそ</h1>
-    <button class="cta big intro-go" id="intro-go" type="button">
-      特設サイトへ
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
-    </button>
+    <h1 class="intro-h" data-split>コンピュータ部へ<br>ようこそ</h1>
+    <button class="cta big intro-go" id="intro-go" type="button">特設サイトへ</button>
   </div>
   <div class="intro-stage intro-load" id="intro-load" hidden>
     <div class="intro-ring" aria-hidden="true"><i></i></div>
@@ -168,9 +167,13 @@
 
 <main class="home" data-reveal>
   <div class="home-copy">
-    <p class="home-log" data-reveal-item>// MIF 2026 ── 10/31(土)・11/01(日)<span class="home-count" id="home-count"></span></p>
+    <p class="home-log" data-reveal-item>
+      <span>// MIF 2026</span>
+      <span>10月31日(土)・11月1日(日)</span>
+      <span class="home-count" id="home-count"></span>
+    </p>
 
-    <h1 class="home-title" data-reveal-item><span class="home-hello">ようこそ</span>// 昆布観測島へ</h1>
+    <h1 class="home-title" data-split><span class="home-hello">ようこそ</span><span class="home-slash">//</span>昆布観測島へ</h1>
 
     <p class="home-lede" data-reveal-item>
       部員が半年かけて作ったゲームや映像、音楽に3Dモデルなどが<br>
@@ -178,10 +181,7 @@
     </p>
 
     <div class="home-acts" data-reveal-item>
-      <a class="cta big" href="works.html">
-        作品を探す
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
-      </a>
+      <a class="cta big" href="works.html">作品を探す</a>
       <a class="home-link" href="qa.html">// 昆布観測島とは？</a>
     </div>
 
@@ -197,25 +197,34 @@
        その内側の丸い窓に部員の映像を流す。窓の下に、実際の作品名が
        「観測ログ」として順番に流れる（押すとその作品へ）。 -->
   <figure class="scope" data-reveal-item>
-    <div class="scope-lens" aria-hidden="true">
-      <!-- 7.4MB。データ節約・動きを控える設定のときは下のスクリプトが止める -->
-      <video id="bgv" autoplay muted loop playsinline preload="metadata" disablepictureinpicture>
-        <source src="assets/video/computopia2.mp4" type="video/mp4">
-      </video>
+    <!-- 窓の座標。赤経 10時31分・赤緯 +11度01分 は、会期の 10/31 と 11/01 -->
+    <p class="scope-coord" aria-hidden="true"><span>RA 10ʰ31ᵐ</span><span>DEC +11°01′</span></p>
+    <!-- カーソルの方へ少し傾く（site.js が --px / --py を書く） -->
+    <div class="scope-body">
+      <div class="scope-lens" aria-hidden="true">
+        <!-- 7.4MB。データ節約・動きを控える設定のときは下のスクリプトが止める -->
+        <video id="bgv" autoplay muted loop playsinline preload="metadata" disablepictureinpicture>
+          <source src="assets/video/computopia2.mp4" type="video/mp4">
+        </video>
+        <!-- 開いた瞬間だけ、窓を覆っていた月の影が滑り去る（食の終わり）。
+             最後の光が一瞬ひかる（ダイヤモンドリング） -->
+        <i class="scope-moon"></i>
+        <i class="scope-flare"></i>
+      </div>
+      <span class="scope-ring" aria-hidden="true"></span>
     </div>
-    <span class="scope-ring" aria-hidden="true"></span>
     <figcaption class="scope-log" id="scope-log" hidden>
       <span class="scope-log-k">// 観測ログ</span>
-      <a class="scope-log-w" id="scope-log-w" href="works.html"></a>
+      <a class="scope-log-w" id="scope-log-w" href="works.html"><span class="t"></span><span class="by"></span></a>
     </figcaption>
   </figure>
 </main>
 
 <p class="home-theme" aria-hidden="true">COMPUTER CLUB&nbsp;&nbsp;2026</p>
 
-<script src="assets/js/site.js?v=20260923112532"></script>
-<script src="assets/js/config.js?v=20260923112532"></script>
-<script src="assets/js/data.js?v=20260923112532"></script>
+<script src="assets/js/site.js?v=20260923114645"></script>
+<script src="assets/js/config.js?v=20260923114645"></script>
+<script src="assets/js/data.js?v=20260923114645"></script>
 <script>
 (function () {
   var facts = document.getElementById('home-facts');
@@ -245,11 +254,13 @@
     var now = Date.now(), s = Date.parse(F.start), e = Date.parse(F.end);
     var day = function (t) { return Math.floor((t + 9 * 3600000) / 86400000); };
     var dd = day(s) - day(now);
-    cnt.textContent = now > e ? ' ── アーカイブ公開中'
-                    : now >= s ? ' ── 開催中'
-                    : dd <= 0 ? ' ── きょうから'
-                    : dd === 1 ? ' ── あした開催'
-                    : ' ── あと ' + dd + ' 日';
+    var msg = now > e ? 'アーカイブ公開中'
+            : now >= s ? 'いま開催中'
+            : dd <= 0 ? 'きょうから'
+            : dd === 1 ? 'あした開催'
+            : '開催まで あと ' + dd + ' 日';
+    if (window.CCMSite && window.CCMSite.decode) window.CCMSite.decode(cnt, msg, 900);
+    else cnt.textContent = msg;
   }
 
   if (window.CCMData) {
@@ -272,18 +283,22 @@
       var j = Math.floor(Math.random() * (i + 1)), t = list[i]; list[i] = list[j]; list[j] = t;
     }
     var k = 0;
+    var decode = window.CCMSite && window.CCMSite.decode;
+    var tEl = a.querySelector('.t'), byEl = a.querySelector('.by');
+    /* 等幅書体（PlemolJP）は全角スペースを「見える四角」で描くので、普通の空白にしておく */
+    function tidy(s) { return String(s || '').replace(/　/g, ' ').trim(); }
+    /* 切り替わるたびに、観測装置の表示のように字が読み出されて落ち着く */
     function put() {
       var w = list[k++ % list.length];
-      a.textContent = w.title + (w.author ? '  ─  ' + w.author : '');
+      var t = tidy(w.title), by = tidy(w.author);
+      if (decode) { decode(tEl, t, 700); decode(byEl, by, 700); }
+      else { tEl.textContent = t; byEl.textContent = by; }
       a.href = 'works.html#w/' + encodeURIComponent(w.slug);
     }
     box.hidden = false;
     put();
     if (REDUCE) return;
-    setInterval(function () {
-      a.classList.add('swap');
-      setTimeout(function () { put(); a.classList.remove('swap'); }, 260);
-    }, 4200);
+    setInterval(put, 4600);
   }
   /* 映像が読めない環境では地の色に任せる。
      データ節約モードや「動きを減らす」設定の人には、そもそも流さない

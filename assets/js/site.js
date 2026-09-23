@@ -166,6 +166,155 @@
     }, true);
   }
 
+  /* =====================================================
+     見出しを一文字ずつ立ち上げる（[data-split]）
+     文字を <span class="ch"><i>字</i></span> に組み直し、.split-in で動かす。
+     中の <span> や <br> はそのまま残す（ホームの「ようこそ」「//」など）。
+     読み上げ用に、元の文を aria-label に置いておく。
+     ===================================================== */
+  var SPLIT_MS = 36, RISE_MS = 950;
+  function splitNode(el) {
+    var text = el.textContent;
+    el.setAttribute('aria-label', text.replace(/\s+/g, ' ').trim());
+    var n = 0;
+    (function walk(node) {
+      [].slice.call(node.childNodes).forEach(function (k) {
+        if (k.nodeType === 3) {
+          var frag = d.createDocumentFragment();
+          Array.from(k.nodeValue).forEach(function (c) {
+            if (/\s/.test(c)) { frag.appendChild(d.createTextNode(c)); return; }
+            var s = d.createElement('span'); s.className = 'ch'; s.setAttribute('aria-hidden', 'true');
+            var i = d.createElement('i'); i.textContent = c; i.style.setProperty('--ci', n++);
+            s.appendChild(i); frag.appendChild(s);
+          });
+          node.replaceChild(frag, k);
+        } else if (k.nodeType === 1 && k.tagName !== 'BR' && !k.classList.contains('ch')) {
+          walk(k);
+        }
+      });
+    })(el);
+    el._split = text;
+    el._chars = n;
+  }
+  function playSplit(el) {
+    el.classList.remove('split-in', 'split-done');
+    void el.offsetWidth;                                /* 同じ要素でもう一度動かすため */
+    el.classList.add('split-in');
+    clearTimeout(el._doneT);
+    el._doneT = setTimeout(function () { el.classList.add('split-done'); },
+                           RISE_MS + (el._chars || 0) * SPLIT_MS + 300);
+  }
+  function splits() {
+    var els = [].slice.call(d.querySelectorAll('[data-split]'));
+    if (!els.length || REDUCE) return;
+    els.forEach(splitNode);
+
+    /* 導入画面（初回のホーム）の間は、導入の中の見出しだけを動かす。
+       導入が明けたら、残りを動かす。 */
+    var locked = d.body.classList.contains('intro-lock');
+    els.forEach(function (el) { if (!locked || el.closest('.intro')) playSplit(el); });
+    if (locked) {
+      var mo = new MutationObserver(function () {
+        if (d.body.classList.contains('intro-lock')) return;
+        mo.disconnect();
+        els.forEach(function (el) { if (!el.closest('.intro')) playSplit(el); });
+      });
+      mo.observe(d.body, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    /* 中身を差し替えられたら（作品一覧でジャンルを切り替えたとき）組み直す。
+       文が変わったときだけ、もう一度立ち上げる。 */
+    els.forEach(function (el) {
+      new MutationObserver(function () {
+        if (el.querySelector('.ch')) return;            /* 自分で組み直した直後 */
+        var changed = el.textContent !== el._split;
+        splitNode(el);
+        if (changed) playSplit(el);
+      }).observe(el, { childList: true });
+    });
+  }
+
+  /* =====================================================
+     文字の読み出し（観測装置の表示が切り替わる感じ）
+     左から順に、でたらめな字が本来の字に落ち着く。
+     ===================================================== */
+  var POOL = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモラリルレロ0123456789ABCDEF';
+  function decode(el, text, ms) {
+    text = String(text == null ? '' : text);
+    if (!el) return;
+    if (el._decodeRaf) cancelAnimationFrame(el._decodeRaf);
+    if (REDUCE) { el.textContent = text; return; }
+    var dur = ms || 560, t0 = null, chars = Array.from(text);
+    function frame(now) {
+      if (t0 === null) t0 = now;
+      var k = Math.min(1, (now - t0) / dur), out = '';
+      for (var i = 0; i < chars.length; i++) {
+        var at = 0.25 + 0.75 * (i / Math.max(1, chars.length));
+        out += (k >= at || /\s/.test(chars[i])) ? chars[i] : POOL.charAt((Math.random() * POOL.length) | 0);
+      }
+      el.textContent = out;
+      if (k < 1) el._decodeRaf = requestAnimationFrame(frame);
+      else el._decodeRaf = 0;
+    }
+    el._decodeRaf = requestAnimationFrame(frame);
+  }
+
+  /* =====================================================
+     カーソルに応える奥行き
+     星空（.bg）と観測窓（.scope）に --px / --py（-1〜1）を書く。
+     ルートに書くと重い作品一覧まで毎回計算し直すので、使う要素にだけ書く。
+     ===================================================== */
+  function pointer() {
+    if (REDUCE || !(w.matchMedia && w.matchMedia('(pointer: fine)').matches)) return;
+    var targets = [].slice.call(d.querySelectorAll('.bg, .scope'));
+    if (!targets.length) return;
+    var tx = 0, ty = 0, x = 0, y = 0, running = false;
+    function step() {
+      x += (tx - x) * 0.07; y += (ty - y) * 0.07;
+      targets.forEach(function (t) {
+        t.style.setProperty('--px', x.toFixed(4));
+        t.style.setProperty('--py', y.toFixed(4));
+      });
+      if (Math.abs(tx - x) > 0.0008 || Math.abs(ty - y) > 0.0008) requestAnimationFrame(step);
+      else running = false;
+    }
+    d.addEventListener('pointermove', function (e) {
+      if (e.pointerType !== 'mouse') return;
+      tx = e.clientX / w.innerWidth * 2 - 1;
+      ty = e.clientY / w.innerHeight * 2 - 1;
+      if (!running) { running = true; requestAnimationFrame(step); }
+    }, { passive: true });
+  }
+
+  /* =====================================================
+     ナビの下線は1本だけ。狙ったリンクへ滑り、離れると現在地に戻る。
+     現在地と狙い先が同時に光ると、どちらが現在地か読めなくなるため。
+     ===================================================== */
+  function navInk() {
+    var nav = d.querySelector('.nav-links');
+    if (!nav) return;
+    var ink = d.createElement('i');
+    ink.className = 'nav-ink'; ink.setAttribute('aria-hidden', 'true');
+    nav.appendChild(ink);
+    var cur = nav.querySelector('.is-on');
+    function to(el) {
+      if (!el || !nav.contains(el)) { ink.style.opacity = '0'; return; }
+      var r = el.getBoundingClientRect(), p = nav.getBoundingClientRect();
+      ink.style.transform = 'translateX(' + (r.left - p.left).toFixed(1) + 'px) scaleX(' + r.width.toFixed(1) + ')';
+      ink.style.opacity = '1';
+    }
+    function place() {
+      ink.style.transition = 'none'; to(cur); void ink.offsetWidth; ink.style.transition = '';
+    }
+    nav.addEventListener('pointerover', function (e) { to(e.target.closest('a, button')); });
+    nav.addEventListener('pointerleave', function () { to(cur); });
+    nav.addEventListener('focusin', function (e) { to(e.target.closest('a, button')); });
+    nav.addEventListener('focusout', function () { to(cur); });
+    place();
+    if (d.fonts && d.fonts.ready) d.fonts.ready.then(place);   /* 書体が届いてから測り直す */
+    w.addEventListener('resize', place, { passive: true });
+  }
+
   function start() {
     var host = d.getElementById('stars');
     if (host) {
@@ -179,10 +328,13 @@
     transitions();
     reveal();
     buttonFeel();
+    splits();
+    pointer();
+    navInk();
     requestAnimationFrame(function () { d.body.classList.add('ready'); });
   }
 
-  w.CCMSite = { stars: stars, reveal: reveal, countTo: countTo };
+  w.CCMSite = { stars: stars, reveal: reveal, countTo: countTo, decode: decode };
 
   if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', start);
   else start();

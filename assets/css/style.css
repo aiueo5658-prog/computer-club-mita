@@ -3,6 +3,20 @@
    場面はひとつ。動くのはカメラだけ。
    ========================================================= */
 
+/* =============== 書体 ===============
+   ・見出し  … CCM Display（コーポレート・ロゴ Bold の、サイトで使う字だけ）
+               ※明朝体は日本語のサイトでは敬遠されるので使わない
+   ・ラベル／ログ／数字 … CCM Mono（PlemolJP Console。IBM Plex Mono ＋ IBM Plex Sans JP）
+   ・本文    … IBM Plex Sans JP（Google Fonts。CCM Mono の日本語と同じ系統）
+   どれも SIL OFL。作り方と著作権表示は tools/subset-fonts.py と assets/fonts/LICENSE.txt。
+   見出しの字を足して一部だけ書体が変わったら、tools/subset-fonts.py を実行し直す。 */
+@font-face{font-family:"CCM Display";src:url(../fonts/ccm-display.woff2) format("woff2");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"CCM Mono";src:url(../fonts/ccm-mono-regular.woff2) format("woff2");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"CCM Mono";src:url(../fonts/ccm-mono-bold.woff2) format("woff2");
+  font-weight:700;font-style:normal;font-display:swap}
+
 :root{
   --ink:#ffffff;
   --ink-2:#9aa8a3;
@@ -14,10 +28,12 @@
   --line-2:rgba(255,255,255,.2);
   --panel:rgba(8,14,12,.8);
 
-  --font-jp:"Zen Kaku Gothic New","Hiragino Sans",system-ui,sans-serif;
-  --font-num:Archivo,system-ui,sans-serif;
-  /* 小見出し・数字など「観測ログ」の声。ブランド名が // で始まるのに合わせる */
-  --font-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --font-jp:"IBM Plex Sans JP","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --font-display:"CCM Display","IBM Plex Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  /* 小見出し・数字など「観測ログ」の声。ブランド名が // で始まるのに合わせる。
+     間引いた字に無いものは、同じ系統の IBM Plex Sans JP に落ちる */
+  --font-mono:"CCM Mono","IBM Plex Sans JP",ui-monospace,Consolas,monospace;
+  --font-num:var(--font-mono);
 
   --pad:clamp(20px,3.4vw,56px);
   --navh:76px;
@@ -725,4 +741,59 @@ html.novt body.leaving{
 }
 @media (prefers-reduced-motion: reduce){
   .rate.pop,.chip.pop{ animation:none }
+}
+
+
+/* =========================================================
+   2026-09 書体と動きの見直し
+   ========================================================= */
+
+/* 見出しはコーポレート・ロゴ Bold（それ自体が太い1ウェイト）。400 に固定し、にせの太字を作らせない。
+   palt で仮名を詰め、見出しそのものを「組版」として見せる。
+   （作品名など、あとから流し込む文字は本文の書体のまま。間引いた書体に無い字があるため） */
+body :is(.home-title,.hero-title,.doc-title,.intro-h,.guide-name,.side-title,.zonecard-title,.thanks-t,.noscript h1){
+  font-family:var(--font-display);font-weight:400;font-synthesis:none;
+  font-feature-settings:"palt";letter-spacing:0}
+
+/* 小見出しは、全部大文字の字間を広げたラベルにしない。コードのコメントのように小文字で */
+body :is(.hero-kick,.doc-kick,.guide-kick,.side-kick,.player-kick,.zonecard-kick,.cpanel .kick,.flag i,.ec-cap,.home-theme,.frame .hint b){
+  text-transform:lowercase;letter-spacing:.04em}
+
+/* 画面全体にごく薄い粒子。黒一色の平たさを消す（映画のフィルムの粒） */
+html::after{content:"";position:fixed;inset:-50%;z-index:9990;pointer-events:none;opacity:.055;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 1s steps(5) infinite}
+@keyframes grain{
+  0%{transform:translate(0,0)} 20%{transform:translate(-3%,2%)} 40%{transform:translate(2%,-3%)}
+  60%{transform:translate(-2%,-1%)} 80%{transform:translate(3%,3%)} 100%{transform:translate(0,0)}}
+
+/* ナビの下線は1本だけ。狙ったリンクへ滑り、離れると現在地に戻る（site.js の navInk） */
+.nav-links{position:relative}
+.nav-ink{position:absolute;left:0;bottom:-8px;width:1px;height:1px;pointer-events:none;
+  background:var(--acid);box-shadow:0 0 8px rgba(var(--acid-rgb),.7);opacity:0;
+  transform-origin:0 50%;transition:transform .45s cubic-bezier(.22,1,.36,1),opacity .25s ease}
+
+/* 押せるものは、押す前に色で答える */
+.cta{transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .2s,background-color .25s ease}
+.cta:hover{background:var(--acid)}
+
+/* 見出しを一文字ずつ立ち上げる（site.js の split）。.split-in が付いた瞬間に動く */
+.ch{display:inline-block;overflow:hidden;vertical-align:top;
+  padding:.08em 0 .1em;margin:-.08em 0 -.1em}
+.ch > i{display:inline-block;font-style:inherit;transform:translateY(108%);opacity:0}
+.split-in .ch > i{animation:chRise .95s cubic-bezier(.2,.9,.2,1) both;
+  animation-delay:calc(var(--ci) * 36ms + var(--sd, 0ms))}
+@keyframes chRise{from{transform:translateY(108%);opacity:0}to{transform:none;opacity:1}}
+/* 立ち上がり終わったあと、同じ文で組み直されても（再描画）もう動かさない */
+.split-done .ch > i{animation:none;transform:none;opacity:1}
+
+/* 星はカーソルに合わせてわずかに奥行きで動く（site.js が --px / --py を書く） */
+.bg .stars{transform:translate3d(calc(var(--px,0) * -14px),calc(var(--py,0) * -10px),0)}
+.bg .limb{transform:translate3d(calc(var(--px,0) * -26px),calc(var(--py,0) * -18px),0)}
+
+@media (prefers-reduced-motion: reduce){
+  html::after{animation:none}
+  .ch > i{transform:none;opacity:1;animation:none !important}
+  .bg .stars,.bg .limb{transform:none}
+  .nav-ink{transition:none}
 }
