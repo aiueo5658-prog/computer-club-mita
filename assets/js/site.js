@@ -138,8 +138,9 @@
 
   /* =====================================================
      ボタンの手ざわり
-     カーソルに寄る（磁石）のと、押した点から輪が広がるのと。
-     どちらも見た目だけで、当たり判定はいじらない。
+     カーソルに少し寄る（磁石）。見た目だけで、当たり判定はいじらない。
+     （押した点から輪が広がる演出は、どこにでもある既製品っぽさが
+     強かったので外した）
      ===================================================== */
   function buttonFeel() {
     if (REDUCE) return;
@@ -163,19 +164,6 @@
       var b = e.target.closest && e.target.closest(sel);
       if (b) { b.style.setProperty('--mx', '0px'); b.style.setProperty('--my', '0px'); }
     }, true);
-
-    d.addEventListener('pointerdown', function (e) {
-      var b = e.target.closest('.cta, .ghost');
-      if (!b) return;
-      var r = b.getBoundingClientRect();
-      var ring = d.createElement('i');
-      ring.className = 'ripple';
-      var s = Math.max(r.width, r.height) * 1.8;
-      ring.style.cssText = 'width:' + s + 'px;height:' + s + 'px;left:' +
-        (e.clientX - r.left - s / 2) + 'px;top:' + (e.clientY - r.top - s / 2) + 'px';
-      b.appendChild(ring);
-      ring.addEventListener('animationend', function () { ring.remove(); });
-    });
   }
 
   function start() {

@@ -814,7 +814,9 @@
   var Hearts = window.CCMHearts || null;
   var HeartsOn = !!((Hearts && Hearts.enabled) || (Cloud && Cloud.enabled));
   var Comments = window.CCMComments || null;
-  var CommentsOn = !!((Comments && Comments.enabled) || (Cloud && Cloud.enabled));
+  /* ひとことは必ず裏側（Jev の審査）を通して書く。裏側が無ければ欄ごと出さない。
+     読むのは Firebase があればそちら（速い）、無ければ裏側から。 */
+  var CommentsOn = !!(Cloud && Cloud.enabled);
   var heartCounts = {};
   var heartBaseSlug = null;   /* 今、基準値が揃っている作品 */
 
@@ -1225,25 +1227,30 @@
         var send = $('#cmt-send');
         send.disabled = true;
         note.classList.remove('bad');
-        note.textContent = '送っています…';
+        note.textContent = '確認しています…';
 
-        /* 表示に使うのは Firebase（速い）。スプレッドシートには
-           記録として裏で残すだけで、表示の成否には関わらせない。 */
-        var write = (Comments && Comments.enabled) ? Comments.add(slug, name, text) : Cloud.addComment(slug, name, text);
-        if (Comments && Comments.enabled && Cloud && Cloud.enabled) Cloud.addComment(slug, name, text);
-
-        write.then(function (ok) {
+        /* 裏側が Jev で審査して、公開してよいものだけを Firebase に載せる。
+           published … 載った / held … 部員の確認待ち / rejected・slow … 載らない */
+        Cloud.addComment(slug, name, text, playerWork.title).then(function (res) {
           send.disabled = false;
-          if (!ok) {
+          if (!res) {
             note.textContent = '送れませんでした。少し待ってもう一度どうぞ。';
             note.classList.add('bad');
             return;
           }
-          $('#cmt-text').value = '';
-          note.textContent = 'ありがとうございました。';
-          /* 書いたものがすぐ見えるように読み直す。loadComments だと
-             この note の文言まで空にしてしまうので、一覧だけ読み直す。 */
-          if (playerWork && playerWork.slug === slug) refreshComments(slug);
+          if (res.status === 'published' || res.status === 'held') {
+            $('#cmt-text').value = '';
+            note.textContent = res.message || (res.status === 'published'
+              ? 'ありがとうございます。載せました。'
+              : 'ありがとうございます。部員が確認してから載せます。');
+            /* 書いたものがすぐ見えるように読み直す。loadComments だと
+               この note の文言まで空にしてしまうので、一覧だけ読み直す。 */
+            if (res.status === 'published' && playerWork && playerWork.slug === slug) refreshComments(slug);
+            return;
+          }
+          /* 載せられなかったときは、書いた文を消さずに残す（直して送り直せる） */
+          note.textContent = res.message || '送れませんでした。';
+          note.classList.add('bad');
         });
       });
     }

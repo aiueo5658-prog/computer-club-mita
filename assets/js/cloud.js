@@ -99,10 +99,19 @@ window.CCMCloud = (function () {
     });
   }
 
-  /* ---- コメントを書く ---- */
-  function addComment(slug, name, text) {
-    return post({ action: 'comment', slug: slug, name: name, text: text })
-      .then(function (res) { return !!(res && res.ok); });
+  /* ---- ひとことを書く ----
+     裏側が Jev で審査し、公開してよいものだけを Firebase に載せる。
+     返り値は { status: 'published' | 'held' | 'rejected' | 'slow', message }。
+     通信に失敗したときは null。 */
+  function addComment(slug, name, text, title) {
+    return post({ action: 'comment', slug: slug, name: name, text: text, title: title || '', id: deviceId() })
+      .then(function (res) {
+        if (!res) return null;
+        if (res.status) return { status: res.status, message: res.message || '' };
+        /* 審査の入る前の裏側（古いデプロイ）は status を返さない。
+           その場合もシートには残っているので「確認待ち」として扱う。 */
+        return res.ok ? { status: 'held', message: '' } : null;
+      });
   }
 
   /* ---- アンケートを送る ---- */

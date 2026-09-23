@@ -8,13 +8,16 @@
   --ink-2:#9aa8a3;
   --muted:#8d9a96;
   --faint:#7a8884;
-  --acid:#00ff9c;
+  --acid:#00ff00;
+  --acid-rgb:0,255,0;
   --line:rgba(255,255,255,.13);
   --line-2:rgba(255,255,255,.2);
   --panel:rgba(8,14,12,.8);
 
   --font-jp:"Zen Kaku Gothic New","Hiragino Sans",system-ui,sans-serif;
   --font-num:Archivo,system-ui,sans-serif;
+  /* 小見出し・数字など「観測ログ」の声。ブランド名が // で始まるのに合わせる */
+  --font-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
 
   --pad:clamp(20px,3.4vw,56px);
   --navh:76px;
@@ -42,7 +45,7 @@ body{
   overflow:hidden;
 }
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
-a{color:#7cffc4;text-decoration:none}
+a{color:var(--acid);text-decoration:none}
 :focus-visible{outline:2px solid var(--acid);outline-offset:3px;border-radius:6px}
 
 .noscript{position:relative;z-index:5;max-width:640px;margin:14vh auto;padding:0 24px;text-align:center}
@@ -62,9 +65,10 @@ a{color:#7cffc4;text-decoration:none}
 .limb i{position:absolute;border-radius:50%}
 .limb-glow{
   left:-772px;top:-772px;width:1544px;height:1544px;
+  /* 食の縁の光。ロゴと同じ緑1色の濃淡だけで作る（青・紫を混ぜない）。 */
   background:conic-gradient(from 235deg,
-    rgba(0,255,156,0) 0deg, rgba(0,255,156,.95) 24deg, rgba(165,255,228,1) 62deg,
-    rgba(70,215,255,.95) 100deg, rgba(125,160,255,.55) 132deg, rgba(0,0,0,0) 162deg);
+    rgba(var(--acid-rgb),0) 0deg, rgba(var(--acid-rgb),.7) 28deg, rgba(200,255,200,.85) 64deg,
+    rgba(var(--acid-rgb),.5) 102deg, rgba(var(--acid-rgb),.16) 136deg, rgba(0,0,0,0) 162deg);
   filter:blur(26px);
 }
 .limb-core{
@@ -114,21 +118,14 @@ a{color:#7cffc4;text-decoration:none}
 .ghost:hover{border-color:rgba(255,255,255,.4);color:#fff}
 .ghost[hidden]{display:none}
 
-/* クリックした点から広がって消える輪。当たり判定には関わらない。 */
-.ripple{
-  position:absolute;border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle, rgba(255,255,255,.5) 0%, rgba(255,255,255,0) 72%);
-  transform:scale(0);animation:rippleOut .6s cubic-bezier(.22,1,.36,1) both;
-}
-.ghost .ripple{background:radial-gradient(circle, rgba(0,255,0,.4) 0%, rgba(0,255,0,0) 72%)}
-@keyframes rippleOut{ to{ transform:scale(1); opacity:0 } }
-
 /* =============== 左の見出し =============== */
 .hero{
   position:fixed;left:var(--pad);top:clamp(120px,22vh,200px);
   width:min(400px,34vw);z-index:12;
 }
-.hero-kick{margin:0;font:600 12.5px var(--font-num);letter-spacing:.26em;color:var(--acid);transition:color .4s}
+.hero-kick{margin:0;font:400 12.5px var(--font-mono);letter-spacing:.12em;color:var(--acid);transition:color .4s}
+/* 小見出しはブランド名と同じコメント記法で始める */
+.hero-kick::before,.guide-kick::before{content:"// ";opacity:.55}
 .hero-title{
   margin:16px 0 0;font-weight:900;line-height:1.04;letter-spacing:-.055em;
   font-size:clamp(38px,5.4vw,82px);white-space:nowrap;
@@ -159,7 +156,7 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
   border:1px solid rgba(255,255,255,.22)}
 /* 光の縁はロゴの三日月が担うので、この輪は後ろのぼんやりした光だけにする。
    白い線を二重に描くと、ロゴの三日月とぶつかって濁る。 */
-.ec-rim{border:0;box-shadow:0 0 70px rgba(160,255,220,.34)}
+.ec-rim{border:0;box-shadow:0 0 70px rgba(var(--acid-rgb),.22)}
 .ec-disc{background:#000;border:0}
 
 /* 部のロゴ。黒を抜いた発光画像なので、背景の星やリムグローの上に自然に乗る。 */
@@ -168,7 +165,7 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
   background:url(../logo-eclipse.webp) center/contain no-repeat;
   /* 黒を抜いた画像は自然と透ける薄さになるので、光暈も控えめに。
      不透明度は画像側（webp のアルファ）を落として作ってある。 */
-  filter:drop-shadow(0 0 18px rgba(0,255,156,.18));
+  filter:drop-shadow(0 0 18px rgba(var(--acid-rgb),.18));
   opacity:.72;
   animation:ecLogoSpin 150s linear infinite;
   pointer-events:none;
@@ -184,13 +181,18 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
 .up{position:absolute;left:0;top:0;width:0;height:0;animation:orb var(--dur) linear infinite reverse}
 .unseat{position:absolute;left:0;top:0;width:0;height:0}
 
-/* 天体。押した惑星はその場で食に変わる。入れ替えではない。 */
+/* 天体。押した惑星はその場で食に変わる。入れ替えではない。
+   塗りつぶしの丸（飴玉のような色）にはせず、衛星と同じ
+   「暗い円＋ジャンル色の縁」で描く。色は縁と記号だけに出る。 */
 .orbi{
   position:absolute;left:0;top:0;width:var(--d);height:var(--d);
   transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;
-  background:var(--c);color:#04120d;display:grid;place-items:center;
-  box-shadow:0 0 calc(var(--d)*.8) color-mix(in oklab, var(--c) 52%, transparent),
-    inset 0 2px 10px rgba(255,255,255,.35);
+  background:#04120d;color:var(--c);display:grid;place-items:center;
+  box-shadow:inset 0 0 0 1.5px var(--c),
+    inset 0 0 0 7px #04120d,
+    inset 0 0 0 8px color-mix(in oklab, var(--c) 30%, transparent),
+    inset 0 0 calc(var(--d)*.4) color-mix(in oklab, var(--c) 14%, transparent),
+    0 0 calc(var(--d)*.5) color-mix(in oklab, var(--c) 20%, transparent);
   /* 戻るときは待たない。遅延は .sun を足すとき（入るとき）だけ効く。 */
   transition:background .3s ease, box-shadow .3s ease,
              opacity .6s ease, transform .3s cubic-bezier(.22,1,.36,1);
@@ -309,7 +311,7 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
   transition:opacity .55s ease .55s, transform .55s cubic-bezier(.22,1,.36,1) .55s;
 }
 .side.off{opacity:0;transform:translateY(10px);pointer-events:none;transition-delay:0s}
-.side-kick{margin:0;font:600 11.5px var(--font-num);letter-spacing:.22em}
+.side-kick{margin:0;font:400 11.5px var(--font-mono);letter-spacing:.12em}
 .side-title{margin:8px 0 0;font-weight:900;font-size:22px;letter-spacing:-.035em}
 .side-count{margin:5px 0 0;font-size:12.5px;color:var(--muted)}
 .side-list{margin-top:20px;display:flex;flex-direction:column;gap:2px;
@@ -342,7 +344,7 @@ body:not(.ready) .guide{opacity:0;transform:translateY(28px)}
 .guide-mark b{position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;
   border-radius:50%;background:var(--acid);box-shadow:0 0 14px var(--acid)}
 .guide-mark u{position:absolute;left:64px;top:14px;width:4px;height:4px;border-radius:50%;background:#fff}
-.guide-kick{font:600 12.5px var(--font-num);letter-spacing:.26em;color:var(--acid)}
+.guide-kick{font:400 12.5px var(--font-mono);letter-spacing:.12em;color:var(--acid)}
 .guide-name{display:block;margin-top:7px;font-weight:900;font-size:24px;letter-spacing:-.035em;white-space:nowrap}
 .guide-step{padding:26px 28px;border-left:1px solid rgba(255,255,255,.07)}
 .guide-no{font:600 13px var(--font-num);color:var(--acid);margin-right:10px}
@@ -367,7 +369,7 @@ body:not(.ready) .guide{opacity:0;transform:translateY(28px)}
 .player-bar{display:flex;align-items:center;gap:20px;padding:20px var(--pad);
   border-bottom:1px solid rgba(255,255,255,.1);min-width:0}
 .player-id{min-width:0}
-.player-kick{font:600 11.5px var(--font-num);letter-spacing:.22em;color:var(--c,#fff)}
+.player-kick{font:400 11.5px var(--font-mono);letter-spacing:.12em;color:var(--c,#fff)}
 .player-id b{display:block;margin-top:5px;font-weight:900;font-size:21px;letter-spacing:-.032em;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .player-acts{margin-left:auto;display:flex;align-items:center;gap:16px;flex:none}
@@ -417,14 +419,6 @@ body:not(.ready) .guide{opacity:0;transform:translateY(28px)}
 @keyframes burstB{ to{ transform:translate(calc(-50% + 16px), calc(-50% - 8px)) scale(.3) } }
 
 /* =========================================================
-   共有：リンクのアイコンが、コピーできたらチェックに入れ替わる
-   ========================================================= */
-#p-share{position:relative;overflow:visible}
-#p-share .share-icon{width:15px;height:15px}
-#p-share.done{border-color:rgba(0,255,0,.4);color:var(--acid)}
-#p-share .share-check{color:var(--acid)}
-
-/* =========================================================
    ひとこと（コメント）を開くボタン
    .like-btn と同じ大きさの丸いアイコンにして、右上のひと並びに揃える。
    押すと assets/js/app.js が .cmt-panel に .on を付け外しする。
@@ -437,7 +431,7 @@ body:not(.ready) .guide{opacity:0;transform:translateY(28px)}
 }
 .cmt-toggle svg{width:19px;height:19px}
 .cmt-toggle:hover{background:rgba(255,255,255,.06);color:#fff}
-.cmt-toggle.on{color:var(--acid);background:rgba(0,255,156,.09)}
+.cmt-toggle.on{color:var(--acid);background:rgba(var(--acid-rgb),.09)}
 .cmt-badge{
   position:absolute;top:1px;right:1px;min-width:15px;height:15px;padding:0 3px;
   border-radius:999px;background:var(--acid);color:#04120d;
@@ -490,11 +484,12 @@ body:not(.ready) .guide{opacity:0;transform:translateY(28px)}
   border-radius:999px; padding:10px 15px; color:var(--ink);
   font:inherit; font-size:13px; width:100%; transition:border-color .2s ease;
 }
-.cmt-name:focus,.cmt-text:focus{ outline:none; border-color:rgba(0,255,156,.5) }
+.cmt-name:focus,.cmt-text:focus{ outline:none; border-color:rgba(var(--acid-rgb),.5) }
 .cmt-name::placeholder,.cmt-text::placeholder{ color:var(--faint) }
 .cmt-send{ align-self:flex-end; flex:none; padding:10px 22px; font-size:13px }
 .cmt-send[disabled]{ opacity:.5; cursor:default }
 
+.cmt-rule{ margin:8px 0 0; font-size:11.5px; line-height:1.6; color:var(--faint); flex:none }
 .cmt-note{ margin:9px 0 0; font-size:12px; color:var(--faint); min-height:1em; flex:none }
 .cmt-note.bad{ color:#ff9a8b }
 
@@ -568,16 +563,16 @@ body:not(.ready) .guide{opacity:0;transform:translateY(28px)}
 .deflist{margin:18px 0;display:grid;gap:1px;background:var(--line);border:1px solid var(--line);
   border-radius:10px;overflow:hidden}
 .deflist>div{display:grid;grid-template-columns:78px 1fr;gap:12px;padding:13px 15px;background:rgba(2,10,8,.8)}
-.deflist dt{font-size:12.5px;color:#7cffc4}
+.deflist dt{font-size:12.5px;color:var(--acid)}
 .deflist dd{margin:0;font-size:14px;line-height:1.7;color:#c2e4d6}
 .offline{margin:0;padding:16px;border:1px solid var(--line);border-radius:10px;
-  font-size:14px;line-height:1.9;color:#c2e4d6;background:rgba(0,255,156,.05)}
+  font-size:14px;line-height:1.9;color:#c2e4d6;background:rgba(var(--acid-rgb),.05)}
 
 /* フォーム */
 .field{margin-bottom:22px;border:0;padding:0;min-width:0}
-.label{display:block;margin-bottom:10px;font-size:13px;font-weight:700;color:#7cffc4}
+.label{display:block;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--acid)}
 .label em{font-style:normal;margin-left:8px;padding:2px 7px;border-radius:4px;font-size:11px;
-  background:rgba(0,255,156,.14);border:1px solid var(--line-2);color:#7cffc4}
+  background:rgba(var(--acid-rgb),.14);border:1px solid var(--line-2);color:var(--acid)}
 .rating{display:flex;gap:7px}
 .rate{flex:1;display:flex;flex-direction:column;align-items:center;gap:9px;
   padding:14px 4px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.35);
@@ -585,9 +580,9 @@ body:not(.ready) .guide{opacity:0;transform:translateY(28px)}
 .rate i{width:14px;height:14px;border-radius:4px;border:1px solid var(--line-2);transition:all .2s}
 .rate u{text-decoration:none;font-size:11.5px;color:var(--muted);text-align:center}
 .rate:hover{border-color:var(--line-2)}
-.rate.on{border-color:var(--acid);background:rgba(0,255,156,.1)}
-.rate.on i{background:var(--acid);border-color:var(--acid);box-shadow:0 0 16px rgba(0,255,156,.7)}
-.rate.on u{color:#b6ffdd}
+.rate.on{border-color:var(--acid);background:rgba(var(--acid-rgb),.1)}
+.rate.on i{background:var(--acid);border-color:var(--acid);box-shadow:0 0 16px rgba(var(--acid-rgb),.7)}
+.rate.on u{color:var(--acid)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{padding:10px 18px;border:1px solid var(--line);border-radius:999px;
   font-size:14px;color:#a3aeaa;background:rgba(255,255,255,.03);transition:all .2s}
@@ -686,7 +681,7 @@ html.novt body.leaving{
   transition:opacity .3s ease, transform .42s cubic-bezier(.22,1,.36,1);
 }
 .camreset.on{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
-.camreset:hover{border-color:var(--acid);color:#b6ffdd}
+.camreset:hover{border-color:var(--acid);color:var(--acid)}
 .camreset svg{width:15px;height:15px}
 @media (prefers-reduced-motion: reduce){ .camreset{transition-duration:.01ms} }
 

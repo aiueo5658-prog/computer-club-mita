@@ -1,15 +1,13 @@
 /* =========================================================
-   firebase-comments.js — 「ひとこと」の即時読み書き（Firebase Realtime Database）
+   firebase-comments.js — 「ひとこと」の即時読み取り（Firebase Realtime Database）
 
-   firebase-hearts.js と同じ理屈で、Apps Script の代わりに使う。
+   読むのはここ（速い）、書くのは裏側（cloud.js → Apps Script）。
+   ブラウザから Firebase へ直接は書けない（docs/firebase-rules.json で
+   閉じてある）。裏側が Jev で審査して、公開してよいものだけを載せるため。
+
    config.js の firebase.databaseURL が空なら、何もつながずに
    CCMComments.enabled=false のまま諦める（呼び出し側の app.js が
-   その場合は Apps Script にフォールバックする）。
-
-   1件ずつ push() で追記する、書き換え・削除ができない一方向のログ。
-   荒らし対策のモデレーションは今のところ無い（docs/firebase-rules.json
-   で長さの上限だけは弾く）。必要になったら、公開フラグを足すなど
-   ハート側と同じ発想で拡張できる。
+   その場合は Apps Script から読む）。
    ========================================================= */
 window.CCMComments = (function () {
   'use strict';
@@ -27,6 +25,7 @@ window.CCMComments = (function () {
     }
   }
 
+  /* このキーの作り方は docs/gas-backend.gs の fbKey() と対になっている */
   function path(slug) { return 'comments/' + encodeURIComponent(slug); }
 
   /* ---- 新しい60件を、新しい順で読む ---- */
@@ -49,18 +48,5 @@ window.CCMComments = (function () {
       .catch(function () { return null; });
   }
 
-  /* ---- 1件書く ---- */
-  function add(slug, name, text) {
-    if (!ON) return Promise.resolve(false);
-    var n = String(name || '').slice(0, 20);
-    var t = String(text || '').slice(0, 200);
-    if (!t) return Promise.resolve(false);
-    return db.ref(path(slug)).push({
-      name: n,
-      text: t,
-      at: firebase.database.ServerValue.TIMESTAMP
-    }).then(function () { return true; }).catch(function () { return false; });
-  }
-
-  return { enabled: ON, list: list, add: add };
+  return { enabled: ON, list: list };
 })();

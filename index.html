@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark">
-<title>コンピュータ部 作品展2026</title>
+<title>// 昆布観測島 作品展 2026</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
-<meta name="description" content="三田国際科学学園 昆布観測島 学園祭 2026「eclipse」。部員が1年かけて作ったものを、ぜんぶ置いています。">
+<meta name="description" content="三田国際科学学園 コンピュータ部の作品展「// 昆布観測島」（MIF 2026・10/31〜11/01）。部員が半年かけて作ったゲーム・映像・音楽・3Dモデルを、この画面でそのまま遊べます。">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260911074109">
-<link rel="stylesheet" href="assets/css/pages.css?v=20260911074109">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=20260923104416">
+<link rel="stylesheet" href="assets/css/pages.css?v=20260923104416">
 </head>
 <body class="page-home">
 
@@ -142,11 +142,10 @@
 
 <!-- 背景の映像。読めない環境では下の地の色だけが残る。 -->
 <div class="filmbg" aria-hidden="true">
-  <video id="bgv" autoplay muted loop playsinline preload="auto" disablepictureinpicture>
-    <!-- 圧縮した .mp4 を置けば、こちらが先に使われる（README の手順を参照）。
-         どちらも無ければ .filmbg の地の色だけで成立する。 -->
+  <video id="bgv" autoplay muted loop playsinline preload="metadata" disablepictureinpicture>
+    <!-- 7.4MB。読めない環境や、データ節約・動きを控える設定のときは
+         下のスクリプトが止めて、.filmbg の地の色だけで成立させる。 -->
     <source src="assets/video/computopia2.mp4" type="video/mp4">
-    <source src="assets/video/computopia2.mov" type="video/quicktime">
   </video>
   <span class="filmbg-tint"></span>
   <span class="filmbg-vig"></span>
@@ -163,7 +162,7 @@
     <span class="brand-txt">// 昆布観測島</span>
   </a>
   <nav class="nav-links">
-    <a href="index.html" class="is-on">ホーム</a>
+    <a href="index.html" class="is-on" aria-current="page">ホーム</a>
     <a href="works.html">作品一覧</a>
     <a href="map.html">マップ</a>
     <a href="qa.html">Q&amp;A</a>
@@ -174,10 +173,7 @@
 </header>
 
 <main class="home" data-reveal>
-  <p class="home-badge" data-reveal-item>
-    <span class="dot" aria-hidden="true"></span>
-    MIF 2026 ・ 10/31 - 11/01
-  </p>
+  <p class="home-log" data-reveal-item>// MIF 2026 ── 10/31(土)・11/01(日)</p>
 
   <h1 class="home-title" data-reveal-item>ようこそ<br>// 昆布観測島へ</h1>
 
@@ -191,7 +187,7 @@
       作品を探す
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
     </a>
-    <a class="ghost big" href="qa.html">// 昆布観測島とは？</a>
+    <a class="home-link" href="qa.html">// 昆布観測島とは？</a>
   </div>
 
   <ul class="home-facts" id="home-facts" data-reveal-item>
@@ -204,9 +200,9 @@
 
 <p class="home-theme" aria-hidden="true">COMPUTER CLUB&nbsp;&nbsp;2026</p>
 
-<script src="assets/js/site.js?v=20260911074109"></script>
-<script src="assets/js/config.js?v=20260911074109"></script>
-<script src="assets/js/data.js?v=20260911074109"></script>
+<script src="assets/js/site.js?v=20260923104416"></script>
+<script src="assets/js/config.js?v=20260923104416"></script>
+<script src="assets/js/data.js?v=20260923104416"></script>
 <script>
 (function () {
   var facts = document.getElementById('home-facts');
@@ -234,9 +230,23 @@
       if (window.CCMSite) countAll();
     });
   }
-  /* 映像が読めない環境では地の色に任せる */
+  /* 映像が読めない環境では地の色に任せる。
+     データ節約モードや「動きを減らす」設定の人には、そもそも流さない
+     （止めて src を外すと、残りのダウンロードも止まる）。 */
   var v = document.getElementById('bgv');
-  if (v) v.addEventListener('error', function () { document.body.classList.add('no-video'); });
+  if (v) {
+    var saveData = navigator.connection && navigator.connection.saveData;
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (saveData || reduce) {
+      v.pause();
+      [].forEach.call(v.querySelectorAll('source'), function (s) { s.remove(); });
+      v.removeAttribute('src');
+      v.load();
+      document.body.classList.add('no-video');
+    } else {
+      v.addEventListener('error', function () { document.body.classList.add('no-video'); }, true);
+    }
+  }
 })();
 </script>
 </body>

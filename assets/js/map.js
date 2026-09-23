@@ -19,7 +19,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const ROOM = { w: 7.5, d: 9.0, h: 2.6 };
-const ACID = 0x00ff9c;          /* サイトの --acid と同じ */
+const ACID = 0x00ff00;          /* サイトの --acid と同じ */
 
 /* 平面図(Blender)の座標を three.js の座標へ。奥行きは符号が反転する。 */
 const P = (x, y, z = 0) => new THREE.Vector3(x, z, -y);

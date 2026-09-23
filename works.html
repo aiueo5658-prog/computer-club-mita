@@ -11,8 +11,8 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260911130000">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css?v=20260923104416">
 </head>
 <body>
 
@@ -20,7 +20,7 @@
   <div class="noscript">
     <h1>三田国際科学学園 // 昆布観測島 作品展 2026</h1>
     <p>このページは JavaScript を使って作品を表示します。ブラウザの設定で JavaScript を有効にしてください。</p>
-    <p>2026年10月30日(金)・31日(土) / 昆布観測島 展示教室</p>
+    <p>2026年10月31日(土)・11月1日(日) / 昆布観測島 展示教室</p>
   </div>
 </noscript>
 
@@ -43,7 +43,7 @@
   </a>
   <nav class="nav-links">
     <a href="index.html">ホーム</a>
-    <button type="button" data-home class="is-on">作品一覧</button>
+    <button type="button" data-home class="is-on" aria-current="page">作品一覧</button>
     <a href="map.html">マップ</a>
     <a href="qa.html">Q&amp;A</a>
   </nav>
@@ -175,9 +175,10 @@
       <input class="cmt-name" id="cmt-name" type="text" maxlength="20"
              placeholder="なまえ（任意）" autocomplete="nickname">
       <input class="cmt-text" id="cmt-text" type="text" maxlength="200"
-             placeholder="感想をひとこと" required>
+             placeholder="感想・質問・改善のアイデアをひとこと" required>
       <button class="cta cmt-send" id="cmt-send" type="submit">送る</button>
     </form>
+    <p class="cmt-rule">辛口の指摘も歓迎です。人を傷つける書き方のものは載りません。</p>
     <p class="cmt-note" id="cmt-note" role="status"></p>
     <ul class="cmt-list" id="cmt-list"></ul>
   </aside>
@@ -194,17 +195,17 @@
 
 <iframe name="gform-sink" title="form sink" style="display:none" aria-hidden="true"></iframe>
 
-<script src="assets/js/site.js?v=20260911130000"></script>
-<script src="assets/js/config.js?v=20260911130000"></script>
+<script src="assets/js/site.js?v=20260923104416"></script>
+<script src="assets/js/config.js?v=20260923104416"></script>
 <!-- ハート・ひとこと の即時読み書き用。config.js の firebase.databaseURL
      が空なら、それぞれ黙って無効化する。 -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
-<script src="assets/js/firebase-hearts.js?v=20260911130000"></script>
-<script src="assets/js/firebase-comments.js?v=20260911130000"></script>
-<script src="assets/js/cloud.js?v=20260911130000"></script>
-<script src="assets/js/data.js?v=20260911130000"></script>
-<script src="assets/js/thumbs.js?v=20260911130000"></script>
-<script src="assets/js/app.js?v=20260911130000"></script>
+<script src="assets/js/firebase-hearts.js?v=20260923104416"></script>
+<script src="assets/js/firebase-comments.js?v=20260923104416"></script>
+<script src="assets/js/cloud.js?v=20260923104416"></script>
+<script src="assets/js/data.js?v=20260923104416"></script>
+<script src="assets/js/thumbs.js?v=20260923104416"></script>
+<script src="assets/js/app.js?v=20260923104416"></script>
 </body>
 </html>
