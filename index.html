@@ -12,8 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260923104416">
-<link rel="stylesheet" href="assets/css/pages.css?v=20260923104416">
+<link rel="stylesheet" href="assets/css/style.css?v=20260923112532">
+<link rel="stylesheet" href="assets/css/pages.css?v=20260923112532">
 </head>
 <body class="page-home">
 
@@ -140,15 +140,9 @@
 })();
 </script>
 
-<!-- 背景の映像。読めない環境では下の地の色だけが残る。 -->
-<div class="filmbg" aria-hidden="true">
-  <video id="bgv" autoplay muted loop playsinline preload="metadata" disablepictureinpicture>
-    <!-- 7.4MB。読めない環境や、データ節約・動きを控える設定のときは
-         下のスクリプトが止めて、.filmbg の地の色だけで成立させる。 -->
-    <source src="assets/video/computopia2.mp4" type="video/mp4">
-  </video>
-  <span class="filmbg-tint"></span>
-  <span class="filmbg-vig"></span>
+<!-- 背景は星空だけ。映像は下の「観測窓」の中に入れる。 -->
+<div class="bg" aria-hidden="true">
+  <div class="stars" id="stars"></div>
 </div>
 
 <header class="nav">
@@ -173,36 +167,55 @@
 </header>
 
 <main class="home" data-reveal>
-  <p class="home-log" data-reveal-item>// MIF 2026 ── 10/31(土)・11/01(日)</p>
+  <div class="home-copy">
+    <p class="home-log" data-reveal-item>// MIF 2026 ── 10/31(土)・11/01(日)<span class="home-count" id="home-count"></span></p>
 
-  <h1 class="home-title" data-reveal-item>ようこそ<br>// 昆布観測島へ</h1>
+    <h1 class="home-title" data-reveal-item><span class="home-hello">ようこそ</span>// 昆布観測島へ</h1>
 
-  <p class="home-lede" data-reveal-item>
-    部員が半年かけて作ったゲームや映像、音楽に3Dモデルなどが<br>
-    <b>この画面でそのまま遊べます。</b>
-  </p>
+    <p class="home-lede" data-reveal-item>
+      部員が半年かけて作ったゲームや映像、音楽に3Dモデルなどが<br>
+      <b>この画面でそのまま遊べます。</b>
+    </p>
 
-  <div class="home-acts" data-reveal-item>
-    <a class="cta big" href="works.html">
-      作品を探す
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
-    </a>
-    <a class="home-link" href="qa.html">// 昆布観測島とは？</a>
+    <div class="home-acts" data-reveal-item>
+      <a class="cta big" href="works.html">
+        作品を探す
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+      </a>
+      <a class="home-link" href="qa.html">// 昆布観測島とは？</a>
+    </div>
+
+    <ul class="home-facts" id="home-facts" data-reveal-item>
+      <li><b data-count="0">0</b><span>作品</span></li>
+      <li><b data-count="0">0</b><span>制作者</span></li>
+      <li><b data-count="5">0</b><span>ジャンル</span></li>
+      <li><b data-count="2">0</b><span>日間</span></li>
+    </ul>
   </div>
 
-  <ul class="home-facts" id="home-facts" data-reveal-item>
-    <li><b data-count="0">0</b><span>作品</span></li>
-    <li><b data-count="0">0</b><span>制作者</span></li>
-    <li><b data-count="5">0</b><span>ジャンル</span></li>
-    <li><b data-count="2">0</b><span>日間</span></li>
-  </ul>
+  <!-- 観測窓。部のロゴ（波形と網目の輪）を望遠鏡の縁に見立て、
+       その内側の丸い窓に部員の映像を流す。窓の下に、実際の作品名が
+       「観測ログ」として順番に流れる（押すとその作品へ）。 -->
+  <figure class="scope" data-reveal-item>
+    <div class="scope-lens" aria-hidden="true">
+      <!-- 7.4MB。データ節約・動きを控える設定のときは下のスクリプトが止める -->
+      <video id="bgv" autoplay muted loop playsinline preload="metadata" disablepictureinpicture>
+        <source src="assets/video/computopia2.mp4" type="video/mp4">
+      </video>
+    </div>
+    <span class="scope-ring" aria-hidden="true"></span>
+    <figcaption class="scope-log" id="scope-log" hidden>
+      <span class="scope-log-k">// 観測ログ</span>
+      <a class="scope-log-w" id="scope-log-w" href="works.html"></a>
+    </figcaption>
+  </figure>
 </main>
 
 <p class="home-theme" aria-hidden="true">COMPUTER CLUB&nbsp;&nbsp;2026</p>
 
-<script src="assets/js/site.js?v=20260923104416"></script>
-<script src="assets/js/config.js?v=20260923104416"></script>
-<script src="assets/js/data.js?v=20260923104416"></script>
+<script src="assets/js/site.js?v=20260923112532"></script>
+<script src="assets/js/config.js?v=20260923112532"></script>
+<script src="assets/js/data.js?v=20260923112532"></script>
 <script>
 (function () {
   var facts = document.getElementById('home-facts');
@@ -222,13 +235,55 @@
   /* 動きを控える設定では transitionend が来ないので、すぐ数える */
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) countAll();
 
+  var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 開催までの日数。config.js の festival から、日本時間の「日付」で数える
+     （時刻の差を割ると、前日の朝が「あと2日」になってしまうため）。 */
+  var F = window.CCM && window.CCM.festival;
+  var cnt = document.getElementById('home-count');
+  if (F && cnt) {
+    var now = Date.now(), s = Date.parse(F.start), e = Date.parse(F.end);
+    var day = function (t) { return Math.floor((t + 9 * 3600000) / 86400000); };
+    var dd = day(s) - day(now);
+    cnt.textContent = now > e ? ' ── アーカイブ公開中'
+                    : now >= s ? ' ── 開催中'
+                    : dd <= 0 ? ' ── きょうから'
+                    : dd === 1 ? ' ── あした開催'
+                    : ' ── あと ' + dd + ' 日';
+  }
+
   if (window.CCMData) {
     window.CCMData.load().then(function () {
       var f = facts.children;
       f[0].querySelector('b').setAttribute('data-count', window.CCMData.works.length);
       f[1].querySelector('b').setAttribute('data-count', window.CCMData.authors().length);
       if (window.CCMSite) countAll();
+      startLog(window.CCMData.works);
     });
+  }
+
+  /* 観測ログ：作品名を順番に流す。押すとその作品が開く。 */
+  function startLog(works) {
+    var box = document.getElementById('scope-log');
+    var a = document.getElementById('scope-log-w');
+    var list = (works || []).filter(function (w) { return w && w.title && w.slug; });
+    if (!box || !a || !list.length) return;
+    for (var i = list.length - 1; i > 0; i--) {          /* 毎回ちがう順番で */
+      var j = Math.floor(Math.random() * (i + 1)), t = list[i]; list[i] = list[j]; list[j] = t;
+    }
+    var k = 0;
+    function put() {
+      var w = list[k++ % list.length];
+      a.textContent = w.title + (w.author ? '  ─  ' + w.author : '');
+      a.href = 'works.html#w/' + encodeURIComponent(w.slug);
+    }
+    box.hidden = false;
+    put();
+    if (REDUCE) return;
+    setInterval(function () {
+      a.classList.add('swap');
+      setTimeout(function () { put(); a.classList.remove('swap'); }, 260);
+    }, 4200);
   }
   /* 映像が読めない環境では地の色に任せる。
      データ節約モードや「動きを減らす」設定の人には、そもそも流さない
