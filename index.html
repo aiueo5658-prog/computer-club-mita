@@ -14,8 +14,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css?v=20260923143957">
-<link rel="stylesheet" href="assets/css/pages.css?v=20260923143957">
+<link rel="stylesheet" href="assets/css/style.css?v=20260923192058">
+<!-- ページ切り替えで写し取られる前に、site.js（ナビの下線・見出しの分割）を済ませておく -->
+<link rel="expect" href="#vt-ready" blocking="render">
+<link rel="stylesheet" href="assets/css/pages.css?v=20260923192058">
 </head>
 <body class="page-home">
 
@@ -223,9 +225,10 @@
 
 <p class="home-theme" aria-hidden="true">COMPUTER CLUB&nbsp;&nbsp;2026</p>
 
-<script src="assets/js/site.js?v=20260923143957"></script>
-<script src="assets/js/config.js?v=20260923143957"></script>
-<script src="assets/js/data.js?v=20260923143957"></script>
+<script src="assets/js/site.js?v=20260923192058"></script>
+<span id="vt-ready" hidden></span>
+<script src="assets/js/config.js?v=20260923192058"></script>
+<script src="assets/js/data.js?v=20260923192058"></script>
 <script>
 (function () {
   var facts = document.getElementById('home-facts');

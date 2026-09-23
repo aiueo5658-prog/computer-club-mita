@@ -378,14 +378,21 @@
     transitions();
     reveal();
     buttonFeel();
-    splits();
+    if (!early) splits();
     pointer();
-    navInk();
+    if (!early) navInk();
     mobileMenu();
     requestAnimationFrame(function () { d.body.classList.add('ready'); });
   }
 
   w.CCMSite = { stars: stars, reveal: reveal, countTo: countTo, decode: decode };
+
+  /* ナビの下線と見出しの分割は、ページの切り替え（View Transition）で
+     写し取られる前に済ませておく（下線は前のページから滑ってきて、見出しは
+     一文字ずつ立ち上がる）。このファイルは本文の後で読まれるので、
+     DOMContentLoaded を待たずにすぐ行う。 */
+  var early = !!d.querySelector('.nav-links');
+  if (early) { navInk(); splits(); }
 
   if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', start);
   else start();

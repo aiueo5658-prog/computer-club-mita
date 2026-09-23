@@ -666,36 +666,84 @@ textarea::placeholder{color:var(--muted)}
 
 
 /* =========================================================
-   ページの切り替え — 「食」に合わせた開き方
-   古い面は奥へ引いてぼけ、新しい面は中心から円で開く。
+   ページの切り替え — 面ごとではなく、部品ごとに入れ替える
+   ・ナビと背景はその場に留まる。緑の下線だけが次のタブへ滑る。
+   ・見出しまわり（小見出し・見出し・説明・その下の操作）は、どのページでも
+     同じ場所にある「枠」として名前をそろえる。枠は次のページの位置へ動き、
+     その中で古い字は上へ抜け、新しい字が下から入ってくる。上から順に少しずつ遅らせる。
+   ・ページ固有の塊（観測窓・Q&A・アンケート）は、古い方が沈み、新しい方が
+     一拍おいて浮かび上がる。
    全ページ共通なので style.css に置く。
    ========================================================= */
 @view-transition { navigation: auto; }
-::view-transition-old(root){ animation: ecOut .30s cubic-bezier(.4,0,.9,.3) both; }
-::view-transition-new(root){ animation: ecIn  .68s cubic-bezier(.22,1,.36,1) both; }
-@keyframes ecOut{
-  to{ transform:scale(1.045); filter:blur(9px) brightness(.55); opacity:0 }
-}
-@keyframes ecIn{
-  from{ clip-path:circle(0% at 50% 46%); transform:scale(1.035); opacity:.6 }
-  60% { opacity:1 }
-  to  { clip-path:circle(78% at 50% 46%); transform:none; opacity:1 }
-}
+.nav{view-transition-name:site-nav}
+.nav-ink{view-transition-name:nav-ink}
 
-/* View Transitions が無い環境。同じ動きを body に当てる。 */
+.home-log,.hero-kick,.doc-kick{view-transition-name:pg-kick;view-transition-class:slot}
+.home-title,.hero-title,.doc-title{view-transition-name:pg-title;view-transition-class:slot}
+.home-lede,.hero-lede,.doc-lede{view-transition-name:pg-lede;view-transition-class:slot}
+.home-acts,.qa-jump,.sv-meta{view-transition-name:pg-more;view-transition-class:slot}
+.home-facts,.scope,.qa-group,.sv-main{view-transition-name:match-element;view-transition-class:blk}
+
+::view-transition-group(site-nav){z-index:3}
+::view-transition-group(nav-ink){z-index:4;animation-duration:.7s;
+  animation-timing-function:cubic-bezier(.22,1,.36,1)}
+
+/* 背景と、名前の付いていない残りは溶け合わせる。古い方は早めに退く */
+::view-transition-old(root){animation-duration:.26s}
+::view-transition-new(root){animation-duration:.5s;animation-delay:.08s}
+
+/* 枠：次のページの位置へ動きながら、中身だけを差し替える。
+   枠の外にはみ出した字は切る（横は字の端が欠けないよう少し広めに） */
+::view-transition-group(*.slot){animation-duration:.7s;
+  animation-timing-function:cubic-bezier(.22,1,.36,1)}
+::view-transition-image-pair(*.slot){clip-path:inset(-2px -40px -6px -12px)}
+::view-transition-old(*.slot),::view-transition-new(*.slot){width:auto;height:auto}
+::view-transition-old(*.slot){animation:slotOut .26s cubic-bezier(.5,0,.2,1) both}
+::view-transition-new(*.slot){animation:slotIn .6s cubic-bezier(.2,.9,.2,1) both}
+@keyframes slotOut{to{transform:translateY(-105%);opacity:0}}
+@keyframes slotIn{from{transform:translateY(105%);opacity:0}}
+
+/* 上から順に：退くのは小刻みに、入るのは古い字が抜けきってから */
+::view-transition-old(pg-title){animation-delay:.03s}
+::view-transition-old(pg-lede) {animation-delay:.06s}
+::view-transition-old(pg-more) {animation-delay:.09s}
+::view-transition-new(pg-kick) {animation-delay:.14s}
+::view-transition-new(pg-lede) {animation-delay:.3s}
+::view-transition-new(pg-more) {animation-delay:.38s}
+::view-transition-group(pg-lede){animation-delay:.04s}
+::view-transition-group(pg-more){animation-delay:.08s}
+/* 新しい見出しは、いつもの一文字ずつの立ち上がり（site.js の split）で入る。
+   古い見出しが抜けきるまでは伏せておく（重なって読めなくなるため） */
+::view-transition-new(pg-title){animation:vtWait .22s}
+@keyframes vtWait{from,to{opacity:0}}
+
+/* 塊：古い方は沈んで消え、新しい方は一拍おいて浮かぶ */
+::view-transition-old(*.blk){animation:blkOut .24s cubic-bezier(.5,0,.2,1) both}
+::view-transition-new(*.blk){animation:blkIn .8s cubic-bezier(.2,.9,.2,1) .3s both}
+@keyframes blkOut{to{opacity:0;transform:translateY(-18px) scale(.98)}}
+@keyframes blkIn{from{opacity:0;transform:translateY(44px)}}
+
+/* View Transitions が無い環境。本文を下から浮かせるだけ。 */
+@keyframes ecOut{ to{ opacity:0; transform:translateY(-10px) } }
+@keyframes ecIn{ from{ opacity:0; transform:translateY(16px) } }
 html.novt body{
-  animation: ecIn .68s cubic-bezier(.22,1,.36,1) both;
+  animation: ecIn .5s cubic-bezier(.22,1,.36,1) both;
 }
 html.novt body.leaving{
-  animation: ecOut .26s cubic-bezier(.4,0,.9,.3) both;
+  animation: ecOut .24s cubic-bezier(.4,0,.9,.3) both;
 }
 
 /* 動きを控えたい設定のときは、素直に薄く出す */
 @media (prefers-reduced-motion: reduce){
-  ::view-transition-old(root),::view-transition-new(root),
-  html:not(.vt) body,html.novt body.leaving{ animation-duration:.16s }
-  @keyframes ecIn{ from{opacity:0} to{opacity:1} }
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*),
+  html.novt body,html.novt body.leaving{ animation-duration:.16s !important; animation-delay:0s !important }
+  @keyframes ecIn{ from{opacity:0} }
   @keyframes ecOut{ to{opacity:0} }
+  @keyframes slotIn{ from{opacity:0} }
+  @keyframes slotOut{ to{opacity:0} }
+  @keyframes blkIn{ from{opacity:0} }
+  @keyframes blkOut{ to{opacity:0} }
 }
 
 
