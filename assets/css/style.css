@@ -1,0 +1,908 @@
+/* =========================================================
+   コンピュータ部 作品展 2026 — eclipse
+   場面はひとつ。動くのはカメラだけ。
+   ========================================================= */
+
+/* =============== 書体 ===============
+   ・見出し  … CCM Display（コーポレート・ロゴ Bold の、サイトで使う字だけ）
+               ※明朝体は日本語のサイトでは敬遠されるので使わない
+   ・ラベル／ログ／数字 … CCM Mono（PlemolJP Console。IBM Plex Mono ＋ IBM Plex Sans JP）
+   ・本文    … IBM Plex Sans JP（Google Fonts。CCM Mono の日本語と同じ系統）
+   どれも SIL OFL。作り方と著作権表示は tools/subset-fonts.py と assets/fonts/LICENSE.txt。
+   見出しの字を足して一部だけ書体が変わったら、tools/subset-fonts.py を実行し直す。 */
+@font-face{font-family:"CCM Display";src:url(../fonts/ccm-display.woff2?v=20260929231049) format("woff2");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"CCM Mono";src:url(../fonts/ccm-mono-regular.woff2?v=20260929231049) format("woff2");
+  font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"CCM Mono";src:url(../fonts/ccm-mono-bold.woff2?v=20260929231049) format("woff2");
+  font-weight:700;font-style:normal;font-display:swap}
+
+:root{
+  --ink:#e9eeec;
+  --ink-2:#9aa8a3;
+  --muted:#8d9a96;
+  --faint:#7a8884;
+  --acid:#00ff00;
+  --acid-rgb:0,255,0;
+  --line:rgba(255,255,255,.13);
+  --line-2:rgba(255,255,255,.2);
+  --panel:rgba(8,14,12,.8);
+
+  /* 本文：UD新ゴ（モリサワ）。Adobe Fonts の Web プロジェクトから届く（assets/js/fonts.js）。
+     届かない間・届かない環境では、字幅の近い順に各 OS の標準ゴシックへ落ちる */
+  --font-jp:"a-otf-ud-shin-go-pr6n","BIZ UDPGothic","Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;
+  --font-display:"CCM Display","a-otf-ud-shin-go-pr6n","BIZ UDPGothic","Hiragino Sans","Yu Gothic",sans-serif;
+  /* 数字・日付・分類ラベルだけに使う。見出しの飾りには使わない */
+  --font-mono:"CCM Mono","a-otf-ud-shin-go-pr6n","BIZ UDPGothic",ui-monospace,Consolas,monospace;
+  --font-num:var(--font-mono);
+
+  /* 形・組版・動きの約束（ここ以外の値を足さない） */
+  --surface:#0a0d0c;      /* 地より一段明るい面 */
+  --rad:3px;              /* 面（カード・写真・パネル・入力欄）の角丸 */
+  --rad-btn:999px;        /* 押すもの（ボタン・選択肢）は丸く。月食のモチーフに合わせる */
+  --lh-read:1.9;          /* 読み物の行間 */
+  --lh-ui:1.6;            /* UI・短文の行間 */
+  --ease:cubic-bezier(.22,1,.36,1);
+
+  --pad:clamp(20px,3.4vw,56px);
+  --navh:76px;
+
+  /* app.js が実測して書き込む */
+  --cx:56vw; --cy:52vh; --R:245px; --K:1;
+  --inv:1;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+
+/* hidden 属性は「この要素は無い扱いにしてくれ」という一番強い意思表示。
+   ところがブラウザ標準の [hidden]{display:none} は詳しさが最低なので、
+   .foo{display:flex} のような何気ない一行に静かに負ける。
+   負けると「見えているのに JS が何も繋いでいない板」が最前面に居座り、
+   押しても無反応、という気づきにくい壊れ方をする。
+   実際この不具合は .intro-stage / .thanks / .intro と三度起きているので、
+   個別に潰すのをやめて、ここで一度だけ勝たせておく。 */
+[hidden]{display:none !important}
+
+html,body{height:100%}
+body{
+  margin:0; background:#000; color:var(--ink);
+  font-family:var(--font-jp); -webkit-font-smoothing:antialiased;
+  line-height:var(--lh-ui); letter-spacing:.02em; line-break:strict;
+  overflow:hidden;
+}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:var(--acid);text-decoration:none}
+:focus-visible{outline:2px solid var(--acid);outline-offset:3px;border-radius:var(--rad)}
+
+/* キーボード操作の最初の一手。見えるのは Tab を押したときだけ。 */
+.skip-link{
+  position:fixed;left:16px;top:-60px;z-index:200;
+  background:#000;color:#fff;padding:12px 20px;border-radius:var(--rad-btn);
+  font:600 14px var(--font-num);letter-spacing:.02em;
+  border:1px solid rgba(var(--acid-rgb),.5);
+  transition:top .2s ease;
+}
+.skip-link:focus{top:16px}
+
+.noscript{position:relative;z-index:5;max-width:640px;margin:14vh auto;padding:0 24px;text-align:center}
+.noscript h1{font-size:26px;font-weight:900}
+.noscript p{color:var(--ink-2);font-size:15px;line-height:1.9}
+
+@keyframes orb{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes drawX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes drawD{from{transform:rotate(-45deg) scaleX(0)}to{transform:rotate(-45deg) scaleX(1)}}
+@keyframes panelIn{from{opacity:0;transform:translateY(-100%) translateX(-10px)}
+                   to{opacity:1;transform:translateY(-100%) translateX(0)}}
+@keyframes fsIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+
+/* =============== 背景 =============== */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:#000;
+  /* リムの光は画面より大きい。はみ出しを切らないと、スマホでページが横に揺れる */
+  overflow:hidden}
+.limb{position:absolute;left:81%;top:89%;width:0;height:0}
+.limb i{position:absolute;border-radius:50%}
+.limb-glow{
+  left:-772px;top:-772px;width:1544px;height:1544px;
+  /* 食の縁の光。ロゴと同じ緑1色の濃淡だけで作る（青・紫を混ぜない）。 */
+  background:conic-gradient(from 235deg,
+    rgba(var(--acid-rgb),0) 0deg, rgba(var(--acid-rgb),.7) 28deg, rgba(200,255,200,.85) 64deg,
+    rgba(var(--acid-rgb),.5) 102deg, rgba(var(--acid-rgb),.16) 136deg, rgba(0,0,0,0) 162deg);
+  filter:blur(26px);
+}
+.limb-core{
+  left:-758px;top:-758px;width:1516px;height:1516px;
+  background:radial-gradient(circle at 28% 18%, #06231a 0%, #02100b 52%, #010604 100%);
+}
+.stars i{position:absolute;border-radius:50%;background:#dff5ec}
+
+/* =============== ナビ =============== */
+.nav{
+  position:fixed;left:0;right:0;top:0;height:var(--navh);z-index:80;
+  display:flex;align-items:center;gap:clamp(16px,2.4vw,30px);
+  padding:0 var(--pad);
+}
+.brand{display:flex;align-items:center;gap:11px}
+.brand-mark{width:30px;height:30px;color:var(--acid);display:block}
+.brand-mark svg{width:100%;height:100%}
+.brand-txt{font-weight:700;font-size:15.5px;letter-spacing:-.01em}
+.nav-links{display:flex;gap:clamp(14px,2vw,28px);margin-left:14px}
+.nav-links a,.nav-links button{font-size:14px;color:#93a09b;transition:color .2s}
+.nav-links a:hover,.nav-links button:hover,
+.nav-links a.is-on,.nav-links button.is-on{color:#fff}
+.nav-end{margin-left:auto;display:flex;align-items:center;gap:18px}
+
+.cta,.ghost{
+  position:relative;overflow:hidden;
+  touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+.cta{
+  display:inline-block;text-align:center;
+  background:var(--ink);color:#050706;font-weight:700;border-radius:var(--rad-btn);
+  font-size:14px;line-height:1.2;padding:12px 24px;letter-spacing:.04em;
+  transition:background-color .2s ease;
+}
+.ghost{
+  display:inline-flex;align-items:center;gap:9px;
+  border:1px solid var(--line-2);border-radius:var(--rad-btn);
+  color:var(--ink);background:transparent;
+  font-size:14px;line-height:1.2;font-weight:500;padding:11px 18px;
+  transition:border-color .2s,color .2s;
+}
+.ghost svg{width:15px;height:15px}
+.ghost:hover{border-color:var(--ink)}
+.ghost[hidden]{display:none}
+
+/* =============== 左の見出し =============== */
+.hero{
+  position:fixed;left:var(--pad);top:clamp(120px,22vh,200px);
+  width:min(400px,34vw);z-index:12;
+}
+.hero-kick{margin:0;font:400 12px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);transition:color .4s}
+.hero-title{
+  margin:16px 0 0;font-weight:900;line-height:1.04;letter-spacing:-.055em;
+  font-size:clamp(38px,5.4vw,82px);white-space:nowrap;
+}
+.hero-lede{margin:24px 0 0;font-size:15px;line-height:var(--lh-read);color:var(--ink-2)}
+.hero-back{margin-top:28px;padding-left:15px}
+
+/* =============== 太陽系 =============== */
+.scene{position:fixed;inset:0;z-index:6;overflow:hidden;
+  /* 視点を引いて回すので、途中で文字を掴んでしまわないようにする */
+  -webkit-user-select:none;user-select:none}
+.cpanel{-webkit-user-select:text;user-select:text}
+/* ジャンルに入っている間だけ、横に引いて軌道を回せる */
+.scene:has(.sys.held){cursor:grab}
+html.turning .scene,html.turning .scene *{cursor:grabbing}
+.sys{
+  position:absolute;left:var(--cx);top:var(--cy);width:0;height:0;
+  transform:translate(0px,0px) scale(1);
+  transition:transform 1.15s cubic-bezier(.4,.02,.15,1);
+}
+/* 寄っている間だけジャンルの公転を止める。衛星は回り続ける。 */
+.sys.held .g-arm,.sys.held .g-up{animation-play-state:paused}
+
+.ringgrp{position:absolute;left:0;top:0;width:0;height:0;transition:opacity .7s ease}
+.ring{position:absolute;left:50%;top:50%;border-radius:50%;border:1px solid var(--line)}
+/* 飾りの薄い軌道。以前は .ghost（ボタンの部品名）と名前がかぶり、ボタンの余白や
+   position:relative が乗って中心からずれていた */
+.ring.faint{border-color:rgba(255,255,255,.07);background:none}
+.ec{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%);
+  border:1px solid rgba(255,255,255,.22)}
+/* 光の縁はロゴの三日月が担うので、この輪は後ろのぼんやりした光だけにする。
+   白い線を二重に描くと、ロゴの三日月とぶつかって濁る。 */
+.ec-rim{border:0;box-shadow:0 0 70px rgba(var(--acid-rgb),.12)}
+.ec-disc{background:#000;border:0}
+
+/* 部のロゴ。黒を抜いた発光画像なので、背景の星やリムグローの上に自然に乗る。 */
+.ec-logo{
+  border:0;
+  background:url(../logo-eclipse.webp) center/contain no-repeat;   /* ここは静止画 */
+  /* 黒を抜いた画像は自然と透ける薄さになるので、光暈も控えめに。
+     不透明度は画像側（webp のアルファ）を落として作ってある。 */
+  filter:drop-shadow(0 0 18px rgba(var(--acid-rgb),.18));
+  opacity:.85;
+  pointer-events:none;
+}
+@keyframes ecLogoSpin{ to{ transform:translate(-50%,-50%) rotate(360deg) } }
+@media (prefers-reduced-motion: reduce){ .ec-logo{ animation:none } }
+.ec-cap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font:600 12px var(--font-num);letter-spacing:.3em;color:#a8b4b0;pointer-events:none}
+
+.seat{position:absolute;left:50%;top:50%;width:0;height:0}
+.arm{position:absolute;left:0;top:0;width:0;height:0;animation:orb var(--dur) linear infinite}
+.pos{position:absolute;left:0;top:0;width:0;height:0;transform:translateX(var(--rx))}
+.up{position:absolute;left:0;top:0;width:0;height:0;animation:orb var(--dur) linear infinite reverse}
+.unseat{position:absolute;left:0;top:0;width:0;height:0}
+
+/* 天体。押した惑星はその場で食に変わる。入れ替えではない。
+   塗りつぶしの丸（飴玉のような色）にはせず、衛星と同じ
+   「暗い円＋ジャンル色の縁」で描く。色は縁と記号だけに出る。 */
+.orbi{
+  position:absolute;left:0;top:0;width:var(--d);height:var(--d);
+  transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;
+  background:#04120d;color:var(--c);display:grid;place-items:center;
+  box-shadow:inset 0 0 0 1.5px var(--c),
+    inset 0 0 0 7px #04120d,
+    inset 0 0 0 8px color-mix(in oklab, var(--c) 30%, transparent),
+    inset 0 0 calc(var(--d)*.4) color-mix(in oklab, var(--c) 14%, transparent);
+  /* 戻るときは待たない。遅延は .sun を足すとき（入るとき）だけ効く。 */
+  transition:background .3s ease, box-shadow .3s ease,
+             opacity .6s ease, transform .3s cubic-bezier(.22,1,.36,1);
+}
+.orbi:hover{transform:translate(-50%,-50%) scale(1.04)}
+.orbi.sun{
+  cursor:default;background:#000;
+  box-shadow:0 0 0 2px var(--c), 0 0 0 9px color-mix(in oklab, var(--c) 16%, transparent), inset 0 0 40px #000;
+  transition:background .65s ease .45s, box-shadow .65s ease .45s,
+             opacity .6s ease, transform .3s cubic-bezier(.22,1,.36,1);
+}
+.orbi.sun:hover{transform:translate(-50%,-50%)}
+.orbi.away{opacity:0;pointer-events:none}
+.orbi svg{width:42%;height:42%;position:relative;z-index:2;transition:opacity .25s ease}
+.orbi.sun svg{opacity:0;transition:opacity .5s ease .45s}
+/* 衛星の中身＝サムネイル。
+   .lens が円に切り抜く枠。中身はその中で拡大するので、
+   16:9 の絵を入れても上下に黒帯が残らない。枠の縁はジャンルの色。 */
+.lens{position:absolute;inset:var(--lens-gap,5px);z-index:1;
+  border-radius:50%;overflow:hidden;background:#010604}
+.lens > canvas,.lens > img{position:absolute;inset:0;width:100%;height:100%;display:block;
+  object-fit:cover;transform:scale(1.12);transform-origin:50% 50%;
+  transition:transform .35s cubic-bezier(.22,1,.36,1)}
+.orbi:hover .lens > canvas,.orbi:hover .lens > img{transform:scale(1.2)}
+/* 枠。内側に落とすので絵とぶつからない。 */
+.satsys .orbi{background:#04120d;box-shadow:none}
+.satsys .orbi::after{content:"";position:absolute;inset:0;z-index:3;
+  border-radius:50%;pointer-events:none;
+  box-shadow:inset 0 0 0 2px var(--cg),
+             inset 0 0 0 5px #04120d,
+             inset 0 0 0 6px color-mix(in oklab, var(--cg) 30%, transparent),
+             inset 0 0 18px color-mix(in oklab, var(--cg) 22%, transparent);
+  transition:box-shadow .3s ease}
+.satsys .orbi:hover::after{
+  box-shadow:inset 0 0 0 2px color-mix(in oklab, var(--cg) 65%, #fff),
+             inset 0 0 0 5px #04120d,
+             inset 0 0 0 7px color-mix(in oklab, var(--cg) 55%, transparent),
+             inset 0 0 26px color-mix(in oklab, var(--cg) 34%, transparent)}
+
+/* 名札は倍率を打ち消して、いつも同じ大きさで読める */
+.flag{
+  position:absolute;top:0;left:var(--fo);
+  transform:translateY(-50%) scale(var(--inv));transform-origin:0 50%;
+  white-space:nowrap;pointer-events:none;text-shadow:0 0 14px rgba(0,0,0,.95);
+  max-width:230px;overflow:hidden;text-overflow:ellipsis;transition:opacity .45s ease;
+}
+.flag b{display:block;font-weight:700;font-size:15px}
+.flag i{display:block;margin-top:3px;font-style:normal;font:600 11.5px var(--font-num);
+  letter-spacing:.16em;color:var(--muted)}
+.flag u{display:block;margin-top:3px;text-decoration:none;font-size:12.5px;color:var(--muted)}
+.flag.one i,.flag.one u{display:none}
+.flag.hide{opacity:0}
+/* 衛星の名札は重なり合うので、乗せた1つだけ出す */
+.satsys .flag{opacity:0;transition:opacity .18s ease}
+.satsys .orbi:hover + .flag{opacity:1}
+
+/* 衛星は最初からその惑星の子。寄って空いた場所に浮かび上がる。
+   .satsys 自身には opacity を置かない。置くと重なり順の階層が切れて、
+   奥に回った衛星を惑星の下に潜らせられなくなる。 */
+.satsys{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
+.satsys.on{pointer-events:auto}
+.satrings{position:absolute;left:0;top:0;width:0;height:0}
+
+/* 軌道の線。円を透視で落とした形なので、CSS の楕円ではなく
+   app.js が点を打って描く。前後で見た目は変えない。奥側だけ、
+   中心の丸に隠れる範囲を描かない（手前は丸より上に描くので隠す必要がない）。 */
+.orbsvg{position:absolute;left:-500px;top:-500px;width:1000px;height:1000px;
+  overflow:visible;pointer-events:none;
+  opacity:0;transition:opacity .2s ease}
+.satsys.on .orbsvg{opacity:1;transition:opacity .3s ease .04s}
+.orbsvg.back {z-index:6}    /* 奥の線。作品も中心も、この上に来る */
+.orbsvg.front{z-index:21}   /* 手前の線。中心より上、ただし作品より下 */
+.orbline{fill:none;vector-effect:non-scaling-stroke;
+  stroke:color-mix(in oklab, var(--c) 34%, transparent);stroke-width:1.1}
+
+/* 衛星ひとつ。位置・奥行きの倍率・重なり順は app.js が毎コマ入れる。 */
+.satnode{position:absolute;left:0;top:0;width:0;height:0;
+  opacity:0;transition:opacity .2s ease}
+.satsys.on .satnode{opacity:var(--dim,1);transition:opacity .26s ease .04s}
+/* 手前ほど大きい。ふつうの .orbi の拡大に --sc を掛ける。 */
+.satnode > .orbi{transform:translate(-50%,-50%) scale(var(--sc,1))}
+.satnode > .orbi:hover{transform:translate(-50%,-50%) scale(calc(var(--sc,1) * 1.07))}
+/* 名札と吹き出しの出る位置も、その衛星の大きさに合わせる。 */
+.satnode > .flag{--fo:calc(var(--satd,50px) / 2 * var(--sc,1) + 15px * var(--inv,1))}
+.satnode > .call-host{--s:calc(var(--satd,50px) / 2 * var(--sc,1) * var(--kz,1))}
+/* 潜った惑星は衛星の層のまん中に立つ。奥の衛星はこの下を通る。 */
+.orbi.sun{z-index:20}
+
+/* 吹き出し */
+.callout{position:absolute;left:0;top:0;width:0;height:0;z-index:60;
+  transform:scale(var(--inv));transform-origin:0 50%}
+.cdot{position:absolute;left:var(--s);top:-3.5px;width:7px;height:7px;border-radius:50%;background:var(--c)}
+.cdiag{position:absolute;left:var(--s);top:0;width:54px;height:1px;background:var(--c);
+  transform-origin:0 50%;transform:rotate(-45deg);animation:drawD .26s cubic-bezier(.22,1,.36,1) both}
+.chorz{position:absolute;left:calc(var(--s) + 38px);top:-38px;width:46px;height:1px;background:var(--c);
+  transform-origin:0 50%;animation:drawX .22s cubic-bezier(.22,1,.36,1) .24s both}
+.cpanel{position:absolute;left:calc(var(--s) + 84px);top:-38px;width:282px;
+  transform:translateY(-100%);background:var(--surface);border-radius:var(--rad);
+  border:1px solid var(--line);
+  padding:20px 22px 22px;box-shadow:0 24px 60px rgba(0,0,0,.6);
+  animation:panelIn .34s cubic-bezier(.22,1,.36,1) .4s both}
+/* スマホ幅：説明は画面下のシート */
+.csheet{position:fixed;left:12px;right:12px;bottom:max(12px, env(safe-area-inset-bottom));z-index:70}
+.csheet .cpanel{position:static;width:auto;transform:none;animation:sheetIn .38s cubic-bezier(.22,1,.36,1) both}
+@keyframes sheetIn{from{opacity:0;transform:translateY(24px)}}
+.cpanel .kick{font:600 11.5px var(--font-num);letter-spacing:.22em;color:var(--c)}
+.cpanel h4{margin:10px 0 0;font-weight:700;font-size:18px;line-height:1.4;letter-spacing:0}
+.cpanel .by{margin-top:6px;font-size:12.5px;color:var(--muted)}
+.cpanel p{margin:12px 0 0;font-size:13.5px;line-height:1.8;color:var(--ink-2)}
+.cpanel .acts{display:flex;gap:9px;margin-top:18px}
+.cpanel .cta{flex:1;text-align:center;font-size:13.5px;padding:12px 0}
+
+/* =============== 右の一覧 =============== */
+.side{
+  position:fixed;right:var(--pad);top:104px;width:266px;z-index:70;
+  border:1px solid var(--line);border-radius:var(--rad);background:var(--surface);
+  padding:22px 18px;
+  transition:opacity .55s ease .55s, transform .55s cubic-bezier(.22,1,.36,1) .55s;
+}
+.side.off{opacity:0;transform:translateY(10px);pointer-events:none;transition-delay:0s}
+.side-kick{margin:0;font:400 12px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase}
+.side-title{margin:10px 0 0;font-size:22px;letter-spacing:0}
+.side-count{margin:5px 0 0;font-size:12.5px;color:var(--muted)}
+.side-list{margin-top:20px;display:flex;flex-direction:column;gap:2px;
+  max-height:min(52vh,460px);overflow-y:auto;scrollbar-width:thin}
+.row{display:grid;grid-template-columns:12px 1fr;align-items:center;gap:12px;
+  padding:12px 13px;border-radius:var(--rad);text-align:left;border:1px solid transparent;
+  transition:background .18s,border-color .18s}
+.row:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)}
+.row.on{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)}
+.row .dot{width:12px;height:12px;border-radius:50%;background:var(--c)}
+.row b{font-weight:700;font-size:14px}
+.row span{display:block;margin-top:3px;font-size:12px;color:var(--muted);font-weight:400}
+
+/* =============== 使い方ガイド =============== */
+.guide{
+  position:fixed;left:var(--pad);right:var(--pad);bottom:0;height:150px;z-index:14;
+  border-top:1px solid var(--line);border-radius:0;
+  background:rgba(5,7,6,.94);
+  display:grid;grid-template-columns:330px repeat(3,1fr);
+  transition:opacity .5s ease, transform .6s cubic-bezier(.22,1,.36,1);
+  pointer-events:none;
+}
+.guide.off{opacity:0}
+/* 開いた瞬間だけ、下からそっと持ち上がる */
+body:not(.ready) .guide{opacity:0;transform:translateY(28px)}
+.guide-brand{padding:26px 28px;display:flex;align-items:center;gap:18px}
+.guide-mark{position:relative;width:78px;height:78px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.12);display:grid;place-items:center;flex:none}
+.guide-mark i{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.16);display:block}
+.guide-mark b{position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;
+  border-radius:50%;background:var(--acid)}
+.guide-mark u{position:absolute;left:64px;top:14px;width:4px;height:4px;border-radius:50%;background:#fff}
+.guide-kick{font:400 12px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+.guide-name{display:block;margin-top:10px;font-size:22px;letter-spacing:0;white-space:nowrap}
+.guide-step{padding:26px 28px;border-left:1px solid rgba(255,255,255,.07)}
+.guide-no{font:600 13px var(--font-num);color:var(--acid);margin-right:10px}
+.guide-step b{font-size:15px}
+.guide-step p{margin:12px 0 0;font-size:13.5px;line-height:1.8;color:var(--muted);text-wrap:pretty}
+
+/* =============== 全画面再生 =============== */
+.player{
+  position:fixed;inset:0;z-index:200;background:#000;
+  display:grid;grid-template-rows:auto 1fr auto;
+  animation:fsIn .42s cubic-bezier(.22,1,.36,1) both;
+}
+.player[hidden]{display:none}
+.player-loading{position:absolute;inset:0;z-index:50;display:grid;place-items:center;
+  background:#000;transition:opacity .25s ease}
+.player-loading[hidden]{display:none}
+.loading-ring{width:40px;height:40px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.12);border-top-color:var(--acid);
+  animation:loadingSpin .8s linear infinite}
+@keyframes loadingSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.loading-ring{animation:none}}
+.player-bar{display:flex;align-items:center;gap:20px;padding:20px var(--pad);
+  border-bottom:1px solid rgba(255,255,255,.1);min-width:0}
+.player-id{min-width:0}
+.player-kick{font:400 12px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--c,#fff)}
+.player-id b{display:block;margin-top:8px;font-weight:700;font-size:20px;letter-spacing:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.player-acts{margin-left:auto;display:flex;align-items:center;gap:16px;flex:none}
+.player-by{font-size:13.5px;color:var(--muted)}
+
+/* =========================================================
+   いいね
+   輪郭のハートが、押した瞬間だけ弾んで塗りつぶされる。
+   バネのような動きは、ふつうの ease ではなく、行き過ぎてから
+   戻る2段のキーフレームで作る。
+   ========================================================= */
+/* ハート本体と数字を横に並べる。数字は .like-btn の外（隣）に置く。
+   以前は .like-btn の中（display:grid;place-items:center）に数字を
+   直接入れていたが、明示的な列を持たない grid はアイテムを縦に
+   積んでしまい、「数がハートの下に出る」原因になっていた。 */
+.like-wrap{display:flex;align-items:center;gap:6px;flex:none}
+
+.like-btn{
+  position:relative;width:40px;height:40px;flex:none;display:grid;place-items:center;
+  border-radius:50%;color:#c2d2cd;
+  transition:color .25s ease, background .25s ease;
+}
+.like-btn:hover{background:rgba(255,255,255,.06);color:#fff}
+.like-icon{width:20px;height:20px;transition:transform .2s ease}
+.like-btn.on{color:var(--acid)}
+.like-btn.on .like-icon{fill:var(--acid)}
+.like-btn.burst .like-icon{animation:likeSpring .5s cubic-bezier(.19,1,.22,1) both}
+@keyframes likeSpring{
+  0%{transform:scale(1)}
+  32%{transform:scale(1.5)}
+  55%{transform:scale(.86)}
+  80%{transform:scale(1.12)}
+  100%{transform:scale(1)}
+}
+/* 押した中心から、光の粒が数個だけ散る */
+.like-burst{position:absolute;inset:0;pointer-events:none;opacity:0}
+.like-btn.burst .like-burst{opacity:1;animation:burstFade .6s ease both}
+.like-burst::before,.like-burst::after{
+  content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:50%;
+  background:var(--acid);
+  transform:translate(-50%,-50%);
+}
+.like-btn.burst .like-burst::before{animation:burstA .55s cubic-bezier(.22,1,.36,1) both}
+.like-btn.burst .like-burst::after{animation:burstB .55s cubic-bezier(.22,1,.36,1) both}
+@keyframes burstFade{ 0%{opacity:1} 70%{opacity:1} 100%{opacity:0} }
+@keyframes burstA{ to{ transform:translate(calc(-50% - 15px), calc(-50% - 11px)) scale(.3) } }
+@keyframes burstB{ to{ transform:translate(calc(-50% + 16px), calc(-50% - 8px)) scale(.3) } }
+
+/* =========================================================
+   ひとこと（コメント）を開くボタン
+   .like-btn と同じ大きさの丸いアイコンにして、右上のひと並びに揃える。
+   押すと assets/js/app.js が .cmt-panel に .on を付け外しする。
+   件数が来ていれば、右肩に小さな緑のバッジで知らせる。
+   ========================================================= */
+.cmt-toggle{
+  position:relative;width:40px;height:40px;flex:none;display:grid;place-items:center;
+  border-radius:50%;color:#c2d2cd;
+  transition:color .25s ease, background .25s ease;
+}
+.cmt-toggle svg{width:19px;height:19px}
+.cmt-toggle:hover{background:rgba(255,255,255,.06);color:#fff}
+.cmt-toggle.on{color:var(--acid);background:rgba(var(--acid-rgb),.09)}
+.cmt-badge{
+  position:absolute;top:1px;right:1px;min-width:15px;height:15px;padding:0 3px;
+  border-radius:999px;background:var(--acid);color:#04120d;
+  font:700 9.5px var(--font-num);line-height:15px;text-align:center;
+  transform:scale(0);transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.cmt-badge:not(:empty){transform:scale(1)}
+
+/* ハートの数。.like-wrap の中で .like-btn の隣（後ろ）に置かれる
+   兄弟要素なので、一般兄弟結合子で色だけ合わせる。 */
+.like-n{
+  font:600 12.5px var(--font-num); letter-spacing:.02em;
+  color:var(--faint); min-width:1ch; transition:color .2s ease;
+}
+.like-btn.on ~ .like-n{ color:var(--acid) }
+.like-n:empty{ display:none }
+
+/* ---- ひとこと：右上のアイコンを押すと滑り出す、小さなカード ----
+   .side（すぐ下）や map.html の .zonecard と同じ組み
+   （枠線・角丸20px・panel色・26pxのぼかし）で作り、独立した
+   フローティングにする。プレイヤー下部の行に混ぜると、フォームや
+   一覧の高さぶん前後の作品ボタンまで動いて崩れてしまうため。 */
+.cmt-panel{
+  position:fixed; right:var(--pad); top:96px; z-index:210;
+  width:320px; max-width:calc(100vw - var(--pad) * 2);
+  max-height:calc(100vh - 170px);
+  display:flex; flex-direction:column; min-height:0;
+  border:1px solid var(--line); border-radius:var(--rad);
+  background:var(--surface);
+  padding:20px 20px 18px;
+  opacity:0; transform:translateX(18px); pointer-events:none;
+  transition:opacity .3s ease, transform .38s cubic-bezier(.22,1,.36,1);
+}
+.cmt-panel.on{ opacity:1; transform:translateX(0); pointer-events:auto }
+
+.cmt-head{ display:flex; align-items:center; gap:10px; flex:none }
+.cmt-title{ margin:0; font-size:14px; font-weight:700; letter-spacing:.02em }
+.cmt-count{ font:600 12px var(--font-num); color:var(--faint) }
+.cmt-panel-close{
+  margin-left:auto; width:26px; height:26px; flex:none; display:grid; place-items:center;
+  border-radius:50%; color:var(--muted);
+  transition:color .2s ease, background .2s ease;
+}
+.cmt-panel-close svg{ width:14px; height:14px }
+.cmt-panel-close:hover{ color:#fff; background:rgba(255,255,255,.08) }
+
+.cmt-form{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; flex:none }
+.cmt-name,.cmt-text{
+  border:1px solid var(--line); background:rgba(255,255,255,.03);
+  border-radius:var(--rad-btn); padding:10px 16px; color:var(--ink);
+  font:inherit; font-size:13px; width:100%; transition:border-color .2s ease;
+}
+.cmt-name:focus,.cmt-text:focus{ outline:none; border-color:rgba(var(--acid-rgb),.5) }
+.cmt-name::placeholder,.cmt-text::placeholder{ color:var(--faint) }
+.cmt-send{ align-self:flex-end; flex:none; padding:10px 22px; font-size:13px }
+.cmt-send[disabled]{ opacity:.5; cursor:default }
+
+.cmt-rule{ margin:8px 0 0; font-size:12px; line-height:1.6; color:var(--faint); flex:none }
+.cmt-note{ margin:9px 0 0; font-size:12px; color:var(--faint); min-height:1em; flex:none }
+.cmt-note.bad{ color:#ff9a8b }
+
+.cmt-list{ list-style:none; margin:12px 0 0; padding:0 2px 0 0; display:grid; gap:9px;
+  overflow-y:auto; min-height:0; scrollbar-width:thin }
+.cmt-list li{
+  border-top:1px solid var(--line); border-radius:0;
+  background:none; padding:12px 0 2px; flex:none;
+}
+.cmt-who{ font-size:12px; color:var(--acid); font-weight:700 }
+.cmt-at{ font:600 11px var(--font-num); color:var(--faint); margin-left:8px }
+.cmt-body{ margin:5px 0 0; font-size:13px; line-height:1.7; color:var(--ink-2);
+  overflow-wrap:anywhere }
+.cmt-empty{ font-size:13px; color:var(--faint) }
+
+@media (max-width:640px){
+  .cmt-panel{
+    left:var(--pad); right:var(--pad); width:auto;
+    top:auto; bottom:14px; max-height:min(70vh,520px);
+  }
+  /* アイコンが5つ並ぶと 375px 幅では収まらず、右側が画面の外に
+     はみ出していた（このバグは今回のひとこと機能とは無関係の
+     既存のもの）。折り返せるようにして、はみ出しをなくす。 */
+  .player-bar{flex-wrap:wrap; row-gap:10px}
+  .player-acts{margin-left:0; flex-wrap:wrap; row-gap:8px}
+  .player-by{order:1}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .like-btn.burst .like-icon,.like-btn.burst .like-burst,
+  .like-btn.burst .like-burst::before,.like-btn.burst .like-burst::after{animation:none}
+}
+.player-stage{display:grid;place-items:center;padding:clamp(16px,3vh,34px) var(--pad);min-height:0;min-width:0}
+.frame{position:relative;border:1px solid color-mix(in oklab, var(--c,#fff) 42%, transparent);
+  background:#04100c;display:grid;place-items:center}
+.frame iframe,.frame video{width:100%;height:100%;border:0;display:block;background:#000}
+.frame img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.frame .br{position:absolute;width:22px;height:22px;border:1px solid var(--c,#fff)}
+.frame .hint{text-align:center;padding:20px}
+.frame .hint b{display:block;font:600 12px var(--font-num);letter-spacing:.28em;color:var(--c,#fff)}
+.frame .hint span{display:block;margin-top:12px;font-size:13px;color:var(--faint)}
+.audio-stage{display:flex;flex-direction:column;align-items:center;gap:22px;padding:34px;width:min(520px,80vw)}
+.audio-stage audio{width:100%}
+.player-foot{display:flex;align-items:center;gap:24px;padding:18px var(--pad) 24px;
+  border-top:1px solid rgba(255,255,255,.1)}
+.player-foot p{margin:0;max-width:800px;font-size:13.5px;line-height:1.85;color:#a9b4b0}
+.player-steps{margin-left:auto;display:flex;gap:9px;flex:none}
+
+/* =============== シート =============== */
+.sheet{position:fixed;inset:0;z-index:220;display:grid;place-items:center;padding:var(--pad)}
+.sheet[hidden]{display:none}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.86)}
+.sheet-box{position:relative;display:flex;flex-direction:column;
+  width:min(620px,100%);max-height:min(86vh,780px);
+  border:1px solid var(--line);border-radius:var(--rad);
+  background:var(--surface);
+  box-shadow:0 24px 60px rgba(0,0,0,.7);overflow:hidden;
+  animation:fsIn .34s cubic-bezier(.22,1,.36,1) both}
+.sheet-head{display:flex;align-items:center;gap:14px;flex:none;
+  padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.09)}
+.sheet-head h2{margin:0;font-size:16px;font-weight:700}
+.x{width:36px;height:36px;display:grid;place-items:center;margin-left:auto;flex:none;
+  border:1px solid var(--line);border-radius:50%;color:var(--ink);transition:border-color .2s,color .2s}
+.x svg{width:16px;height:16px}
+.x:hover{border-color:var(--ink)}
+.sheet-body{padding:20px;overflow-y:auto;min-height:0;overscroll-behavior:contain}
+
+.prose p{margin:0 0 15px;font-size:15px;line-height:var(--lh-read);color:var(--ink)}
+.prose .fine{font-size:13px;color:var(--muted);margin-top:16px}
+.deflist{margin:18px 0;display:grid;gap:0;border-top:1px solid var(--line)}
+.deflist>div{display:grid;grid-template-columns:84px 1fr;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.deflist dt{font-size:13px;font-weight:700;color:var(--ink)}
+.deflist dd{margin:0;font-size:14.5px;line-height:1.7;color:var(--ink-2)}
+.offline{margin:0;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  font-size:14.5px;line-height:var(--lh-read);color:var(--ink-2)}
+
+/* フォーム */
+.field{margin-bottom:22px;border:0;padding:0;min-width:0}
+.label{display:block;margin-bottom:10px;font-size:14px;font-weight:700;color:var(--ink)}
+.label em{font-style:normal;margin-left:8px;font-size:12px;font-weight:400;color:var(--faint)}
+.rating{display:flex;gap:7px}
+.rate{flex:1;display:flex;flex-direction:column;align-items:center;gap:9px;
+  padding:14px 4px;border:1px solid var(--line);border-radius:var(--rad-btn);background:transparent;
+  transition:border-color .2s,background-color .2s}
+.rate i{width:14px;height:14px;border-radius:50%;border:1px solid var(--line-2);transition:background-color .2s,border-color .2s}
+.rate u{text-decoration:none;font-size:12.5px;color:var(--muted);text-align:center}
+.rate:hover{border-color:var(--line-2)}
+.rate.on{border-color:var(--ink);background:var(--ink)}
+.rate.on i{background:#050706;border-color:#050706}
+.rate.on u{color:#050706;font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:10px 18px;border:1px solid var(--line);border-radius:var(--rad-btn);
+  font-size:14px;line-height:1.2;color:var(--ink-2);background:transparent;transition:border-color .2s,color .2s,background-color .2s}
+.chip:hover{border-color:var(--line-2);color:var(--ink)}
+.chip.on{background:var(--ink);color:#050706;border-color:var(--ink);font-weight:700}
+.select-wrap{position:relative}
+.select-wrap select{appearance:none;width:100%;padding:13px 42px 13px 14px;
+  border:1px solid var(--line);border-radius:999px;background:#000;color:var(--ink);padding-left:20px;
+  font:inherit;font-size:15px;outline:none;cursor:pointer}
+.select-wrap select:focus{border-color:var(--line-2)}
+.select-wrap select option{background:#04120d;color:var(--ink)}
+.select-wrap svg{position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  width:18px;height:18px;color:var(--muted);pointer-events:none}
+textarea{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:var(--rad);
+  background:#000;color:var(--ink);font:inherit;font-size:15px;line-height:1.8;
+  resize:vertical;outline:none}
+textarea:focus{border-color:var(--line-2)}
+textarea::placeholder{color:var(--muted)}
+.form-foot{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,.09)}
+.note{margin:0;flex:1 1 180px;font-size:12.5px;line-height:1.7;color:var(--muted)}
+.note.err{color:#ff8080}
+.form-foot .cta{padding:0 26px;height:46px}
+.thanks{display:flex;flex-direction:column;align-items:center;gap:12px;padding:34px 8px;text-align:center}
+.thanks[hidden]{display:none}
+.thanks-t{margin:0;font-size:24px;letter-spacing:0}
+.thanks-s{margin:0 0 10px;font-size:15px;line-height:var(--lh-read);color:var(--ink-2)}
+.thanks-acts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.thanks-acts .cta{padding:0 24px;height:44px}
+
+/* =============== 画面が狭いとき =============== */
+@media (max-width:1180px){
+  .side{display:none}
+  .guide{grid-template-columns:1fr;height:auto;padding-bottom:8px}
+  .guide-step{display:none}
+}
+@media (max-width:820px){
+  :root{--navh:64px}
+  .hero{width:min(320px,52vw);top:96px}
+  .guide{display:none}
+  .nav-links{display:none}
+  .cpanel{width:236px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;
+    transition-duration:.01ms !important}
+}
+
+
+/* =========================================================
+   ページの切り替え — 面ごとではなく、部品ごとに入れ替える
+   ・ナビと背景はその場に留まる。緑の下線だけが次のタブへ滑る。
+   ・見出しまわり（小見出し・見出し・説明・その下の操作）は、どのページでも
+     同じ場所にある「枠」として名前をそろえる。枠は次のページの位置へ動き、
+     その中で古い字は上へ抜け、新しい字が下から入ってくる。上から順に少しずつ遅らせる。
+   ・ページ固有の塊（観測窓・Q&A・アンケート）は、古い方が沈み、新しい方が
+     一拍おいて浮かび上がる。
+   全ページ共通なので style.css に置く。
+   ========================================================= */
+@view-transition { navigation: auto; }
+.nav{view-transition-name:site-nav}
+.nav-ink{view-transition-name:nav-ink}
+
+.home-log,.hero-kick,.doc-kick,.art-kick{view-transition-name:pg-kick;view-transition-class:slot}
+.home-title,.hero-title,.doc-title,.art-title{view-transition-name:pg-title;view-transition-class:slot}
+.home-lede,.hero-lede,.doc-lede,.art-sub{view-transition-name:pg-lede;view-transition-class:slot}
+.home-acts,.qa-jump,.sv-meta,.art-meta{view-transition-name:pg-more;view-transition-class:slot}
+.home-facts,.scope,.qa-group,.sv-main,.arts-list,.art-layout,.art-more{view-transition-name:match-element;view-transition-class:blk}
+
+::view-transition-group(site-nav){z-index:3}
+::view-transition-group(nav-ink){z-index:4;animation-duration:.7s;
+  animation-timing-function:cubic-bezier(.22,1,.36,1)}
+
+/* 背景と、名前の付いていない残りは溶け合わせる。古い方は早めに退く */
+::view-transition-old(root){animation-duration:.26s}
+::view-transition-new(root){animation-duration:.5s;animation-delay:.08s}
+
+/* 枠：次のページの位置へ動きながら、中身だけを差し替える。
+   枠の外にはみ出した字は切る（横は字の端が欠けないよう少し広めに） */
+::view-transition-group(*.slot){animation-duration:.7s;
+  animation-timing-function:cubic-bezier(.22,1,.36,1)}
+::view-transition-image-pair(*.slot){clip-path:inset(-2px -40px -6px -12px)}
+::view-transition-old(*.slot),::view-transition-new(*.slot){width:auto;height:auto}
+::view-transition-old(*.slot){animation:slotOut .26s cubic-bezier(.5,0,.2,1) both}
+::view-transition-new(*.slot){animation:slotIn .6s cubic-bezier(.2,.9,.2,1) both}
+@keyframes slotOut{to{transform:translateY(-105%);opacity:0}}
+@keyframes slotIn{from{transform:translateY(105%);opacity:0}}
+
+/* 上から順に：退くのは小刻みに、入るのは古い字が抜けきってから */
+::view-transition-old(pg-title){animation-delay:.03s}
+::view-transition-old(pg-lede) {animation-delay:.06s}
+::view-transition-old(pg-more) {animation-delay:.09s}
+::view-transition-new(pg-kick) {animation-delay:.14s}
+::view-transition-new(pg-lede) {animation-delay:.3s}
+::view-transition-new(pg-more) {animation-delay:.38s}
+::view-transition-group(pg-lede){animation-delay:.04s}
+::view-transition-group(pg-more){animation-delay:.08s}
+/* 新しい見出しは、いつもの一文字ずつの立ち上がり（site.js の split）で入る。
+   古い見出しが抜けきるまでは伏せておく（重なって読めなくなるため） */
+::view-transition-new(pg-title){animation:vtWait .22s}
+@keyframes vtWait{from,to{opacity:0}}
+
+/* 見出しは一文字ずつの箱が自分で字を切るので、枠は上だけ切る（2行の見出しの2行目が欠けないように） */
+::view-transition-image-pair(pg-title.slot){clip-path:inset(-2px -40px -200% -12px)}
+
+/* 記事の表紙：一覧のカードから記事の頭へ、同じ写真がそのまま移る */
+::view-transition-group(*.cover){animation-duration:.78s;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+::view-transition-old(*.cover),::view-transition-new(*.cover){height:100%;object-fit:cover;animation-duration:.5s}
+
+/* 塊：古い方は沈んで消え、新しい方は一拍おいて浮かぶ */
+::view-transition-old(*.blk){animation:blkOut .24s cubic-bezier(.5,0,.2,1) both}
+::view-transition-new(*.blk){animation:blkIn .8s cubic-bezier(.2,.9,.2,1) .3s both}
+@keyframes blkOut{to{opacity:0;transform:translateY(-18px) scale(.98)}}
+@keyframes blkIn{from{opacity:0;transform:translateY(44px)}}
+
+/* View Transitions が無い環境。本文を下から浮かせるだけ。 */
+@keyframes ecOut{ to{ opacity:0; transform:translateY(-10px) } }
+@keyframes ecIn{ from{ opacity:0; transform:translateY(16px) } }
+html.novt body{
+  animation: ecIn .5s cubic-bezier(.22,1,.36,1) both;
+}
+html.novt body.leaving{
+  animation: ecOut .24s cubic-bezier(.4,0,.9,.3) both;
+}
+
+/* 動きを控えたい設定のときは、素直に薄く出す */
+@media (prefers-reduced-motion: reduce){
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*),
+  html.novt body,html.novt body.leaving{ animation-duration:.16s !important; animation-delay:0s !important }
+  @keyframes ecIn{ from{opacity:0} }
+  @keyframes ecOut{ to{opacity:0} }
+  @keyframes slotIn{ from{opacity:0} }
+  @keyframes slotOut{ to{opacity:0} }
+  @keyframes blkIn{ from{opacity:0} }
+  @keyframes blkOut{ to{opacity:0} }
+}
+
+
+/* =========================================================
+   カメラを戻すボタン — 視点を動かしたときだけ下から出てくる
+   ========================================================= */
+.camreset{
+  position:fixed;left:50%;bottom:26px;z-index:75;
+  display:inline-flex;align-items:center;gap:9px;
+  padding:12px 22px;border-radius:var(--rad-btn);cursor:pointer;
+  border:1px solid var(--line-2);background:var(--surface);
+  color:var(--ink);font:inherit;font-size:14px;
+  opacity:0;transform:translate(-50%,18px) scale(.96);pointer-events:none;
+  transition:opacity .3s ease, transform .42s cubic-bezier(.22,1,.36,1);
+}
+.camreset.on{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
+.camreset:hover{border-color:var(--ink)}
+.camreset svg{width:15px;height:15px}
+@media (prefers-reduced-motion: reduce){ .camreset{transition-duration:.01ms} }
+
+
+/* =========================================================
+   スクロールで現れる（[data-reveal] は site.js の reveal() が担当）
+   子に data-reveal-item を付けると、その中で順番にずらして出す。
+   ========================================================= */
+[data-reveal-item]{
+  opacity:0;transform:translateY(22px);
+  transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1);
+  transition-delay:calc(var(--ri, 0) * 70ms);
+}
+[data-reveal].in [data-reveal-item]{opacity:1;transform:none}
+[data-reveal]:not(:has([data-reveal-item])){
+  opacity:0;transform:translateY(22px);
+  transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1);
+}
+[data-reveal].in:not(:has([data-reveal-item])){opacity:1;transform:none}
+
+/* 読み物のページでは、同じフェードを全部に掛けない（読みたい所がすぐ出る方が大事） */
+.page-doc [data-reveal-item],.page-doc [data-reveal]{opacity:1 !important;transform:none !important;transition:none !important}
+@media (prefers-reduced-motion: reduce){
+  [data-reveal-item],[data-reveal]{opacity:1 !important;transform:none !important;transition:none !important}
+}
+
+
+/* =========================================================
+   アンケートの選択：押した瞬間だけ弾む
+   ========================================================= */
+.rate,.chip{ animation:none; }
+.rate.pop{ animation:selectPop .38s cubic-bezier(.22,1,.36,1); }
+.chip.pop{ animation:selectPopSm .34s cubic-bezier(.22,1,.36,1); }
+@keyframes selectPop{
+  0%{ transform:scale(1) }
+  40%{ transform:scale(1.07) }
+  100%{ transform:scale(1) }
+}
+@keyframes selectPopSm{
+  0%{ transform:scale(1) }
+  45%{ transform:scale(1.09) }
+  100%{ transform:scale(1) }
+}
+@media (prefers-reduced-motion: reduce){
+  .rate.pop,.chip.pop{ animation:none }
+}
+
+
+/* =========================================================
+   2026-09 書体と動きの見直し
+   ========================================================= */
+
+/* 見出しはコーポレート・ロゴ Bold（それ自体が太い1ウェイト）。400 に固定し、にせの太字を作らせない。
+   palt で仮名を詰め、見出しそのものを「組版」として見せる。
+   （作品名など、あとから流し込む文字は本文の書体のまま。間引いた書体に無い字があるため） */
+body :is(.home-title,.hero-title,.doc-title,.intro-h,.guide-name,.side-title,.zonecard-title,.thanks-t,.noscript h1){
+  font-family:var(--font-display);font-weight:400;font-synthesis:none;
+  font-feature-settings:"palt";letter-spacing:0}
+
+/* 分類ラベル（作品のジャンル・会場の区画など）は、英字の大文字＋字間で統一する。
+   見出しの飾りとしては使わない。 */
+body :is(.cpanel .kick,.flag i,.frame .hint b){text-transform:uppercase;letter-spacing:.1em}
+
+/* ナビの下線は1本だけ。狙ったリンクへ滑り、離れると現在地に戻る（site.js の navInk） */
+.nav-links{position:relative}
+.nav-ink{position:absolute;left:0;bottom:-8px;width:1px;height:1px;pointer-events:none;
+  background:var(--acid);opacity:0;
+  transform-origin:0 50%;transition:transform .45s var(--ease),opacity .25s ease}
+
+/* 押せるものは、押す前に色で答える（動かさない・光らせない） */
+.cta:hover{background:var(--acid)}
+
+/* 見出しを一文字ずつ立ち上げる（site.js の split）。.split-in が付いた瞬間に動く */
+.ch{display:inline-block;overflow:hidden;vertical-align:top;
+  padding:.08em 0 .1em;margin:-.08em 0 -.1em}
+.ch > i{display:inline-block;font-style:inherit;transform:translateY(108%);opacity:0}
+.split-in .ch > i{animation:chRise .95s cubic-bezier(.2,.9,.2,1) both;
+  animation-delay:calc(var(--ci) * 36ms + var(--sd, 0ms))}
+@keyframes chRise{from{transform:translateY(108%);opacity:0}to{transform:none;opacity:1}}
+/* 立ち上がり終わったあと、同じ文で組み直されても（再描画）もう動かさない */
+.split-done .ch > i{animation:none;transform:none;opacity:1}
+
+/* 星はカーソルに合わせてわずかに奥行きで動く（site.js が --px / --py を書く） */
+/* ホームだけ（見せ場は1か所に） */
+.page-home .bg .stars{transform:translate3d(calc(var(--px,0) * -14px),calc(var(--py,0) * -10px),0)}
+.page-home .bg .limb{transform:translate3d(calc(var(--px,0) * -26px),calc(var(--py,0) * -18px),0)}
+/* 読み物のページでは、食の光を背景の気配に留める */
+.page-doc .bg .limb{opacity:.4}
+
+@media (prefers-reduced-motion: reduce){
+  html::after{animation:none}
+  .ch > i{transform:none;opacity:1;animation:none !important}
+  .bg .stars,.bg .limb{transform:none}
+  .nav-ink{transition:none}
+}
+
+/* =============== スマホのメニュー（site.js の mobileMenu） =============== */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.menu-btn{display:none;position:relative;width:44px;height:44px;border-radius:50%;
+  border:1px solid var(--line-2);z-index:95}
+.menu-btn i{position:absolute;left:13px;right:13px;height:1.5px;background:#fff;
+  transition:transform .35s cubic-bezier(.22,1,.36,1)}
+.menu-btn i:nth-of-type(1){top:17px}
+.menu-btn i:nth-of-type(2){top:25px}
+.menu-open .menu-btn i:nth-of-type(1){transform:translateY(4px) rotate(45deg)}
+.menu-open .menu-btn i:nth-of-type(2){transform:translateY(-4px) rotate(-45deg)}
+.menu-sheet{position:fixed;inset:0;z-index:90;background:#000;
+  display:flex;flex-direction:column;justify-content:center;padding:calc(var(--navh) + 20px) var(--pad) 40px;
+  opacity:0;transition:opacity .3s ease}
+.menu-sheet.on{opacity:1}
+.menu-sheet ol{list-style:none;margin:0;padding:0}
+.menu-sheet li{border-bottom:1px solid var(--line)}
+.menu-sheet a{display:block;padding:16px 0;color:#fff;font-family:var(--font-display);
+  font-size:clamp(30px,9vw,44px);line-height:1.2;
+  opacity:0;transform:translateY(14px);transition:opacity .45s ease,transform .5s cubic-bezier(.2,.9,.2,1)}
+.menu-sheet.on a{opacity:1;transform:none;transition-delay:calc(var(--mi) * 50ms + 60ms)}
+.menu-sheet a[aria-current]{color:var(--acid)}
+.menu-foot{margin:28px 0 0;font:400 13px var(--font-mono);color:var(--muted)}
+.menu-open body{overflow:hidden}
+@media (max-width:820px){
+  .menu-btn{display:block}
+  .nav-end .cta{display:none}      /* アンケートはメニューの中へ */
+}
+@media (prefers-reduced-motion: reduce){
+  .menu-sheet,.menu-sheet a,.menu-btn i{transition:none}
+}
+.menu-open .nav{z-index:100}   /* 開いている間は閉じるボタンをシートの上に */
+
+/* スマホでは輪が小さく、横に名札を出すと隣の星や中央に重なる。
+   名札を星の真下に置き、ジャンル名だけにする */
+@media (max-width:560px){
+  .unseat > .flag,.satnode > .flag{top:var(--fo);left:0;transform:translate(-50%,0) scale(var(--inv));transform-origin:50% 0;text-align:center}
+  .unseat > .flag b,.satnode > .flag b{font-size:12.5px}
+  .unseat > .flag i,.unseat > .flag u,.satnode > .flag i,.satnode > .flag u{display:none}
+}
+
+/* 見出しを文節で折り返す（「探検し／よう。」のような切れ方を防ぐ） */
+h1, h2, .art-title, .doc-title, .doc-lede, .acard-title, .hero-lede, .hero-title { word-break: auto-phrase; }

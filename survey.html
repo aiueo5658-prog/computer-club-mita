@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<title>アンケート — // 昆布観測島 作品展 2026</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta name="description" content="三田国際科学学園 昆布観測島 作品展 2026 のアンケート。">
+
+<!-- 本文の書体（UD新ゴ）は Adobe Fonts から。設定は assets/js/fonts.js -->
+<link rel="preconnect" href="https://use.typekit.net" crossorigin>
+<script src="assets/js/fonts.js?v=20261014230121"></script>
+<link rel="stylesheet" href="assets/css/style.css?v=20261014230121">
+<!-- ページ切り替えで写し取られる前に、site.js（ナビの下線・見出しの分割）を済ませておく -->
+<link rel="expect" href="#vt-ready" blocking="render">
+<link rel="stylesheet" href="assets/css/pages.css?v=20261014230121">
+<link rel="stylesheet" href="assets/css/m3.css?v=20261014230121">
+</head>
+<body class="page-doc">
+
+<div class="bg" aria-hidden="true">
+  <div class="stars" id="stars"></div>
+  <div class="limb"><i class="limb-glow"></i><i class="limb-core"></i></div>
+</div>
+
+<a class="skip-link" href="#main">本文へ</a>
+<header class="nav">
+  <a class="brand" href="index.html">
+    <span class="brand-txt">// 昆布観測島</span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html">ホーム</a>
+    <a href="works.html">作品一覧</a>
+    <a href="map.html">マップ</a>
+    <a href="articles.html">記事</a>
+    <a href="qa.html">Q&amp;A</a>
+  </nav>
+  <div class="nav-end">
+    <a class="cta" href="survey.html" aria-current="page">アンケート</a>
+  </div>
+</header>
+
+<main class="sv" id="main" tabindex="-1">
+  <!-- 左：見出し。ここは動かない -->
+  <aside class="sv-side" data-reveal>
+    <p class="doc-kick">SURVEY</p>
+    <h1 class="doc-title" data-split>今日は<br>ありがとう<br>ございました</h1>
+    <p class="doc-lede">よかったら、ひとことだけ<br>残していってください。<br>来年つくるものの参考にします。</p>
+    <p class="sv-meta"><span>全7問</span><span>1分ほど</span><span>必須は1問目だけ</span></p>
+  </aside>
+
+  <div class="sv-main">
+
+  <form class="svf" id="survey-form" novalidate data-reveal>
+    <ol class="svq-list">
+
+      <li class="svq">
+        <fieldset>
+          <legend class="svq-h"><span class="svq-n">1</span>展示はいかがでしたか<em class="svq-req">必須</em></legend>
+          <p class="svq-hint">月の満ち具合で選んでください。</p>
+          <div class="moons" id="rating">
+            <label class="moon"><input type="radio" name="rating" value="1"><i style="--f:0"></i><span>いまいち</span></label>
+            <label class="moon"><input type="radio" name="rating" value="2"><i style="--f:.25"></i><span>すこし</span></label>
+            <label class="moon"><input type="radio" name="rating" value="3"><i style="--f:.5"></i><span>ふつう</span></label>
+            <label class="moon"><input type="radio" name="rating" value="4"><i style="--f:.75"></i><span>よかった</span></label>
+            <label class="moon"><input type="radio" name="rating" value="5"><i style="--f:1"></i><span>最高</span></label>
+          </div>
+        </fieldset>
+      </li>
+
+      <li class="svq">
+        <label class="svq-h" for="fav-work"><span class="svq-n">2</span>一番よかった作品</label>
+        <div class="select-wrap">
+          <select id="fav-work"><option value="">選んでください</option></select>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+        </div>
+        <p class="svq-hint">迷ったら、いま思い出せたものを。</p>
+      </li>
+
+      <li class="svq">
+        <fieldset>
+          <legend class="svq-h"><span class="svq-n">3</span>どのジャンルが面白かったですか</legend>
+          <p class="svq-hint">いくつでも選べます。</p>
+          <div class="opts opts--grid" id="genre">
+            <label class="opt"><input type="checkbox" name="genre" value="音楽"><span>音楽</span></label>
+            <label class="opt"><input type="checkbox" name="genre" value="デザイン"><span>デザイン（映像・静止画）</span></label>
+            <label class="opt"><input type="checkbox" name="genre" value="プログラミング"><span>プログラミング</span></label>
+            <label class="opt"><input type="checkbox" name="genre" value="モデリング"><span>モデリング</span></label>
+            <label class="opt"><input type="checkbox" name="genre" value="その他"><span>その他</span></label>
+          </div>
+        </fieldset>
+      </li>
+
+      <li class="svq">
+        <fieldset>
+          <legend class="svq-h"><span class="svq-n">4</span>あなたについて</legend>
+          <div class="opts opts--grid" id="who">
+            <label class="opt"><input type="radio" name="who" value="在校生"><span>在校生</span></label>
+            <label class="opt"><input type="radio" name="who" value="保護者"><span>保護者</span></label>
+            <label class="opt"><input type="radio" name="who" value="受験生"><span>受験生</span></label>
+            <label class="opt"><input type="radio" name="who" value="卒業生"><span>卒業生</span></label>
+            <label class="opt"><input type="radio" name="who" value="その他"><span>その他</span></label>
+          </div>
+        </fieldset>
+      </li>
+
+      <li class="svq">
+        <fieldset>
+          <legend class="svq-h"><span class="svq-n">5</span>昆布観測島に興味を持ちましたか</legend>
+          <div class="opts opts--grid" id="interest">
+            <label class="opt"><input type="radio" name="interest" value="入ってみたい"><span>入ってみたい</span></label>
+            <label class="opt"><input type="radio" name="interest" value="少し気になる"><span>少し気になる</span></label>
+            <label class="opt"><input type="radio" name="interest" value="見るのが楽しい"><span>見るのが楽しい</span></label>
+            <label class="opt"><input type="radio" name="interest" value="もともと部員"><span>もともと部員</span></label>
+          </div>
+        </fieldset>
+      </li>
+
+      <li class="svq">
+        <fieldset>
+          <legend class="svq-h"><span class="svq-n">6</span>この展示をどこで知りましたか</legend>
+          <div class="opts opts--grid" id="found">
+            <label class="opt"><input type="radio" name="found" value="校内の掲示"><span>校内の掲示</span></label>
+            <label class="opt"><input type="radio" name="found" value="パンフレット"><span>パンフレット</span></label>
+            <label class="opt"><input type="radio" name="found" value="友だち・家族"><span>友だち・家族</span></label>
+            <label class="opt"><input type="radio" name="found" value="通りかかって"><span>通りかかって</span></label>
+            <label class="opt"><input type="radio" name="found" value="SNS"><span>SNS</span></label>
+          </div>
+        </fieldset>
+      </li>
+
+      <li class="svq">
+        <label class="svq-h" for="comment"><span class="svq-n">7</span>感想・部員へのメッセージ</label>
+        <textarea id="comment" rows="4" placeholder="「この作品のここが良かった」と書いてもらえると、本人がとても喜びます。" maxlength="1000"></textarea>
+        <p class="counter"><b id="cc">0</b> / 1000</p>
+      </li>
+    </ol>
+
+    <div class="form-foot">
+      <p class="note" id="form-note">いただいた声は部員のみが集計に利用します。個人が特定される情報は集めていません。</p>
+      <button class="cta big" type="submit" id="submit-btn">送信する</button>
+    </div>
+  </form>
+
+  <div class="thanks card" id="thanks" hidden>
+    <span class="thanks-mark" aria-hidden="true">
+      <i></i><b></b>
+    </span>
+    <p class="thanks-t">ありがとうございました。</p>
+    <p class="thanks-s" id="thanks-s">いただいた声は、来年のわたしたちに渡します。<br>またどこかで、つくったものを見せに来ます。</p>
+    <p class="thanks-echo" id="thanks-echo" hidden></p>
+    <div class="thanks-acts">
+      <a class="cta" href="works.html">作品一覧に戻る</a>
+      <button class="ghost" type="button" id="again">もう一度書く</button>
+    </div>
+  </div>
+
+    <p class="doc-foot">三田国際科学学園 ・ // 昆布観測島 ・ ECLIPSE 2026 ・ 10/31 - 11/01</p>
+  </div>
+</main>
+
+<iframe name="gform-sink" title="form sink" style="display:none" aria-hidden="true"></iframe>
+
+<script src="assets/js/site.js?v=20261014230121"></script>
+<span id="vt-ready" hidden></span>
+<script src="assets/js/config.js?v=20261014230121"></script>
+<script src="assets/js/cloud.js?v=20261014230121"></script>
+<script src="assets/js/data.js?v=20261014230121"></script>
+<script src="assets/js/survey.js?v=20261014230121"></script>
+</body>
+</html>

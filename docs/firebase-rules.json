@@ -1,0 +1,21 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "hearts": {
+      "$slug": {
+        ".read": true,
+        "count": {
+          ".write": true,
+          ".validate": "$slug.length <= 200 && newData.isNumber() && newData.val() >= 0 && ((!data.exists() && newData.val() <= 1) || newData.val() == data.val() + 1 || newData.val() == data.val() - 1)"
+        }
+      }
+    },
+    "comments": {
+      "$slug": {
+        ".read": true,
+        ".indexOn": "at"
+      }
+    }
+  }
+}

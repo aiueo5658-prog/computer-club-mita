@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<title>作品一覧 — // 昆布観測島 作品展 2026</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta name="description" content="三田国際科学学園 昆布観測島の作品展 2026。ジャンルを選ぶと、その中の作品が並びます。">
+
+<!-- 本文の書体（UD新ゴ）は Adobe Fonts から。設定は assets/js/fonts.js -->
+<link rel="preconnect" href="https://use.typekit.net" crossorigin>
+<script src="assets/js/fonts.js?v=20261014230121"></script>
+<link rel="stylesheet" href="assets/css/style.css?v=20261014230121">
+<link rel="stylesheet" href="assets/css/m3.css?v=20261014230121">
+<!-- ページ切り替えで写し取られる前に、site.js（ナビの下線・見出しの分割）を済ませておく -->
+<link rel="expect" href="#vt-ready" blocking="render">
+</head>
+<body>
+
+<noscript>
+  <div class="noscript">
+    <h1>三田国際科学学園 // 昆布観測島 作品展 2026</h1>
+    <p>このページは JavaScript を使って作品を表示します。ブラウザの設定で JavaScript を有効にしてください。</p>
+    <p>2026年10月31日(土)・11月1日(日) / 昆布観測島 展示教室</p>
+  </div>
+</noscript>
+
+<!-- ===== 背景 ===== -->
+<div class="bg" aria-hidden="true">
+  <div class="limb"><i class="limb-glow"></i><i class="limb-core"></i></div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<!-- ===== ナビ ===== -->
+<a class="skip-link" href="#scene">本文へ</a>
+<header class="nav">
+  <a class="brand" href="index.html">
+    <span class="brand-txt">// 昆布観測島</span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html">ホーム</a>
+    <button type="button" data-home class="is-on" aria-current="page">作品一覧</button>
+    <a href="map.html">マップ</a>
+    <a href="articles.html">記事</a>
+    <a href="qa.html">Q&amp;A</a>
+  </nav>
+  <div class="nav-end">
+    <a class="cta" href="survey.html">アンケート</a>
+  </div>
+</header>
+
+<!-- ===== 左：見出し ===== -->
+<div class="hero" id="hero">
+  <p class="hero-kick" id="hero-kick">ECLIPSE 2026</p>
+  <h1 class="hero-title" id="hero-title" data-split>作品一覧</h1>
+  <p class="hero-lede" id="hero-lede"></p>
+  <button class="ghost hero-back" id="hero-back" type="button" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+    すべてのジャンルへ
+  </button>
+</div>
+
+<!-- ===== 作品の配置（これひとつだけ） ===== -->
+<main class="scene" id="scene" tabindex="-1">
+  <div class="sys" id="sys">
+    <div class="ringgrp" id="ringgrp">
+      <i class="ring faint" data-r="0.58"></i>
+      <i class="ring faint" data-r="0.78"></i>
+      <i class="ring faint" data-r="1.27"></i>
+      <i class="ring" data-r="1"></i>
+      <i class="ec" data-d="0.95"></i>
+      <i class="ec" data-d="0.78"></i>
+      <i class="ec ec-rim" data-d="0.62"></i>
+      <i class="ec ec-disc" data-d="0.48"></i>
+      <!-- 部のロゴ。白い三日月がそのまま日食の光の縁になる。 -->
+      <i class="ec ec-logo" data-d="0.60" role="img" aria-label="コンピュータ部のロゴ"></i>
+      <span class="ec-cap">ECLIPSE</span>
+    </div>
+    <!-- 中身は app.js が組み立てます -->
+  </div>
+</main>
+
+<!-- ===== 右：作品リスト ===== -->
+<aside class="side off" id="side">
+  <p class="side-kick" id="side-kick"></p>
+  <p class="side-title" id="side-title"></p>
+  <p class="side-count" id="side-count"></p>
+  <div class="side-list" id="side-list"></div>
+</aside>
+
+<!-- ===== 使い方ガイド ===== -->
+<div class="guide" id="guide">
+  <div class="guide-brand">
+    <span class="guide-mark" aria-hidden="true"><i></i><b></b><u></u></span>
+    <span>
+      <span class="guide-kick">GUIDE</span>
+      <span class="guide-name">使い方ガイド</span>
+    </span>
+  </div>
+  <div class="guide-step"><span class="guide-no">01</span><b>ジャンルを選ぶ</b>
+    <p>まるい絵を押すと、そのジャンルに入ります。</p></div>
+  <div class="guide-step"><span class="guide-no">02</span><b>左右に引いて回す</b>
+    <p>作品がぐるりと並びます。画面を横に引くと回ります。</p></div>
+  <div class="guide-step"><span class="guide-no">03</span><b>その場で遊ぶ</b>
+    <p>Scratch も映像も音楽も、全画面で楽しめます。</p></div>
+</div>
+
+<button class="camreset" id="camreset" type="button">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+  カメラをリセット
+</button>
+
+<!-- ===== 全画面再生 ===== -->
+<div class="player" id="player" hidden role="dialog" aria-modal="true" aria-labelledby="p-title">
+  <!-- 作品を開いた直後、ハートの数が裏側から届くまでの間だけ覆う。
+       数字だけが後から遅れてポツンと現れるとバグって見えるため、
+       用意ができるまでは丸ごと隠しておき、揃ってから一度に出す。 -->
+  <div class="player-loading" id="p-loading" hidden aria-hidden="true"><span class="loading-ring"></span></div>
+  <div class="player-bar">
+    <button class="ghost" id="p-close" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+      一覧へ戻る
+    </button>
+    <div class="player-id">
+      <span class="player-kick" id="p-kick"></span>
+      <b id="p-title"></b>
+    </div>
+    <div class="player-acts">
+      <div class="like-wrap">
+        <button class="like-btn" id="p-like" type="button" aria-pressed="false" aria-label="いいね">
+          <svg class="like-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 20.7C7 17.2 3 13.7 3 9.4 3 6.4 5.3 4 8.3 4c1.8 0 3.2 1 3.7 2.3C12.5 5 13.9 4 15.7 4 18.7 4 21 6.4 21 9.4c0 4.3-4 7.8-9 11.3z"/>
+          </svg>
+          <i class="like-burst" aria-hidden="true"></i>
+        </button>
+        <span class="like-n" id="p-like-n" aria-hidden="true"></span>
+      </div>
+      <!-- ひとこと。裏側(config.js の apiUrl)が未設定なら丸ごと隠れる。 -->
+      <button class="cmt-toggle" id="cmt-toggle" type="button" hidden
+              aria-haspopup="true" aria-expanded="false" aria-controls="cmt-panel" aria-label="ひとこと">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+        </svg>
+        <span class="cmt-badge" id="cmt-badge" aria-hidden="true"></span>
+      </button>
+      <span class="player-by" id="p-by"></span>
+      <button class="m3-icon-btn p-fs" id="p-fs" type="button" aria-label="全画面で遊ぶ" title="全画面">
+        <svg class="fs-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19v-5h2v3h3v2zm0-9V5h5v2H7v3zm9 9v-2h3v-3h2v5zm3-9V7h-3V5h5v5z"/></svg>
+        <svg class="fs-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 19v-3H5v-2h5v5zm6 0v-5h5v2h-3v3zM5 10V8h3V5h2v5zm9 0V5h2v3h3v2z"/></svg>
+      </button>
+      <a class="ghost" id="p-ext" href="#" target="_blank" rel="noopener noreferrer" hidden>元のページ</a>
+    </div>
+  </div>
+  <div class="player-stage" id="p-stage"></div>
+  <div class="player-foot">
+    <p id="p-desc"></p>
+    <div class="player-steps">
+      <button class="ghost" id="p-prev" type="button">前の作品</button>
+      <button class="ghost" id="p-next" type="button">次の作品</button>
+    </div>
+  </div>
+
+  <!-- ひとこと。右上のアイコン(#cmt-toggle)を押したときだけ滑り出す。
+       フッターの行に混ぜていた頃は、フォームや一覧の高さぶん
+       前後の作品ボタンまで動いてレイアウトが崩れていたため、
+       独立したフローティングカードに切り出した。 -->
+  <aside class="cmt-panel" id="cmt-panel" aria-hidden="true" aria-labelledby="cmt-title">
+    <div class="cmt-head">
+      <h3 class="cmt-title" id="cmt-title">ひとこと</h3>
+      <span class="cmt-count" id="cmt-count"></span>
+      <button class="m3-icon-btn cmt-panel-close" id="cmt-panel-close" type="button" aria-label="閉じる">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.4 19 5 17.6 10.6 12 5 6.4 6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4z"/></svg>
+      </button>
+    </div>
+    <!-- M3 の outlined text field。ラベルは入力すると枠の上に上がる -->
+    <form class="cmt-form" id="cmt-form">
+      <label class="m3-field">
+        <input class="cmt-name" id="cmt-name" type="text" maxlength="20" placeholder=" " autocomplete="nickname">
+        <span class="m3-field-label">なまえ（任意）</span>
+      </label>
+      <label class="m3-field m3-field--area">
+        <textarea class="cmt-text" id="cmt-text" maxlength="200" rows="3" placeholder=" " required></textarea>
+        <span class="m3-field-label">ひとこと</span>
+      </label>
+      <div class="m3-field-support">
+        <span class="cmt-rule">感想・応援・質問をどうぞ。批判や人を傷つける言葉は載りません。</span>
+        <span class="cmt-counter" id="cmt-counter" aria-hidden="true">0/200</span>
+      </div>
+      <div class="cmt-actions">
+        <button class="m3-filled cmt-send" id="cmt-send" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V4l19 8-19 8zm2-3 11.85-5L5 7v3.5l6 1.5-6 1.5V17z"/></svg>
+          送信
+        </button>
+      </div>
+    </form>
+    <p class="cmt-note" id="cmt-note" role="status"></p>
+    <ul class="cmt-list" id="cmt-list"></ul>
+  </aside>
+</div>
+
+<!-- ===== アイコンの版下 ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- Material Symbols: music_note -->
+  <symbol id="i-music" viewBox="0 -960 960 960" fill="currentColor" stroke="none"><path d="M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z"/></symbol>
+  <!-- Material Symbols: palette -->
+  <symbol id="i-film" viewBox="0 -960 960 960" fill="currentColor" stroke="none"><path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 32.5-156t88-127Q256-817 330-848.5T488-880q80 0 151 27.5t124.5 76q53.5 48.5 85 115T880-518q0 115-70 176.5T640-280h-74q-9 0-12.5 5t-3.5 11q0 12 15 34.5t15 51.5q0 50-27.5 74T480-80Zm0-400Zm-220 40q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm120-160q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm200 0q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm120 160q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17ZM480-160q9 0 14.5-5t5.5-13q0-14-15-33t-15-57q0-42 29-67t71-25h70q66 0 113-38.5T800-518q0-121-92.5-201.5T488-800q-136 0-232 93t-96 227q0 133 93.5 226.5T480-160Z"/></symbol>
+  <!-- Material Symbols: code -->
+  <symbol id="i-code" viewBox="0 -960 960 960" fill="currentColor" stroke="none"><path d="M320-240 80-480l240-240 57 57-184 184 183 183-56 56Zm320 0-57-57 184-184-183-183 56-56 240 240-240 240Z"/></symbol>
+  <!-- Material Symbols: view_in_ar -->
+  <symbol id="i-model" viewBox="0 -960 960 960" fill="currentColor" stroke="none"><path d="M440-181 240-296q-19-11-29.5-29T200-365v-230q0-22 10.5-40t29.5-29l200-115q19-11 40-11t40 11l200 115q19 11 29.5 29t10.5 40v230q0 22-10.5 40T720-296L520-181q-19 11-40 11t-40-11Zm0-92v-184l-160-93v185l160 92Zm80 0 160-92v-185l-160 93v184ZM80-680v-120q0-33 23.5-56.5T160-880h120v80H160v120H80ZM280-80H160q-33 0-56.5-23.5T80-160v-120h80v120h120v80Zm400 0v-80h120v-120h80v120q0 33-23.5 56.5T800-80H680Zm120-600v-120H680v-80h120q33 0 56.5 23.5T880-800v120h-80ZM480-526l158-93-158-91-158 91 158 93Zm0 45Zm0-45Zm40 69Zm-80 0Z"/></symbol>
+  <!-- Material Symbols: category -->
+  <symbol id="i-other" viewBox="0 -960 960 960" fill="currentColor" stroke="none"><path d="m260-520 220-360 220 360H260ZM700-80q-75 0-127.5-52.5T520-260q0-75 52.5-127.5T700-440q75 0 127.5 52.5T880-260q0 75-52.5 127.5T700-80Zm-580-20v-320h320v320H120Zm580-60q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29Zm-500-20h160v-160H200v160Zm202-420h156l-78-126-78 126Zm78 0ZM360-340Zm340 80Z"/></symbol>
+</svg>
+
+<iframe name="gform-sink" title="form sink" style="display:none" aria-hidden="true"></iframe>
+
+<script src="assets/js/site.js?v=20261014230121"></script>
+<span id="vt-ready" hidden></span>
+<script src="assets/js/config.js?v=20261014230121"></script>
+<!-- ハート・ひとこと の即時読み書き用。config.js の firebase.databaseURL
+     が空なら、それぞれ黙って無効化する。 -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="assets/js/firebase-hearts.js?v=20261014230121"></script>
+<script src="assets/js/firebase-comments.js?v=20261014230121"></script>
+<script src="assets/js/cloud.js?v=20261014230121"></script>
+<script src="assets/js/local-mod.js?v=20261014230121"></script>
+<script src="assets/js/data.js?v=20261014230121"></script>
+<script src="assets/js/thumbs.js?v=20261014230121"></script>
+<script src="assets/js/app.js?v=20261014230121"></script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- JS が動く環境だけ、最初の一瞬から「月が窓を覆った状態」にしておく（動かない環境では覆わない） -->
+<script>document.documentElement.classList.add('js');</script>
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<title>// 昆布観測島 作品展 2026</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta name="description" content="三田国際科学学園 コンピュータ部の作品展「// 昆布観測島」（MIF 2026・10/31〜11/01）。部員が半年かけて作ったゲーム・映像・音楽・3Dモデルを、この画面でそのまま遊べます。">
+
+<!-- 本文の書体（UD新ゴ）は Adobe Fonts から。設定は assets/js/fonts.js -->
+<link rel="preconnect" href="https://use.typekit.net" crossorigin>
+<script src="assets/js/fonts.js?v=20261014230121"></script>
+<link rel="stylesheet" href="assets/css/style.css?v=20261014230121">
+<!-- ページ切り替えで写し取られる前に、site.js（ナビの下線・見出しの分割）を済ませておく -->
+<link rel="expect" href="#vt-ready" blocking="render">
+<link rel="stylesheet" href="assets/css/pages.css?v=20261014230121">
+<link rel="stylesheet" href="assets/css/m3.css?v=20261014230121">
+</head>
+<body class="page-home">
+
+<!-- ===== 導入：ようこそ → ローディング（Tips）→ ホーム =====
+     一度見せたら、二度と出さない（localStorage）。ホームのボタンを
+     何度押しても、最初の一回だけでいい。
+     JS が読めない・動かない環境では最初から出さず、直接ホームへ。 -->
+<div class="intro" id="intro" hidden aria-hidden="true">
+  <div class="stars" aria-hidden="true"></div>
+  <div class="intro-stage intro-welcome" id="intro-welcome">
+    <p class="intro-eyebrow">// 昆布観測島</p>
+    <h1 class="intro-h" data-split>コンピュータ部へ<br>ようこそ</h1>
+    <button class="cta big intro-go" id="intro-go" type="button">特設サイトへ</button>
+  </div>
+  <div class="intro-stage intro-load" id="intro-load" hidden>
+    <!-- 部のロゴアニメーション（2秒）。黒地に焼いた映像を「スクリーン」で重ね、黒を透かす -->
+    <video class="intro-logo" id="intro-logo" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true">
+      <source src="assets/video/logo-anim.mp4" type="video/mp4">
+    </video>
+    <p class="intro-tip" id="intro-tip"></p>
+    <div class="intro-bar" aria-hidden="true"><i id="intro-bar-fill"></i></div>
+  </div>
+</div>
+<script>
+/* 導入を出すのは次の2つのとき。
+     1. はじめての訪問
+     2. ブラウザの再読み込み（F5 など）
+   サイト内のリンクで「ホーム」に戻ってきただけのときは出さない。
+   毎回あの黒画面から始まると、行き来するのが煩わしくなるため。
+   一方、わざわざ再読み込みするのは「もう一度最初から見たい」という
+   意思表示なので、そのときは何度でも見せる。
+
+   JS が動かない環境や localStorage が読めない環境（プライベートモード
+   など）では、最初から出さずそのままいつものホームへ。 */
+(function () {
+  var KEY = 'ccm-intro-seen';
+
+  /* 再読み込みかどうかを見分ける。新しい API が無いブラウザでは
+     古い performance.navigation に落とす（1 が再読み込み）。 */
+  var isReload = false;
+  try {
+    var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    isReload = nav ? nav.type === 'reload'
+                   : !!(performance.navigation && performance.navigation.type === 1);
+  } catch (e) {}
+
+  try { if (localStorage.getItem(KEY) && !isReload) return; } catch (e) { return; }
+
+  var intro = document.getElementById('intro');
+  intro.hidden = false;
+  document.body.classList.add('intro-lock');
+  /* site.js はこの後に読み込まれる。星を撒く関数が届いてから使う。 */
+  (function waitStars() {
+    /* CCMSite が届いた直後は、まだレイアウトが整っていないことがある
+       （高さが 0 で星の数が 0 になる）。少し待ってから撒く。 */
+    if (!window.CCMSite) { setTimeout(waitStars, 30); return; }
+    setTimeout(function () { window.CCMSite.stars(intro.querySelector('.stars'), 4242); }, 60);
+  })();
+
+  var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* 豆知識はこれ一本だけ。読み切れる時間だけ止めてから進む。 */
+  var TIP = '昆布は、コンピュータ部の略語として昔から愛されており、今もなお学校内ではコンピュータ部を昆布と呼びます。';
+
+  var REVEAL_DELAY = 320;   /* ようこそ画面が消えて、ローディング画面が出てくるまで */
+  /* 本物のダウンロードっぽく見せるため、一定速度ではなく段階ごとに
+     速さを変える。はじめは勢いよく伸び、中盤で伸び悩み、最後にスッと
+     100%へ決着する。ここの ms 合計がローディング画面の表示時間（約3秒）。 */
+  var STAGES = [
+    { to: 22,  ms: 260, ease: 'ease-out' },
+    { to: 46,  ms: 420, ease: 'ease-in-out' },
+    { to: 66,  ms: 520, ease: 'ease-in-out' },
+    { to: 81,  ms: 640, ease: 'ease-out' },
+    { to: 92,  ms: 760, ease: 'ease-out' },
+    { to: 100, ms: 400, ease: 'ease-in' }
+  ];
+  var BAR_MS = STAGES.reduce(function (sum, s) { return sum + s.ms; }, 0);
+  var HOLD_BUFFER = 200;   /* 100%になってから、次の画面へ移るまでの一呼吸 */
+  var HOLD = REDUCE ? 200 : (REVEAL_DELAY + BAR_MS + HOLD_BUFFER);
+
+  document.getElementById('intro-go').addEventListener('click', function () {
+    var welcome = document.getElementById('intro-welcome');
+    var load = document.getElementById('intro-load');
+    welcome.classList.add('leave');
+    setTimeout(function () {
+      welcome.hidden = true;
+      load.hidden = false;
+
+      document.getElementById('intro-tip').textContent = TIP;
+      var logo = document.getElementById('intro-logo');
+      if (logo && !REDUCE) { try { logo.currentTime = 0; var pp = logo.play(); if (pp) pp.catch(function () {}); } catch (e) {} }
+      var bar = document.getElementById('intro-bar-fill');
+
+      if (REDUCE) {
+        bar.style.transitionDuration = '0s';
+        bar.style.width = '100%';
+        return;
+      }
+
+      /* 直前まで hidden（display:none）だった要素は、幅を変えても
+         トランジションが再生されない（描画されていないため）。
+         表示された直後の2フレーム待ってから、0%を起点に段階を刻む。 */
+      bar.style.transitionDuration = '0s';
+      bar.style.width = '0%';
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          var t = 0;
+          STAGES.forEach(function (s) {
+            setTimeout(function () {
+              bar.style.transitionTimingFunction = s.ease;
+              bar.style.transitionDuration = s.ms + 'ms';
+              bar.style.width = s.to + '%';
+            }, t);
+            t += s.ms;
+          });
+        });
+      });
+    }, REDUCE ? 0 : REVEAL_DELAY);
+
+    setTimeout(function () {
+      intro.classList.add('out');
+      document.body.classList.remove('intro-lock');
+      setTimeout(function () { intro.hidden = true; }, REDUCE ? 0 : 650);
+      try { localStorage.setItem(KEY, '1'); } catch (e) {}
+    }, HOLD);
+  });
+})();
+</script>
+
+<!-- 背景は星空だけ。映像は下の「観測窓」の中に入れる。 -->
+<div class="bg" aria-hidden="true">
+  <div class="stars" id="stars"></div>
+</div>
+
+<a class="skip-link" href="#main">本文へ</a>
+<header class="nav">
+  <a class="brand" href="index.html">
+    <span class="brand-txt">// 昆布観測島</span>
+  </a>
+  <nav class="nav-links">
+    <a href="index.html" class="is-on" aria-current="page">ホーム</a>
+    <a href="works.html">作品一覧</a>
+    <a href="map.html">マップ</a>
+    <a href="articles.html">記事</a>
+    <a href="qa.html">Q&amp;A</a>
+  </nav>
+  <div class="nav-end">
+    <a class="cta" href="survey.html">アンケート</a>
+  </div>
+</header>
+
+<main class="home" data-reveal id="main" tabindex="-1">
+  <div class="home-copy">
+    <!-- 左は「いつ・何・どうする」の3つだけ。日付は1つのピルにまとめる -->
+    <p class="home-log" data-reveal-item>
+      <span class="home-date">2026.10.31 SAT — 11.01 SUN</span>
+      <span class="home-count" id="home-count"></span>
+    </p>
+
+    <h1 class="home-title" data-split><span class="home-slash">//</span>昆布観測島</h1>
+
+    <p class="home-lede" data-reveal-item>
+      部員が半年かけて作ったゲームやデザインを、<br>この画面でそのまま遊べます。
+    </p>
+
+    <div class="home-acts" data-reveal-item>
+      <!-- M3：主＝filled（末尾に矢印）、副＝text（先頭に再生）。高さ40の標準サイズ -->
+      <a class="cta home-go" href="works.html">作品を探す
+        <svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z"/></svg>
+      </a>
+      <button class="m3-text-btn home-pr" id="pr-open" type="button" aria-haspopup="dialog">
+        <svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M320-200v-560l440 280-440 280Zm80-280Zm0 134 210-134-210-134v268Z"/></svg>
+        PR動画を見る
+      </button>
+    </div>
+
+    <ul class="home-facts" id="home-facts" data-reveal-item hidden>
+      <li><b data-count="0">0</b><span>作品</span></li>
+      <li><b data-count="0">0</b><span>制作者</span></li>
+      <li><b data-count="5">0</b><span>ジャンル</span></li>
+      <li><b data-count="2">0</b><span>日間</span></li>
+    </ul>
+  </div>
+
+  <!-- 観測窓。部のロゴ（波形と網目の輪）を望遠鏡の縁に見立て、
+       その内側の丸い窓に部員の映像を流す。窓の下に、実際の作品名が
+       「観測ログ」として順番に流れる（押すとその作品へ）。 -->
+  <figure class="scope" data-reveal-item>
+    <!-- 窓の座標。赤経 10時31分・赤緯 +11度01分 は、会期の 10/31 と 11/01 -->
+    <p class="scope-coord" aria-hidden="true"><span>RA 10ʰ31ᵐ</span><span>DEC +11°01′</span></p>
+    <!-- カーソルの方へ少し傾く（site.js が --px / --py を書く） -->
+    <div class="scope-body">
+      <div class="scope-lens" aria-hidden="true">
+        <!-- 望遠鏡のレンズの歪み：中心がふくらみ、縁で色が少しずれる。地図は lens-map.png -->
+        <svg class="lens-defs" width="0" height="0" aria-hidden="true"><filter id="lens" x="0" y="0" width="1" height="1" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+          <feImage href="assets/img/lens-map.png?v=2" x="0" y="0" width="1" height="1" preserveAspectRatio="none" result="m"/>
+          <feDisplacementMap in="SourceGraphic" in2="m" scale=".25" xChannelSelector="R" yChannelSelector="G" result="d"/>
+          <feDisplacementMap in="SourceGraphic" in2="m" scale=".2535" xChannelSelector="R" yChannelSelector="G" result="d2"/>
+          <feColorMatrix in="d" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" result="gb"/>
+          <feColorMatrix in="d2" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
+          <feComposite in="r" in2="gb" operator="arithmetic" k2="1" k3="1"/>
+        </filter></svg>
+        <!-- 2026年のPR動画（音なし・960px・5MB）。データ節約・動きを控える設定のときは下のスクリプトが止める -->
+        <video id="bgv" autoplay muted loop playsinline preload="metadata" disablepictureinpicture poster="assets/video/pr2026-poster.jpg">
+          <source src="assets/video/pr2026-loop.mp4" type="video/mp4">
+        </video>
+        <!-- 開いた瞬間だけ、窓を覆っていた月の影が滑り去る（食の終わり）。
+             最後の光が一瞬ひかる（ダイヤモンドリング） -->
+        <i class="scope-moon"></i>
+        <i class="scope-flare"></i>
+      </div>
+      <span class="scope-ring" aria-hidden="true"></span>
+    </div>
+    <figcaption class="scope-log" id="scope-log" hidden>
+      <span class="scope-log-k">観測ログ</span>
+      <a class="scope-log-w" id="scope-log-w" href="works.html"><span class="t"></span><span class="by"></span></a>
+    </figcaption>
+  </figure>
+</main>
+
+<!-- 2026年のPR動画（60秒・音あり）。M3 のダイアログで開く -->
+<dialog class="m3-dialog" id="pr-dialog" aria-labelledby="pr-title">
+  <div class="m3-dialog-head">
+    <div style="flex:1;min-width:0">
+      <h2 id="pr-title">2026 PR動画</h2>
+      <p>コンピュータ部の半年を、60秒で。</p>
+    </div>
+    <button class="m3-icon-btn" type="button" data-close aria-label="閉じる">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.4 19 5 17.6 10.6 12 5 6.4 6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4z"/></svg>
+    </button>
+  </div>
+  <div class="m3-dialog-media">
+    <video id="pr-video" controls playsinline preload="none" poster="assets/video/pr2026-poster.jpg">
+      <source src="assets/video/pr2026.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="m3-dialog-actions">
+    <button class="m3-text-btn" type="button" data-close>閉じる</button>
+  </div>
+</dialog>
+<script>
+(function () {
+  var dlg = document.getElementById('pr-dialog'), v = document.getElementById('pr-video');
+  var open = document.getElementById('pr-open');
+  if (!dlg || !open || typeof dlg.showModal !== 'function') { if (open) open.hidden = true; return; }
+  var bg = document.getElementById('bgv');
+  open.addEventListener('click', function () {
+    dlg.showModal();
+    if (bg) bg.pause();
+    var p = v.play(); if (p) p.catch(function () {});
+  });
+  function close() { dlg.close(); }
+  [].forEach.call(dlg.querySelectorAll('[data-close]'), function (b) { b.addEventListener('click', close); });
+  /* 外側（暗幕）を押しても閉じる */
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) close(); });
+  dlg.addEventListener('close', function () {
+    v.pause();
+    if (bg && !document.body.classList.contains('no-video')) { var p = bg.play(); if (p) p.catch(function () {}); }
+  });
+})();
+</script>
+
+<p class="home-theme" aria-hidden="true">COMPUTER CLUB&nbsp;&nbsp;2026</p>
+
+<script src="assets/js/site.js?v=20261014230121"></script>
+<span id="vt-ready" hidden></span>
+<script src="assets/js/config.js?v=20261014230121"></script>
+<script src="assets/js/data.js?v=20261014230121"></script>
+<script>
+(function () {
+  var facts = document.getElementById('home-facts');
+  /* ジャンル・日間は静的な数なので、出てきた瞬間に数え上げる。
+     作品・制作者はデータが届いてから、同じ数え上げで差し替える。 */
+  function countAll() {
+    if (!window.CCMSite) return;
+    [].forEach.call(facts.querySelectorAll('b'), function (b) {
+      window.CCMSite.countTo(b, b.getAttribute('data-count'), 900);
+    });
+  }
+  facts.addEventListener('transitionend', function once(e) {
+    if (e.propertyName !== 'opacity') return;
+    facts.removeEventListener('transitionend', once);
+    countAll();
+  });
+  /* 動きを控える設定では transitionend が来ないので、すぐ数える */
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) countAll();
+
+  var REDUCE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 開催までの日数。config.js の festival から、日本時間の「日付」で数える
+     （時刻の差を割ると、前日の朝が「あと2日」になってしまうため）。 */
+  var F = window.CCM && window.CCM.festival;
+  var cnt = document.getElementById('home-count');
+  if (F && cnt) {
+    var now = Date.now(), s = Date.parse(F.start), e = Date.parse(F.end);
+    var day = function (t) { return Math.floor((t + 9 * 3600000) / 86400000); };
+    var dd = day(s) - day(now);
+    var msg = now > e ? 'アーカイブ公開中'
+            : now >= s ? 'いま開催中'
+            : dd <= 0 ? 'きょうから'
+            : dd === 1 ? 'あした開催'
+            : '開催まで あと ' + dd + ' 日';
+    if (window.CCMSite && window.CCMSite.decode) window.CCMSite.decode(cnt, msg, 900);
+    else cnt.textContent = msg;
+  }
+
+  if (window.CCMData) {
+    window.CCMData.load().then(function () {
+      var f = facts.children;
+      f[0].querySelector('b').setAttribute('data-count', window.CCMData.works.length);
+      f[1].querySelector('b').setAttribute('data-count', window.CCMData.authors().length);
+      if (window.CCMSite) countAll();
+      startLog(window.CCMData.works);
+    });
+  }
+
+  /* 観測ログ：作品名を順番に流す。押すとその作品が開く。 */
+  function startLog(works) {
+    var box = document.getElementById('scope-log');
+    var a = document.getElementById('scope-log-w');
+    var list = (works || []).filter(function (w) { return w && w.title && w.slug; });
+    if (!box || !a || !list.length) return;
+    for (var i = list.length - 1; i > 0; i--) {          /* 毎回ちがう順番で */
+      var j = Math.floor(Math.random() * (i + 1)), t = list[i]; list[i] = list[j]; list[j] = t;
+    }
+    var k = 0;
+    var decode = window.CCMSite && window.CCMSite.decode;
+    var tEl = a.querySelector('.t'), byEl = a.querySelector('.by');
+    /* 等幅書体（PlemolJP）は全角スペースを「見える四角」で描くので、普通の空白にしておく */
+    function tidy(s) { return String(s || '').replace(/　/g, ' ').trim(); }
+    /* 切り替わるたびに、観測装置の表示のように字が読み出されて落ち着く */
+    function put() {
+      var w = list[k++ % list.length];
+      var t = tidy(w.title), by = tidy(w.author);
+      if (decode) { decode(tEl, t, 700); decode(byEl, by, 700); }
+      else { tEl.textContent = t; byEl.textContent = by; }
+      a.href = 'works.html#w/' + encodeURIComponent(w.slug);
+    }
+    box.hidden = false;
+    put();
+    if (REDUCE) return;
+    setInterval(put, 4600);
+  }
+  /* 映像が読めない環境では地の色に任せる。
+     データ節約モードや「動きを減らす」設定の人には、そもそも流さない
+     （止めて src を外すと、残りのダウンロードも止まる）。 */
+  var v = document.getElementById('bgv');
+  if (v) {
+    var saveData = navigator.connection && navigator.connection.saveData;
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (saveData || reduce) {
+      v.pause();
+      [].forEach.call(v.querySelectorAll('source'), function (s) { s.remove(); });
+      v.removeAttribute('src');
+      v.load();
+      document.body.classList.add('no-video');
+    } else {
+      v.addEventListener('error', function () { document.body.classList.add('no-video'); }, true);
+    }
+  }
+})();
+</script>
+</body>
+</html>

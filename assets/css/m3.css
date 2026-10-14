@@ -1,0 +1,350 @@
+/* =========================================================
+   m3.css — Material Design 3 の「作法」だけを、昆布観測島の世界観に混ぜる
+
+   色・書体・形は今のまま（黒地×ネオングリーン、月食、ピル／円）。
+   M3 から借りるのは、目に見えにくいけれど触り心地を決める部分：
+     ・カラーロール（primary / on-primary / surface-container …）を
+       既存の色に割り当てた、暗い緑のスキーム
+     ・状態レイヤー（hover 8% / focus 10% / pressed 10%）
+     ・フォーカスリング（3px・offset 2px）
+     ・動きのカーブ（standard / emphasized）
+     ・部品：トーナルボタン、ダイアログ（角28）、アイコンボタン
+   ========================================================= */
+:root {
+  /* カラーロール。primary はサイトの酸性グリーン */
+  --md-sys-color-primary: var(--acid);
+  --md-sys-color-on-primary: #002200;
+  --md-sys-color-secondary-container: #1d3a24;
+  --md-sys-color-on-secondary-container: #c9f2cf;
+  --md-sys-color-surface: #050706;
+  --md-sys-color-surface-container-low: #0b120e;
+  --md-sys-color-surface-container: #101a14;
+  --md-sys-color-surface-container-high: #16221b;
+  --md-sys-color-on-surface: var(--ink);
+  --md-sys-color-on-surface-variant: #a8b4b0;
+  --md-sys-color-outline-variant: rgba(255,255,255,.14);
+  --md-sys-color-scrim: #000;
+
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-full: 999px;
+
+  --md-sys-motion-easing-standard: cubic-bezier(.2,0,0,1);
+  --md-sys-motion-easing-emphasized-decelerate: cubic-bezier(.05,.7,.1,1);
+  --md-sys-motion-easing-emphasized-accelerate: cubic-bezier(.3,0,.8,.15);
+
+  --md-sys-state-hover: .08;
+  --md-sys-state-focus: .10;
+  --md-sys-state-pressed: .10;
+}
+
+/* ---- 状態レイヤー：押せるものに、currentColor の薄い膜を重ねる ---- */
+.cta, .ghost, .m3-tonal, .m3-icon-btn, .m3-text-btn, .chip, .choice {
+  position: relative; isolation: isolate;
+}
+.cta::after, .ghost::after, .m3-tonal::after, .m3-icon-btn::after, .m3-text-btn::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1;
+  background: currentColor; opacity: 0; pointer-events: none;
+  transition: opacity .2s var(--md-sys-motion-easing-standard);
+}
+.cta:hover::after, .ghost:hover::after, .m3-tonal:hover::after,
+.m3-icon-btn:hover::after, .m3-text-btn:hover::after { opacity: var(--md-sys-state-hover); }
+.cta:focus-visible::after, .ghost:focus-visible::after, .m3-tonal:focus-visible::after,
+.m3-icon-btn:focus-visible::after, .m3-text-btn:focus-visible::after { opacity: var(--md-sys-state-focus); }
+.cta:active::after, .ghost:active::after, .m3-tonal:active::after,
+.m3-icon-btn:active::after, .m3-text-btn:active::after { opacity: var(--md-sys-state-pressed); }
+/* .cta は白地なので、膜は黒く効かせる（currentColor が黒文字） */
+
+/* ---- フォーカスリング：M3 の 3px・offset 2px。色は緑のまま ---- */
+:focus-visible { outline: 3px solid var(--md-sys-color-primary); outline-offset: 2px; }
+.cta:focus-visible, .ghost:focus-visible, .m3-tonal:focus-visible,
+.m3-icon-btn:focus-visible, .m3-text-btn:focus-visible { border-radius: var(--md-sys-shape-corner-full); }
+
+/* ---- トーナルボタン（重要だが主ではない操作）。高さ40・アイコン18・左16 ---- */
+.m3-tonal {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 24px 0 16px;
+  border: 0; border-radius: var(--md-sys-shape-corner-full); cursor: pointer;
+  background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+  font: 500 14px/20px var(--font-jp); letter-spacing: .02em;
+  transition: background-color .2s var(--md-sys-motion-easing-standard);
+}
+.m3-tonal svg { width: 18px; height: 18px; fill: currentColor; flex: none; }
+
+/* ---- アイコンボタン（48×48 のタッチ領域、見た目40） ---- */
+.m3-icon-btn {
+  display: inline-grid; place-items: center; width: 48px; height: 48px; padding: 0;
+  border: 0; border-radius: 50%; background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer;
+}
+.m3-icon-btn svg { width: 24px; height: 24px; fill: currentColor; }
+
+/* ---- テキストボタン（ダイアログの操作） ---- */
+.m3-text-btn {
+  height: 40px; padding: 0 12px; border: 0; border-radius: var(--md-sys-shape-corner-full);
+  background: transparent; color: var(--md-sys-color-primary); cursor: pointer;
+  font: 500 14px/20px var(--font-jp); letter-spacing: .02em;
+}
+
+/* ---- ダイアログ：角28・surface-container-high・見出し Headline Small ---- */
+.m3-dialog {
+  width: min(960px, calc(100vw - 32px)); max-width: none; max-height: calc(100svh - 32px);
+  padding: 0; border: 0; border-radius: var(--md-sys-shape-corner-extra-large);
+  background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface);
+  box-shadow: 0 0 0 1px var(--md-sys-color-outline-variant), 0 24px 80px rgba(0,0,0,.6), 0 0 90px rgba(var(--acid-rgb),.08);
+  overflow: hidden;
+}
+.m3-dialog::backdrop { background: color-mix(in srgb, var(--md-sys-color-scrim) 72%, transparent); }
+.m3-dialog[open] { animation: m3In .45s var(--md-sys-motion-easing-emphasized-decelerate) both; }
+.m3-dialog[open]::backdrop { animation: m3Fade .3s var(--md-sys-motion-easing-standard) both; }
+@keyframes m3In { from { opacity: 0; transform: translateY(24px) scale(.97); } }
+@keyframes m3Fade { from { opacity: 0; } }
+.m3-dialog-head { display: flex; align-items: center; gap: 8px; padding: 12px 12px 8px 24px; }
+.m3-dialog-head h2 { margin: 0; flex: 1; min-width: 0; font: 400 24px/32px var(--font-display); color: var(--md-sys-color-on-surface); }
+.m3-dialog-head p { margin: 2px 0 0; font: 400 14px/20px var(--font-jp); color: var(--md-sys-color-on-surface-variant); }
+.m3-dialog-media { margin: 0 24px; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 16 / 9; }
+.m3-dialog-media video { display: block; width: 100%; height: 100%; }
+.m3-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px 20px; }
+@media (max-width: 599px) {
+  .m3-dialog-head { padding-left: 16px; }
+  .m3-dialog-media { margin: 0 16px; }
+  .m3-dialog-actions { padding: 12px 16px 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m3-dialog[open], .m3-dialog[open]::backdrop { animation: none; }
+}
+
+/* =========================================================
+   ひとこと欄（作品プレイヤーの右上から出るパネル）を M3 の部品で組む
+     パネル    … 浮いているシート：surface-container-high・角28・elevation 3
+     見出し    … Title Large(22/28 400) ＋ 件数バッジ（Label S・full）
+     入力      … outlined text field（角4・高さ56・浮くラベル・文字数カウンター）
+     送信      … filled button（高さ40・アイコン18・右寄せ）
+     結果      … アイコン付きの1行（成功は primary、失敗は error）
+     一覧      … list item（アバター40・Title S の名前・Body M の本文・区切り線）
+   ========================================================= */
+:root {
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-outline: #6f7d76;
+  --cmt-ok-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.4 14.6-4.25-4.25 1.4-1.4 2.85 2.85 5.65-5.65 1.4 1.4z'/%3E%3C/svg%3E");
+  --cmt-bad-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-2h2zm0-4h-2V7h2z'/%3E%3C/svg%3E");
+}
+
+.cmt-panel {
+  width: 360px; padding: 8px 0 0;
+  border: 0; border-radius: var(--md-sys-shape-corner-extra-large);
+  background: var(--md-sys-color-surface-container-high);
+  box-shadow: 0 0 0 1px var(--md-sys-color-outline-variant), 0 6px 24px rgba(0,0,0,.55);
+  transition: opacity .25s var(--md-sys-motion-easing-standard), transform .45s var(--md-sys-motion-easing-emphasized-decelerate);
+}
+.cmt-head { gap: 8px; padding: 4px 8px 4px 24px; min-height: 56px; }
+.cmt-title { font: 400 22px/28px var(--font-jp); letter-spacing: 0; color: var(--md-sys-color-on-surface); }
+.cmt-count:empty { display: none; }
+.cmt-count {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 8px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+  font: 500 11px/16px var(--font-jp); letter-spacing: .04em;
+}
+.cmt-panel-close { margin-left: auto; width: 48px; height: 48px; }
+.cmt-panel-close svg { width: 24px; height: 24px; }
+.cmt-panel-close:hover { background: transparent; }
+
+.cmt-form { display: block; margin: 8px 0 0; padding: 0 24px; }
+
+/* outlined text field */
+.m3-field { position: relative; display: block; margin-top: 16px; }
+.m3-field:first-child { margin-top: 8px; }
+.m3-field input, .m3-field textarea {
+  display: block; width: 100%; min-height: 56px; padding: 16px; margin: 0;
+  border: 1px solid var(--md-sys-color-outline); border-radius: 4px;
+  background: transparent; color: var(--md-sys-color-on-surface);
+  font: 400 16px/24px var(--font-jp); outline: none; resize: none;
+  transition: border-color .2s var(--md-sys-motion-easing-standard);
+}
+.m3-field textarea { min-height: 96px; }
+.m3-field input:hover, .m3-field textarea:hover { border-color: var(--md-sys-color-on-surface); }
+.m3-field input:focus, .m3-field textarea:focus {
+  border-color: var(--md-sys-color-primary); box-shadow: inset 0 0 0 1px var(--md-sys-color-primary);
+}
+.m3-field-label {
+  position: absolute; left: 12px; top: 16px; padding: 0 4px; pointer-events: none;
+  font: 400 16px/24px var(--font-jp); color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-high);
+  transform-origin: left top;
+  transition: transform .2s var(--md-sys-motion-easing-standard), color .2s;
+}
+.m3-field input:focus + .m3-field-label, .m3-field input:not(:placeholder-shown) + .m3-field-label,
+.m3-field textarea:focus + .m3-field-label, .m3-field textarea:not(:placeholder-shown) + .m3-field-label {
+  transform: translateY(-24px) scale(.75);
+}
+.m3-field input:focus + .m3-field-label, .m3-field textarea:focus + .m3-field-label { color: var(--md-sys-color-primary); }
+.m3-field-support {
+  display: flex; gap: 16px; justify-content: space-between; padding: 4px 16px 0;
+  font: 400 12px/16px var(--font-jp); color: var(--md-sys-color-on-surface-variant);
+}
+.cmt-rule { margin: 0; font-size: inherit; line-height: inherit; color: inherit; }
+.cmt-counter { flex: none; font-variant-numeric: tabular-nums; }
+
+/* filled button（このパネルで一番の操作） */
+.cmt-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+.m3-filled {
+  position: relative; isolation: isolate;
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 24px 0 16px;
+  border: 0; border-radius: var(--md-sys-shape-corner-full); cursor: pointer;
+  background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+  font: 500 14px/20px var(--font-jp); letter-spacing: .02em;
+}
+.m3-filled svg { width: 18px; height: 18px; fill: currentColor; flex: none; }
+.m3-filled::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1;
+  background: currentColor; opacity: 0; transition: opacity .2s var(--md-sys-motion-easing-standard);
+}
+.m3-filled:hover::after { opacity: var(--md-sys-state-hover); }
+.m3-filled:focus-visible::after, .m3-filled:active::after { opacity: var(--md-sys-state-pressed); }
+.m3-filled:hover { box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+.m3-filled[disabled] {
+  cursor: default; box-shadow: none;
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent);
+  color: color-mix(in srgb, var(--md-sys-color-on-surface) 38%, transparent);
+}
+.m3-filled[disabled]::after { display: none; }
+.cmt-send { padding: 0 24px 0 16px; font-size: 14px; opacity: 1; }
+
+/* 結果の1行（アイコン付き） */
+.cmt-note { display: flex; align-items: flex-start; gap: 8px; margin: 12px 24px 0; min-height: 0;
+  font: 400 14px/20px var(--font-jp); color: var(--md-sys-color-primary); }
+.cmt-note:empty { display: none; }
+.cmt-note::before {
+  content: ""; flex: none; width: 20px; height: 20px; background: currentColor;
+  -webkit-mask: var(--cmt-ok-icon) center / contain no-repeat; mask: var(--cmt-ok-icon) center / contain no-repeat;
+}
+.cmt-note.bad { color: var(--md-sys-color-error); }
+.cmt-note.bad::before { -webkit-mask-image: var(--cmt-bad-icon); mask-image: var(--cmt-bad-icon); }
+
+/* 一覧：list item */
+.cmt-list { display: block; margin: 16px 0 0; padding: 0 0 8px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.cmt-list li.cmt-item { display: flex; gap: 16px; align-items: flex-start; padding: 12px 24px; border: 0; }
+.cmt-list li.cmt-item + li.cmt-item { border-top: 1px solid var(--md-sys-color-outline-variant); }
+.cmt-av {
+  flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+  font: 500 16px/1 var(--font-jp);
+}
+.cmt-main { flex: 1; min-width: 0; }
+.cmt-top { display: flex; align-items: baseline; gap: 8px; }
+.cmt-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 500 14px/20px var(--font-jp); color: var(--md-sys-color-on-surface); }
+.cmt-at { flex: none; margin-left: auto; font: 500 11px/16px var(--font-jp); color: var(--md-sys-color-on-surface-variant); }
+.cmt-body { margin: 2px 0 0; font: 400 14px/20px var(--font-jp); color: var(--md-sys-color-on-surface-variant); }
+.cmt-pending { opacity: .7; }
+.cmt-list li.cmt-empty { padding: 16px 24px; border: 0; font: 400 14px/20px var(--font-jp); color: var(--md-sys-color-on-surface-variant); }
+
+/* 開くボタン：アイコンボタン48 ＋ 小さな件数バッジ */
+.cmt-toggle { width: 48px; height: 48px; border-radius: 50%; }
+.cmt-toggle svg { width: 24px; height: 24px; }
+.cmt-toggle.on { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.cmt-badge { min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); font: 500 11px/16px var(--font-jp); }
+
+@media (max-width: 640px) {
+  .cmt-panel { width: auto; }
+}
+.m3-field-support .cmt-rule { flex: 1 1 auto; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.cmt-send { font: 500 14px/20px var(--font-jp); letter-spacing: .02em; }
+
+/* ひとこと欄の面は、もう一段暗く（surface-container-low 相当） */
+.cmt-panel { background: #0a110d; }
+.cmt-panel .m3-field-label { background: #0a110d; }
+
+/* =========================================================
+   作品一覧の右パネル（ジャンルに入ったときの作品リスト）を M3 で
+     シート … ひとこと欄と同じ暗い面・角28
+     見出し … ジャンル名 Title Large ＋ 件数バッジ
+     項目   … 2行のリスト項目（高さ72・先頭56のサムネ・末尾の矢印）
+              選択中は secondary-container、hover は状態レイヤー
+   ========================================================= */
+.side {
+  width: 320px; padding: 20px 0 12px;
+  border: 0; border-radius: var(--md-sys-shape-corner-extra-large);
+  background: #0a110d;
+  box-shadow: 0 0 0 1px var(--md-sys-color-outline-variant), 0 6px 24px rgba(0,0,0,.55);
+}
+.side-kick { padding: 0 24px; font: 500 12px/16px var(--font-mono); letter-spacing: .08em; }
+.side-title { display: inline-block; margin: 4px 0 0 24px; font: 400 22px/28px var(--font-display); }
+.side-count {
+  display: inline-flex; align-items: center; vertical-align: 3px; height: 20px; margin: 0 0 0 8px; padding: 0 8px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+  font: 500 11px/16px var(--font-jp); letter-spacing: .04em;
+}
+.side-list { margin-top: 12px; gap: 0; padding: 0 12px; max-height: min(60vh, 560px); }
+.side .row {
+  position: relative; isolation: isolate;
+  display: flex; align-items: center; gap: 16px; min-height: 72px; padding: 8px 8px 8px 12px;
+  border: 0; border-radius: 16px; background: transparent; color: var(--md-sys-color-on-surface);
+  transition: background-color .2s var(--md-sys-motion-easing-standard);
+}
+.side .row::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1;
+  background: currentColor; opacity: 0; transition: opacity .2s var(--md-sys-motion-easing-standard);
+}
+.side .row:hover { background: transparent; border: 0; }
+.side .row:hover::after { opacity: var(--md-sys-state-hover); }
+.side .row:focus-visible::after, .side .row:active::after { opacity: var(--md-sys-state-pressed); }
+.side .row.on { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.row-lead {
+  flex: none; display: grid; place-items: center; width: 56px; height: 56px; overflow: hidden;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--c) 22%, #0a110d);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 45%, transparent);
+  color: var(--c); font: 500 20px/1 var(--font-display);
+}
+.row-lead img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.row-txt { flex: 1; min-width: 0; display: block; }
+.side .row b {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 400 16px/24px var(--font-jp); color: inherit;
+}
+.side .row .row-txt span {
+  display: block; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 400 14px/20px var(--font-jp); color: var(--md-sys-color-on-surface-variant);
+}
+.row-trail { flex: none; display: grid; place-items: center; width: 24px; height: 24px; color: var(--md-sys-color-on-surface-variant); }
+.row-trail svg { width: 24px; height: 24px; fill: currentColor; }
+.side .row:hover .row-trail { color: var(--md-sys-color-on-surface); }
+.side { width: 360px; }
+
+/* ---- 作品の枠：読み込み中のくるくると、全画面 ---- */
+.frame-loading {
+  position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; justify-items: center; gap: 16px;
+  background: #050706; transition: opacity .3s var(--md-sys-motion-easing-standard);
+}
+.frame-loading.out { opacity: 0; pointer-events: none; }
+.frame-loading-t { font: 400 14px/20px var(--font-jp); color: var(--md-sys-color-on-surface-variant); }
+.frame:fullscreen { width: 100vw !important; height: 100vh !important; border: 0; background: #000; }
+.frame:fullscreen .br { display: none; }
+.frame:-webkit-full-screen { width: 100vw !important; height: 100vh !important; border: 0; background: #000; }
+.p-fs .fs-off { display: none; }
+.p-fs.on .fs-on { display: none; }
+.p-fs.on .fs-off { display: block; }
+.p-fs { color: var(--md-sys-color-on-surface); }
+
+/* ---- ホーム左：日付は枠で囲わず、細い等幅の1行。下のボタンと形を重ねない ---- */
+.home-log { gap: 4px 18px; font: 400 13px/20px var(--font-mono); letter-spacing: .08em; color: var(--md-sys-color-on-surface-variant); }
+.home-log .home-count { color: var(--md-sys-color-primary); }
+.home-log .home-count::before { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 10px 1px 0; border-radius: 50%; background: currentColor; vertical-align: middle; }
+.home-log .home-count:empty { display: none; }
+.home-title { margin-top: 28px; }
+.home-lede { margin-top: 24px; color: var(--md-sys-color-on-surface-variant); }
+.home-acts { gap: 12px; margin-top: 40px; }
+
+/* ホームの2つの行き先：M3 標準の高さ40。主は緑の filled、副は文字だけの text ボタン */
+.home-acts { gap: 8px; margin-top: 36px; }
+.home-go { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px 0 24px; text-decoration: none; }
+.home-go svg { fill: currentColor; }
+.home-go svg { width: 18px; height: 18px; transition: transform .2s var(--md-sys-motion-easing-standard); }
+.home-go:hover svg { transform: translateX(3px); }
+.m3-text-btn { display: inline-flex; align-items: center; gap: 8px; }
+.home-pr { padding: 0 16px 0 12px; color: var(--md-sys-color-on-surface); }
+.home-pr svg { width: 18px; height: 18px; fill: var(--md-sys-color-primary); }
+/* 「作品を探す」は細く見えるので、太字＋細い縁取りで無理やり太らせる */
+.home-go { font-weight: 700; -webkit-text-stroke: .35px currentColor; letter-spacing: .04em; }
