@@ -47,6 +47,18 @@
     { title:'カラス', author:'T.F.', category:'モデリング',
       url:'works/karasu.glb', thumb:'works/karasu-thumb.webp',
       desc:'Blender で作ったカラスです。できたら 3D プリントして展示したいと思っています。ドラッグで回して見られます。' },
+    { title:'円周率', author:'R.K.', category:'プログラミング',
+      url:'works/pi/', aspect: 4 / 3,   /* .sb3 を TurboWarp Packager で1枚の HTML にしたもの */
+      desc:'Scratch で作った円周率の作品です。' },
+    { title:'震源シミュレーション', author:'R.K.', category:'プログラミング',
+      url:'works/shingen/', aspect: 4 / 3,
+      desc:'Scratch で作った震源のシミュレーションです。' },
+    { title:'生態系シミュレーション', author:'S.Y.', category:'プログラミング',
+      url:'https://scratch.mit.edu/projects/1388493691/',
+      desc:'生態系について楽しく学べるシミュレーションです。草、ネズミ、うさぎ、土の栄養度、病気の流行度に応じた変化がわかります。' },
+    { title:'MIF用イライラ棒', author:'K.A.', category:'プログラミング',
+      url:'https://scratch.mit.edu/projects/1387718978/',
+      desc:'MIF のために作ったイライラ棒です。' },
     { title:'GONポスター①', author:'R.A.', category:'デザイン',
       url:'https://drive.google.com/file/d/1wCqn2k4aTBrXkkAHARvgh8VTwkPnv4Lh/view',
       desc:'大好きなGONさんのデザインポスターを作りました。まだまだ作る予定です。今年からAdobe Photoshopを触り始めましたが、デザインの自由度が高くて楽しいです。みなさんもGONの配信を観ましょう。' },
@@ -132,10 +144,16 @@
     if (/^https:\/\/[\w-]+\.github\.io\//i.test(url)) return { kind:'web', embed:url, thumb:'' };
     /* p5.js エディタの全画面表示は埋め込める */
     if (/^https:\/\/editor\.p5js\.org\/[^/]+\/full\//.test(url)) return { kind:'web', embed:url, thumb:'' };
+    /* Scratch のファイル（.sb3）は TurboWarp の埋め込みで、このサイトから読み込ませて動かす */
+    if (/\.sb3(\?|$)/i.test(url)) {
+      var abs = url;
+      try { abs = new URL(url, location.href).href; } catch (e) {}
+      return { kind:'web', embed:'https://turbowarp.org/embed?project_url=' + encodeURIComponent(abs), thumb:'' };
+    }
     /* 3D モデル（.glb）はその場で回して見る */
     if (/\.glb(\?|$)/i.test(url)) return { kind:'model3d', embed:url, thumb:'' };
     /* このサイトの games/ に置いたゲーム（Godot・Unity の Web 書き出し） */
-    if (/^games\/[\w-]+\/?$/.test(url)) return { kind:'web', embed:url, thumb:'' };
+    if (/^(games|works)\/[\w-]+\/?$/.test(url)) return { kind:'web', embed:url, thumb:'' };
     if (isDirectMedia(url, ['.mp4', '.webm'])) return { kind:'video-file', embed:url, thumb:'' };
     if (isDirectMedia(url, ['.mp3', '.wav', '.m4a', '.ogg'])) return { kind:'audio-file', embed:url, thumb:'' };
     if (isDirectMedia(url, ['.png', '.jpg', '.jpeg', '.gif', '.webp'])) return { kind:'image', embed:url, thumb:url };
