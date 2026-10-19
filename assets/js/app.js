@@ -1025,29 +1025,46 @@
 
   /* ---- 音楽：オーディオビジュアライザ ---- */
   function buildVisualizer(frame, src, wk) {
+    /* 見た目：細い線を円周にびっしり並べ、円をまたいで内外に伸ばす（少し斜め）。
+       スペクトルは半周ぶんを作り、反対側にも同じものを置く（点対称）。
+       曲ごとに鳴っている帯域を測り、各帯域の大きさを自動で揃えるので、
+       低音だけが伸びて片側に偏ることがない。 */
     var cv = el('canvas', 'viz-canvas');
-    var au = el('audio'); au.src = src; au.preload = 'metadata'; au.crossOrigin = 'anonymous';
+    var au = el('audio'); au.preload = 'auto';
     var btn = el('button', 'viz-play');
     btn.type = 'button'; btn.setAttribute('aria-label', '再生');
     btn.innerHTML = '<svg class="i-play" viewBox="0 -960 960 960"><path d="M320-200v-560l440 280-440 280Z"/></svg>' +
                     '<svg class="i-pause" viewBox="0 -960 960 960"><path d="M520-200v-560h240v560H520Zm-320 0v-560h240v560H200Z"/></svg>';
     var bar = el('div', 'viz-bar');
-    var seek = el('input', 'viz-seek'); seek.type = 'range'; seek.min = 0; seek.max = 1000; seek.value = 0; seek.setAttribute('aria-label', '再生位置');
+    var seek = el('input', 'viz-seek'); seek.type = 'range'; seek.min = 0; seek.max = 1000; seek.step = 1; seek.value = 0;
+    seek.setAttribute('aria-label', '再生位置');
     var tm = el('span', 'viz-time'); tm.textContent = '0:00';
     bar.appendChild(seek); bar.appendChild(tm);
     frame.appendChild(cv); frame.appendChild(btn); frame.appendChild(bar); frame.appendChild(au);
 
+    /* 簡易サーバー（Range 非対応）でも再生位置を動かせるよう、
+       ファイルを丸ごと読んでからブラウザ内の URL で鳴らす */
+    fetch(src).then(function (r) { return r.blob(); })
+      .then(function (b) { au.src = URL.createObjectURL(b); })
+      .catch(function () { au.src = src; });
+
     var ctx = cv.getContext('2d'), ac = null, an = null, data = null, raf = 0;
-    var color = (wk.node && wk.node.color) || '#00ff00';
+    var N = 128, HALF = N / 2;
+    var lvl = new Float32Array(HALF);          /* 表示中の長さ（なめらかに追う） */
+    var peak = null;                           /* 帯域ごとの「この曲での大きさ」 */
+    var hiBin = 0;                             /* この曲で実際に鳴っている一番高い帯域 */
+    var dragging = false;
     function fmt(s) { s = Math.max(0, s | 0); return (s / 60 | 0) + ':' + ('0' + s % 60).slice(-2); }
     function setup() {
       if (ac) return;
       try {
         ac = new (window.AudioContext || window.webkitAudioContext)();
         var srcN = ac.createMediaElementSource(au);
-        an = ac.createAnalyser(); an.fftSize = 512; an.smoothingTimeConstant = .8;
+        an = ac.createAnalyser(); an.fftSize = 2048; an.smoothingTimeConstant = .72;
         srcN.connect(an); an.connect(ac.destination);
         data = new Uint8Array(an.frequencyBinCount);
+        peak = new Float32Array(an.frequencyBinCount).fill(40);
+        hiBin = Math.floor(data.length * .45);
       } catch (e) { ac = null; }
     }
     function draw() {
@@ -1055,41 +1072,76 @@
       if (!frame.isConnected) { cancelAnimationFrame(raf); au.pause(); return; }
       var dpr = Math.min(2, window.devicePixelRatio || 1);
       var w = cv.clientWidth, h = cv.clientHeight;
-      if (cv.width !== (w * dpr | 0)) { cv.width = w * dpr; cv.height = h * dpr; }
+      if (cv.width !== (w * dpr | 0) || cv.height !== (h * dpr | 0)) { cv.width = w * dpr; cv.height = h * dpr; }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      var cx = w / 2, cy = h / 2, R = Math.min(w, h) * .26, N = 96;
-      if (an) an.getByteFrequencyData(data);
-      /* 月食の輪：白い三日月の縁＋外へ伸びる緑の波形 */
-      ctx.lineCap = 'round';
-      for (var i = 0; i < N; i++) {
-        var a = -Math.PI / 2 + i / N * Math.PI * 2;
-        /* 左右対称に、低音を上・高音を下へ。人の耳に合わせて低音側を細かく取る */
-        var fr = i < N / 2 ? i / (N / 2) : (N - i) / (N / 2);
-        var v = data ? data[Math.floor(Math.pow(fr, 1.8) * data.length * .55)] / 255 : 0;
-        if (!data || au.paused) v = .06 + .04 * Math.sin(i * .9 + performance.now() / 900);
-        var L = R * (.08 + v * .62);
-        ctx.strokeStyle = color; ctx.globalAlpha = .35 + v * .65; ctx.lineWidth = Math.max(2, R * .035);
+      var cx = w / 2, cy = h / 2 - 12, R = Math.min(w, h) * .27;
+      var live = an && !au.paused;
+      if (live) {
+        an.getByteFrequencyData(data);
+        /* 帯域ごとの最大値を、ゆっくり下げながら追う（自動ゲイン） */
+        var top = 0;
+        for (var k = 1; k < data.length; k++) {
+          peak[k] = Math.max(data[k], peak[k] * .9985, 40);
+          if (data[k] > 24) top = k;
+        }
+        /* 鳴っている一番上の帯域も、ゆっくり追従させる */
+        hiBin = Math.max(64, hiBin * .995 + Math.min(top, data.length - 1) * .005);
+      }
+      var lo = 2, hi = Math.max(lo + HALF, hiBin);
+      for (var i = 0; i < HALF; i++) {
+        var t = 0;
+        if (live) {
+          /* 低音側は細かく、高音側はまとめて取る（対数） */
+          var b0 = Math.floor(lo * Math.pow(hi / lo, i / HALF));
+          var b1 = Math.max(b0 + 1, Math.floor(lo * Math.pow(hi / lo, (i + 1) / HALF)));
+          var s = 0, pk = 0;
+          for (var j = b0; j < b1; j++) { s += data[j]; pk += peak[j]; }
+          t = Math.max(0, (s / pk - .35) / .65);
+          t = Math.pow(t, 1.4);
+        }
+        lvl[i] += (t - lvl[i]) * (t > lvl[i] ? .5 : .14);
+      }
+      ctx.strokeStyle = '#e9eeec'; ctx.lineCap = 'round';
+      ctx.lineWidth = Math.max(1.2, R * .012);
+      var tilt = .32;                          /* 線を少し斜めにする（ラジアン） */
+      for (var n = 0; n < N; n++) {
+        var v = lvl[n % HALF];
+        var a = -Math.PI / 2 + n / N * Math.PI * 2;
+        var L = R * (.035 + v * .3);
+        var ux = Math.cos(a + tilt), uy = Math.sin(a + tilt);
+        var px = cx + Math.cos(a) * R, py = cy + Math.sin(a) * R;
+        ctx.globalAlpha = .55 + v * .45;
         ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(a) * (R + 10), cy + Math.sin(a) * (R + 10));
-        ctx.lineTo(cx + Math.cos(a) * (R + 10 + L), cy + Math.sin(a) * (R + 10 + L));
+        ctx.moveTo(px - ux * L * .5, py - uy * L * .5);
+        ctx.lineTo(px + ux * L, py + uy * L);
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = Math.max(2, R * .05);
-      ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI * .55, Math.PI * 1.45); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
-      if (au.duration) { seek.value = au.currentTime / au.duration * 1000; tm.textContent = fmt(au.currentTime) + ' / ' + fmt(au.duration); }
+      if (au.duration && !dragging) {
+        seek.value = Math.round(au.currentTime / au.duration * 1000);
+        tm.textContent = fmt(au.currentTime) + ' / ' + fmt(au.duration);
+      }
     }
     btn.addEventListener('click', function () {
       setup();
       if (ac && ac.state === 'suspended') ac.resume();
-      if (au.paused) au.play(); else au.pause();
+      if (au.paused) { var p = au.play(); if (p) p.catch(function () {}); } else au.pause();
     });
     au.addEventListener('play', function () { frame.classList.add('playing'); btn.setAttribute('aria-label', '一時停止'); });
     au.addEventListener('pause', function () { frame.classList.remove('playing'); btn.setAttribute('aria-label', '再生'); });
-    seek.addEventListener('input', function () { if (au.duration) au.currentTime = seek.value / 1000 * au.duration; });
+    au.addEventListener('loadedmetadata', function () { tm.textContent = '0:00 / ' + fmt(au.duration); });
+    /* 再生バー：つまんでいる間は描画で上書きしない。離したところへ飛ぶ */
+    seek.addEventListener('pointerdown', function () { dragging = true; });
+    seek.addEventListener('input', function () {
+      dragging = true;
+      if (au.duration) tm.textContent = fmt(seek.value / 1000 * au.duration) + ' / ' + fmt(au.duration);
+    });
+    seek.addEventListener('change', function () {
+      if (au.duration) au.currentTime = seek.value / 1000 * au.duration;
+      dragging = false;
+    });
+    seek.addEventListener('pointerup', function () { setTimeout(function () { dragging = false; }, 0); });
     raf = requestAnimationFrame(draw);
   }
 
