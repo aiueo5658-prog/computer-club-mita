@@ -23,7 +23,7 @@
     return w.CCMThumbs.make(wk.title + '/' + wk.author, 160, { hue: cat.hue });
   }
   /* 外部は http(s) だけ。このサイトの games/ に置いたゲームは相対パスで許す */
-  function safeUrl(u) { u = String(u || '').trim(); return (/^https?:\/\//i.test(u) || /^games\/[\w-]+\//.test(u)) ? u : ''; }
+  function safeUrl(u) { u = String(u || '').trim(); return (/^https?:\/\//i.test(u) || /^(games|works)\/[\w.-]+/.test(u)) ? u : ''; }
   function hue(h) { return 'oklch(0.86 0.15 ' + h + ')'; }
   function hash(s) {
     var h = 2166136261;
@@ -1023,6 +1023,101 @@
     refreshComments(slug);
   }
 
+  /* ---- 音楽：オーディオビジュアライザ ---- */
+  function buildVisualizer(frame, src, wk) {
+    var cv = el('canvas', 'viz-canvas');
+    var au = el('audio'); au.src = src; au.preload = 'metadata'; au.crossOrigin = 'anonymous';
+    var btn = el('button', 'viz-play');
+    btn.type = 'button'; btn.setAttribute('aria-label', '再生');
+    btn.innerHTML = '<svg class="i-play" viewBox="0 -960 960 960"><path d="M320-200v-560l440 280-440 280Z"/></svg>' +
+                    '<svg class="i-pause" viewBox="0 -960 960 960"><path d="M520-200v-560h240v560H520Zm-320 0v-560h240v560H200Z"/></svg>';
+    var bar = el('div', 'viz-bar');
+    var seek = el('input', 'viz-seek'); seek.type = 'range'; seek.min = 0; seek.max = 1000; seek.value = 0; seek.setAttribute('aria-label', '再生位置');
+    var tm = el('span', 'viz-time'); tm.textContent = '0:00';
+    bar.appendChild(seek); bar.appendChild(tm);
+    frame.appendChild(cv); frame.appendChild(btn); frame.appendChild(bar); frame.appendChild(au);
+
+    var ctx = cv.getContext('2d'), ac = null, an = null, data = null, raf = 0;
+    var color = (wk.node && wk.node.color) || '#00ff00';
+    function fmt(s) { s = Math.max(0, s | 0); return (s / 60 | 0) + ':' + ('0' + s % 60).slice(-2); }
+    function setup() {
+      if (ac) return;
+      try {
+        ac = new (window.AudioContext || window.webkitAudioContext)();
+        var srcN = ac.createMediaElementSource(au);
+        an = ac.createAnalyser(); an.fftSize = 512; an.smoothingTimeConstant = .8;
+        srcN.connect(an); an.connect(ac.destination);
+        data = new Uint8Array(an.frequencyBinCount);
+      } catch (e) { ac = null; }
+    }
+    function draw() {
+      raf = requestAnimationFrame(draw);
+      if (!frame.isConnected) { cancelAnimationFrame(raf); au.pause(); return; }
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      var w = cv.clientWidth, h = cv.clientHeight;
+      if (cv.width !== (w * dpr | 0)) { cv.width = w * dpr; cv.height = h * dpr; }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      var cx = w / 2, cy = h / 2, R = Math.min(w, h) * .26, N = 96;
+      if (an) an.getByteFrequencyData(data);
+      /* 月食の輪：白い三日月の縁＋外へ伸びる緑の波形 */
+      ctx.lineCap = 'round';
+      for (var i = 0; i < N; i++) {
+        var a = -Math.PI / 2 + i / N * Math.PI * 2;
+        /* 左右対称に、低音を上・高音を下へ。人の耳に合わせて低音側を細かく取る */
+        var fr = i < N / 2 ? i / (N / 2) : (N - i) / (N / 2);
+        var v = data ? data[Math.floor(Math.pow(fr, 1.8) * data.length * .55)] / 255 : 0;
+        if (!data || au.paused) v = .06 + .04 * Math.sin(i * .9 + performance.now() / 900);
+        var L = R * (.08 + v * .62);
+        ctx.strokeStyle = color; ctx.globalAlpha = .35 + v * .65; ctx.lineWidth = Math.max(2, R * .035);
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * (R + 10), cy + Math.sin(a) * (R + 10));
+        ctx.lineTo(cx + Math.cos(a) * (R + 10 + L), cy + Math.sin(a) * (R + 10 + L));
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = Math.max(2, R * .05);
+      ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI * .55, Math.PI * 1.45); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+      if (au.duration) { seek.value = au.currentTime / au.duration * 1000; tm.textContent = fmt(au.currentTime) + ' / ' + fmt(au.duration); }
+    }
+    btn.addEventListener('click', function () {
+      setup();
+      if (ac && ac.state === 'suspended') ac.resume();
+      if (au.paused) au.play(); else au.pause();
+    });
+    au.addEventListener('play', function () { frame.classList.add('playing'); btn.setAttribute('aria-label', '一時停止'); });
+    au.addEventListener('pause', function () { frame.classList.remove('playing'); btn.setAttribute('aria-label', '再生'); });
+    seek.addEventListener('input', function () { if (au.duration) au.currentTime = seek.value / 1000 * au.duration; });
+    raf = requestAnimationFrame(draw);
+  }
+
+  /* ---- 3D モデル：model-viewer を必要なときだけ読み込む ---- */
+  var mvLoading = null;
+  function buildModelViewer(frame, src, wk) {
+    if (!mvLoading && !window.customElements.get('model-viewer')) {
+      mvLoading = new Promise(function (res) {
+        var s = d.createElement('script'); s.type = 'module';
+        s.src = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js';
+        s.onload = res; s.onerror = res; d.head.appendChild(s);
+      });
+    }
+    var mv = d.createElement('model-viewer');
+    mv.setAttribute('src', src);
+    mv.setAttribute('alt', wk.title);
+    mv.setAttribute('camera-controls', '');
+    mv.setAttribute('auto-rotate', '');
+    mv.setAttribute('auto-rotate-delay', '0');
+    mv.setAttribute('rotation-per-second', '18deg');
+    mv.setAttribute('interaction-prompt', 'none');
+    mv.setAttribute('shadow-intensity', '0.8');
+    mv.setAttribute('exposure', '1.1');
+    mv.setAttribute('environment-image', 'neutral');
+    var hint = el('span', 'model-hint'); hint.textContent = 'ドラッグで回転・ホイールで拡大';
+    frame.appendChild(mv); frame.appendChild(hint);
+  }
+
   function frameSize(kind) {
     if (kind === 'scratch') return 485 / 402;
     if (kind === 'audio-file') return 1;
@@ -1095,11 +1190,13 @@
       var im = new Image(); im.src = m.embed; im.alt = wk.title;
       frame.appendChild(im);
     } else if (m.kind === 'audio-file') {
-      frame.className = 'frame audio-stage';
-      var au = el('audio'); au.src = m.embed; au.controls = true; au.preload = 'metadata';
-      var lab = el('div', 'hint');
-      lab.innerHTML = '<b>AUDIO</b>';
-      frame.appendChild(lab); frame.appendChild(au);
+      /* 音楽：月食の輪の形をしたオーディオビジュアライザ。再生ボタンは真ん中 */
+      frame.className = 'frame viz-stage';
+      buildVisualizer(frame, m.embed, wk);
+    } else if (m.kind === 'model3d') {
+      /* 3D モデル：その場でドラッグして回せる（Google の model-viewer） */
+      frame.className = 'frame model-stage';
+      buildModelViewer(frame, m.embed, wk);
     } else {
       var hint = el('div', 'hint');
       hint.innerHTML = '<b>' + (url ? 'EXTERNAL SITE' : 'ON SITE ONLY') + '</b><span>' +

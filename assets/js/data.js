@@ -29,6 +29,24 @@
       /* Godot の Web 書き出しを games/hanko/ に置いて、サイトの中で遊ぶ */
       url:'games/hanko/', aspect: 16 / 9, thumb:'games/hanko/thumb.webp',
       desc:'書類の枠のまん中をクリックして、ハンコを押していくゲームです。1で承認、2で却下、3で差戻。右クリックかスペースで書類をはじきます。' },
+    { title:'ムーンキャッチャー', author:'D.C.', category:'プログラミング',
+      url:'https://editor.p5js.org/2025241/full/Jbxo48084', aspect: 3 / 4,
+      desc:'自分の月の形を変えて、上から落ちてくる月と形を合わせてキャッチするゲームです。（p5.js）' },
+    { title:'迷路（超クソゲー）', author:'R.I.', category:'プログラミング',
+      url:'https://scratch.mit.edu/projects/960117282/',
+      desc:'マウスカーソルで緑の四角を操作して、右下のところまで行けばクリア。完全自作です。' },
+    { title:'NeuroShield', author:'R.I.', category:'プログラミング',
+      url:'https://discord.com/oauth2/authorize?client_id=1436980586500718692',
+      desc:'Discord の荒らし対策 bot です。実際に動かすサーバーは後ほど作成します。' },
+    { title:'Nova', author:'R.I.', category:'プログラミング',
+      url:'https://discord.com/oauth2/authorize?client_id=1546154449070719127',
+      desc:'Discord の多機能 bot です。' },
+    { title:'kibou', author:'T.T.', category:'音楽',
+      url:'works/kibou.mp3',
+      desc:'Kawaii Future Bass というジャンルの曲を目指して作ったけど、そこまでには至らなかった曲です。もっと作るのがうまくなりたいです。' },
+    { title:'カラス', author:'T.F.', category:'モデリング',
+      url:'works/karasu.glb', thumb:'works/karasu-thumb.webp',
+      desc:'Blender で作ったカラスです。できたら 3D プリントして展示したいと思っています。ドラッグで回して見られます。' },
     { title:'GONポスター①', author:'R.A.', category:'デザイン',
       url:'https://drive.google.com/file/d/1wCqn2k4aTBrXkkAHARvgh8VTwkPnv4Lh/view',
       desc:'大好きなGONさんのデザインポスターを作りました。まだまだ作る予定です。今年からAdobe Photoshopを触り始めましたが、デザインの自由度が高くて楽しいです。みなさんもGONの配信を観ましょう。' },
@@ -112,6 +130,10 @@
     }
     /* GitHub Pages に置いた Unity WebGL などのウェブ作品は、そのまま枠に埋め込める */
     if (/^https:\/\/[\w-]+\.github\.io\//i.test(url)) return { kind:'web', embed:url, thumb:'' };
+    /* p5.js エディタの全画面表示は埋め込める */
+    if (/^https:\/\/editor\.p5js\.org\/[^/]+\/full\//.test(url)) return { kind:'web', embed:url, thumb:'' };
+    /* 3D モデル（.glb）はその場で回して見る */
+    if (/\.glb(\?|$)/i.test(url)) return { kind:'model3d', embed:url, thumb:'' };
     /* このサイトの games/ に置いたゲーム（Godot・Unity の Web 書き出し） */
     if (/^games\/[\w-]+\/?$/.test(url)) return { kind:'web', embed:url, thumb:'' };
     if (isDirectMedia(url, ['.mp4', '.webm'])) return { kind:'video-file', embed:url, thumb:'' };
