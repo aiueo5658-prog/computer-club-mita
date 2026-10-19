@@ -693,14 +693,14 @@
     });
 
     /* 左の見出し */
-    $('#hero-kick').textContent = zc ? zc.label : 'ECLIPSE 2026';
+    $('#hero-kick').textContent = zc ? zc.label : 'WORKS';
     $('#hero-kick').style.color = zc ? zc.node.color : '';
     $('#hero-title').textContent = zc ? zc.jp : '作品一覧';
     $('#hero-title').style.fontSize = zc && zc.jp.length > 5
       ? 'clamp(30px,' + (380 / zc.jp.length / 16) + 'rem,' + Math.floor(380 / zc.jp.length) + 'px)' : '';
     $('#hero-lede').innerHTML = zc
       ? 'まるい絵ひとつが作品です。<br>横に引くと回ります。押すと説明が出ます。'
-      : 'ジャンルごとに作品を探検しよう。<br>まるい絵を押すと、その中の作品が並びます。';
+      : 'ジャンルごとに作品を探検しよう。';   /* 操作の説明は下の使い方ガイドにあるので繰り返さない */
     $('#hero-back').hidden = !zc;
 
     /* 右の一覧 */

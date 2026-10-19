@@ -384,3 +384,12 @@
 .sc-start { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
 .sc-stop { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
 .sc-running .sc-start { transform: scale(.9); opacity: .7; }
+
+/* ---- Q&A の分類ジャンプ：下線の文字リンク → M3 の assist chip（ピル） ---- */
+.qa-jump { gap: 8px; }
+.qa-jump a { position: relative; isolation: isolate; display: inline-flex; align-items: center; height: 32px; padding: 0 16px;
+  border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-sys-shape-corner-full);
+  font: 500 14px/20px var(--font-jp); color: var(--md-sys-color-on-surface); text-decoration: none; }
+.qa-jump a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: currentColor; opacity: 0; transition: opacity .2s; }
+.qa-jump a:hover::after { opacity: var(--md-sys-state-hover); }
+.qa-jump a:hover, .qa-jump a:focus-visible { border-color: var(--md-sys-color-outline-variant); color: var(--md-sys-color-on-surface); }
