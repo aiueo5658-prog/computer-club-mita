@@ -1104,7 +1104,7 @@
       }
       ctx.strokeStyle = '#e9eeec'; ctx.lineCap = 'round';
       ctx.lineWidth = Math.max(1.2, R * .012);
-      var tilt = .32;                          /* 線を少し斜めにする（ラジアン） */
+      var tilt = 0;                            /* 線は円の中心から放射状にまっすぐ */
       for (var n = 0; n < N; n++) {
         var v = lvl[n % HALF];
         var a = -Math.PI / 2 + n / N * Math.PI * 2;
