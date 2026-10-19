@@ -1048,11 +1048,22 @@
       .then(function (b) { au.src = URL.createObjectURL(b); })
       .catch(function () { au.src = src; });
 
-    var ctx = cv.getContext('2d'), ac = null, an = null, data = null, raf = 0;
-    var N = 128, HALF = N / 2;
-    var lvl = new Float32Array(HALF);          /* 表示中の長さ（なめらかに追う） */
-    var peak = null;                           /* 帯域ごとの「この曲での大きさ」 */
-    var hiBin = 0;                             /* この曲で実際に鳴っている一番高い帯域 */
+    /* 描き方は、定番のビジュアライザ（audioMotion-analyzer、Wallpaper Engine の
+       円形スペクトラム、foobar の Spectrum など）がやっている工夫に揃えた：
+       1. 振幅ではなく dB で見る（耳の感じ方に近い）
+       2. 周波数は対数（オクターブ）で区切る。40Hz〜16kHz
+       3. 高音ほど小さく出る音楽の傾き（ピンクノイズ）を、+4.5dB/oct で補正する
+       4. 帯の中は平均ではなく最大値を取る（細い音も拾う）
+       5. ゲインは帯ごとではなく曲全体で自動調整する
+          （帯ごとに揃えると、ずっと鳴っている低音が常に最大に張り付く）
+       6. 立ち上がりは速く、戻りはゆっくり。隣の帯と少しならして滑らかに
+       7. 円は左右対称（鏡写し）。上が低音、下が高音で、継ぎ目が出ない */
+    var ctx = cv.getContext('2d'), ac = null, an = null, fd = null, raf = 0;
+    var N = 144, HALF = N / 2;
+    var lvl = new Float32Array(HALF), tmp = new Float32Array(HALF);
+    var edges = null;                          /* 各帯の [開始bin, 終了bin, 中心Hz] */
+    var top = -30;                             /* 曲全体の「大きい音」の目安（dB）。自動で追う */
+    var RANGE = 42;                            /* top から何 dB 下までを表示に使うか */
     var dragging = false;
     function fmt(s) { s = Math.max(0, s | 0); return (s / 60 | 0) + ':' + ('0' + s % 60).slice(-2); }
     function setup() {
@@ -1060,11 +1071,17 @@
       try {
         ac = new (window.AudioContext || window.webkitAudioContext)();
         var srcN = ac.createMediaElementSource(au);
-        an = ac.createAnalyser(); an.fftSize = 2048; an.smoothingTimeConstant = .72;
+        an = ac.createAnalyser(); an.fftSize = 8192; an.smoothingTimeConstant = .5;
+        an.minDecibels = -100; an.maxDecibels = -10;
         srcN.connect(an); an.connect(ac.destination);
-        data = new Uint8Array(an.frequencyBinCount);
-        peak = new Float32Array(an.frequencyBinCount).fill(40);
-        hiBin = Math.floor(data.length * .45);
+        fd = new Float32Array(an.frequencyBinCount);
+        var hz = ac.sampleRate / an.fftSize, f0 = 40, f1 = Math.min(16000, ac.sampleRate / 2.2);
+        edges = [];
+        for (var i = 0; i < HALF; i++) {
+          var a = f0 * Math.pow(f1 / f0, i / HALF), b = f0 * Math.pow(f1 / f0, (i + 1) / HALF);
+          var b0 = Math.round(a / hz), b1 = Math.max(b0 + 1, Math.round(b / hz));
+          edges.push([b0, b1, Math.sqrt(a * b)]);
+        }
       } catch (e) { ac = null; }
     }
     function draw() {
@@ -1076,48 +1093,55 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
       var cx = w / 2, cy = h / 2 - 12, R = Math.min(w, h) * .27;
-      var live = an && !au.paused;
+      var live = an && !au.paused, i;
       if (live) {
-        an.getByteFrequencyData(data);
-        /* 帯域ごとの最大値を、ゆっくり下げながら追う（自動ゲイン） */
-        var top = 0;
-        for (var k = 1; k < data.length; k++) {
-          peak[k] = Math.max(data[k], peak[k] * .9985, 40);
-          if (data[k] > 24) top = k;
+        an.getFloatFrequencyData(fd);
+        var frameMax = -200;
+        for (i = 0; i < HALF; i++) {
+          var e = edges[i], m = -200;
+          for (var k = e[0]; k < e[1] && k < fd.length; k++) if (fd[k] > m) m = fd[k];
+          m += 4.5 * Math.log2(e[2] / 1000);   /* 高音の補正 */
+          tmp[i] = m;
+          if (m > frameMax) frameMax = m;
         }
-        /* 鳴っている一番上の帯域も、ゆっくり追従させる */
-        hiBin = Math.max(64, hiBin * .995 + Math.min(top, data.length - 1) * .005);
-      }
-      var lo = 2, hi = Math.max(lo + HALF, hiBin);
-      for (var i = 0; i < HALF; i++) {
-        var t = 0;
-        if (live) {
-          /* 低音側は細かく、高音側はまとめて取る（対数） */
-          var b0 = Math.floor(lo * Math.pow(hi / lo, i / HALF));
-          var b1 = Math.max(b0 + 1, Math.floor(lo * Math.pow(hi / lo, (i + 1) / HALF)));
-          var s = 0, pk = 0;
-          for (var j = b0; j < b1; j++) { s += data[j]; pk += peak[j]; }
-          t = Math.max(0, (s / pk - .35) / .65);
-          t = Math.pow(t, 1.4);
+        /* 曲全体のゲイン：大きい音にはすぐ合わせ、静かになったらゆっくり下げる */
+        top = frameMax > top ? top + (frameMax - top) * .3 : top - .04;
+        for (i = 0; i < HALF; i++) {
+          var v = (tmp[i] - (top - RANGE)) / RANGE;
+          tmp[i] = Math.pow(Math.min(1, Math.max(0, v)), 1.6);
         }
-        lvl[i] += (t - lvl[i]) * (t > lvl[i] ? .5 : .14);
+      } else {
+        for (i = 0; i < HALF; i++) tmp[i] = 0;
       }
-      ctx.strokeStyle = '#e9eeec'; ctx.lineCap = 'round';
-      ctx.lineWidth = Math.max(1.2, R * .012);
-      var tilt = 0;                            /* 線は円の中心から放射状にまっすぐ */
+      /* 隣とならして、立ち上がり速く・戻りゆっくり */
+      for (i = 0; i < HALF; i++) {
+        var sm = tmp[i] * .5 + (tmp[i - 1] !== undefined ? tmp[i - 1] : tmp[i]) * .25 + (tmp[i + 1] !== undefined ? tmp[i + 1] : tmp[i]) * .25;
+        lvl[i] += (sm - lvl[i]) * (sm > lvl[i] ? .55 : .1);
+      }
+      ctx.lineCap = 'round';
+      ctx.lineWidth = Math.max(1.2, R * .011);
+      /* うっすら光らせる。大きく鳴っている所だけ緑がかる */
+      ctx.shadowColor = 'rgba(0,255,0,.35)';
       for (var n = 0; n < N; n++) {
-        var v = lvl[n % HALF];
-        var a = -Math.PI / 2 + n / N * Math.PI * 2;
-        var L = R * (.035 + v * .3);
-        var ux = Math.cos(a + tilt), uy = Math.sin(a + tilt);
-        var px = cx + Math.cos(a) * R, py = cy + Math.sin(a) * R;
-        ctx.globalAlpha = .55 + v * .45;
+        var idx = n < HALF ? n : N - 1 - n;   /* 左右対称 */
+        var lv = lvl[idx];
+        var a = -Math.PI / 2 + (n + .5) / N * Math.PI * 2;
+        var L = R * (.03 + lv * .34);
+        var ux = Math.cos(a), uy = Math.sin(a);
+        var px = cx + ux * R, py = cy + uy * R;
+        /* 静かな所は白く細く、大きく鳴った所だけ緑の光をまとう */
+        ctx.globalAlpha = .5 + lv * .5;
+        ctx.shadowBlur = lv > .45 ? (lv - .45) * 26 : 0;
+        ctx.strokeStyle = '#eef3f0';
         ctx.beginPath();
-        ctx.moveTo(px - ux * L * .5, py - uy * L * .5);
+        ctx.moveTo(px - ux * L * .45, py - uy * L * .45);
         ctx.lineTo(px + ux * L, py + uy * L);
         ctx.stroke();
       }
-      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+      /* 基準の円（細く） */
+      ctx.strokeStyle = 'rgba(233,238,236,.12)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(cx, cy, R * .82, 0, Math.PI * 2); ctx.stroke();
       if (au.duration && !dragging) {
         seek.value = Math.round(au.currentTime / au.duration * 1000);
         tm.textContent = fmt(au.currentTime) + ' / ' + fmt(au.duration);
