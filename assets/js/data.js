@@ -33,7 +33,7 @@
       url:'https://editor.p5js.org/2025241/full/Jbxo48084', aspect: 3 / 4, thumb:'works/thumbs/moon.webp',
       desc:'自分の月の形を変えて、上から落ちてくる月と形を合わせてキャッチするゲームです。（p5.js）' },
     { title:'迷路（超クソゲー）', author:'R.I.', category:'プログラミング',
-      url:'https://scratch.mit.edu/projects/960117282/',
+      url:'works/meiro/', scratch: true, aspect: 4 / 3, thumb:'https://uploads.scratch.mit.edu/get_image/project/960117282_480x360.png',
       desc:'マウスカーソルで緑の四角を操作して、右下のところまで行けばクリア。完全自作です。' },
     { title:'NeuroShield', author:'R.I.', category:'プログラミング',
       url:'https://discord.com/oauth2/authorize?client_id=1436980586500718692', thumb:'works/thumbs/neuroshield.webp',
@@ -48,16 +48,16 @@
       url:'works/karasu.glb', thumb:'works/karasu-thumb.webp',
       desc:'Blender で作ったカラスです。できたら 3D プリントして展示したいと思っています。ドラッグで回して見られます。' },
     { title:'円周率', author:'R.K.', category:'プログラミング',
-      url:'works/pi/', aspect: 4 / 3, thumb:'works/thumbs/pi.webp',   /* .sb3 を TurboWarp Packager で1枚の HTML にしたもの */
+      url:'works/pi/', scratch: true, aspect: 4 / 3, thumb:'works/thumbs/pi.webp',   /* .sb3 を TurboWarp Packager で1枚の HTML にしたもの */
       desc:'Scratch で作った円周率の作品です。' },
     { title:'震源シミュレーション', author:'R.K.', category:'プログラミング',
-      url:'works/shingen/', aspect: 4 / 3, thumb:'works/thumbs/shingen.webp',
+      url:'works/shingen/', scratch: true, aspect: 4 / 3, thumb:'works/thumbs/shingen.webp',
       desc:'Scratch で作った震源のシミュレーションです。' },
     { title:'生態系シミュレーション', author:'S.Y.', category:'プログラミング',
-      url:'https://scratch.mit.edu/projects/1388493691/',
+      url:'works/seitaikei/', scratch: true, aspect: 4 / 3, thumb:'https://uploads.scratch.mit.edu/get_image/project/1388493691_480x360.png',
       desc:'生態系について楽しく学べるシミュレーションです。草、ネズミ、うさぎ、土の栄養度、病気の流行度に応じた変化がわかります。' },
     { title:'MIF用イライラ棒', author:'K.A.', category:'プログラミング',
-      url:'https://scratch.mit.edu/projects/1387718978/',
+      url:'works/irairabou/', scratch: true, aspect: 4 / 3, thumb:'https://uploads.scratch.mit.edu/get_image/project/1387718978_480x360.png',
       desc:'MIF のために作ったイライラ棒です。' },
     /* 音楽のサムネイルは、元の曲の公式動画のサムネイル（メルトはニコニコの原曲と同じ絵） */
     { title:'オーバーライド（ピアノカバー）', author:'S.T.', category:'音楽',
@@ -198,7 +198,8 @@
       desc:     String(raw.desc || '').trim(),
       docUrl:   String(raw.docUrl || '').trim(),
       thumb:    String(raw.thumb || '').trim(),
-      aspect:   Number(raw.aspect) || 0
+      aspect:   Number(raw.aspect) || 0,
+      scratch:  !!raw.scratch
     };
     item.category = normalizeCategory(raw.category, item.url);
     item.media = resolveMedia(item);

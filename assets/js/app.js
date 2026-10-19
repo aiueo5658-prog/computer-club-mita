@@ -1057,9 +1057,9 @@
        5. ゲインは帯ごとではなく曲全体で自動調整する
           （帯ごとに揃えると、ずっと鳴っている低音が常に最大に張り付く）
        6. 立ち上がりは速く、戻りはゆっくり。隣の帯と少しならして滑らかに
-       7. 円は左右対称（鏡写し）。上が低音、下が高音で、継ぎ目が出ない */
+       7. 一周に低音→高音を並べ、継ぎ目（真上）は両端をならしてつなぐ */
     var ctx = cv.getContext('2d'), ac = null, an = null, fd = null, raf = 0;
-    var N = 144, HALF = N / 2;
+    var N = 120, HALF = N;                     /* 一周ぶん、全部別の帯（鏡写しにしない） */
     var lvl = new Float32Array(HALF), tmp = new Float32Array(HALF);
     var edges = null;                          /* 各帯の [開始bin, 終了bin, 中心Hz] */
     var top = -30;                             /* 曲全体の「大きい音」の目安（dB）。自動で追う */
@@ -1115,7 +1115,7 @@
       }
       /* 隣とならして、立ち上がり速く・戻りゆっくり */
       for (i = 0; i < HALF; i++) {
-        var sm = tmp[i] * .5 + (tmp[i - 1] !== undefined ? tmp[i - 1] : tmp[i]) * .25 + (tmp[i + 1] !== undefined ? tmp[i + 1] : tmp[i]) * .25;
+        var sm = tmp[i] * .5 + tmp[(i - 1 + HALF) % HALF] * .25 + tmp[(i + 1) % HALF] * .25;
         lvl[i] += (sm - lvl[i]) * (sm > lvl[i] ? .55 : .1);
       }
       ctx.lineCap = 'round';
@@ -1123,7 +1123,7 @@
       /* うっすら光らせる。大きく鳴っている所だけ緑がかる */
       ctx.shadowColor = 'rgba(0,255,0,.35)';
       for (var n = 0; n < N; n++) {
-        var idx = n < HALF ? n : N - 1 - n;   /* 左右対称 */
+        var idx = n;
         var lv = lvl[idx];
         var a = -Math.PI / 2 + (n + .5) / N * Math.PI * 2;
         var L = R * (.03 + lv * .34);
@@ -1241,6 +1241,22 @@
       /* 読み込み中は枠の中にくるくるを出す。ページはそのまま使える。
          games/ のゲーム（同じサイト）は、ゲーム本体のダウンロードと起動が
          終わるまで（Godot の #status が消えるまで）待ってから外す */
+      /* Scratch（TurboWarp で HTML にしたもの）は、元の旗ボタン類を消してあるので、
+         開始・停止をこちらの M3 アイコンボタンで出す */
+      if (wk.scratch) {
+        var ctl = el('div', 'sc-ctl');
+        ctl.innerHTML =
+          '<button type="button" class="sc-btn sc-start" aria-label="スタート" title="スタート"><svg viewBox="0 -960 960 960"><path d="M320-200v-560l440 280-440 280Z"/></svg></button>' +
+          '<button type="button" class="sc-btn sc-stop" aria-label="ストップ" title="ストップ"><svg viewBox="0 -960 960 960"><path d="M240-240v-480h480v480H240Z"/></svg></button>';
+        var send = function (cmd) { try { ifr.contentWindow.postMessage({ ccm: 'scratch', cmd: cmd }, '*'); } catch (e) {} };
+        ctl.querySelector('.sc-start').addEventListener('click', function () { send('start'); try { ifr.focus(); } catch (e) {} });
+        ctl.querySelector('.sc-stop').addEventListener('click', function () { send('stop'); });
+        w.addEventListener('message', function onMsg(e) {
+          if (!ctl.isConnected) { w.removeEventListener('message', onMsg); return; }
+          if (e.source === ifr.contentWindow && e.data && e.data.ccm === 'scratch') frame.classList.toggle('sc-running', !!e.data.running);
+        });
+        frame.appendChild(ctl);
+      }
       var spin = el('div', 'frame-loading');
       spin.innerHTML = '<span class="loading-ring"></span><span class="frame-loading-t">読み込み中…</span>';
       frame.appendChild(spin);
