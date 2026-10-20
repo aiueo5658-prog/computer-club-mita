@@ -63,7 +63,7 @@ var FIREBASE_DB_URL = 'https://computerclub-8c911-default-rtdb.asia-southeast1.f
          ただし人を貶める言い方が混ざっていれば公開しない。
    ========================================================= */
 /* 貼り直したコードが本当に動いているか、/exec を開いて確かめるための印 */
-var BACKEND_VERSION = 'ai-only-2';
+var BACKEND_VERSION = 'ng-rules-1';
 
 var JEV_URL = 'https://api.typesafe.ai/v1/systemone';
 var JEV_MODEL = 'jev-latest';
