@@ -451,6 +451,14 @@ function resetAllComments() {
   Logger.log('Firebase のひとことを全部消しました');
 }
 
+/* ハートの数を全部 0 に戻す（Firebase の hearts を丸ごと削除）。
+   シートの「ハート」の記録は残す。エディタで関数を選んで「実行」する。 */
+function resetAllHearts() {
+  var res = UrlFetchApp.fetch(fbUrl('hearts'), { method: 'delete', muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) throw new Error('HTTP ' + res.getResponseCode() + ' ' + res.getContentText().slice(0, 120));
+  Logger.log('Firebase のハートを全部消しました');
+}
+
 /* Firebase の comments 以下を全部読む（キーは作品ごと → ひとことのID） */
 function fbGetAll() {
   var res = UrlFetchApp.fetch(fbUrl('comments'), { muteHttpExceptions: true });
