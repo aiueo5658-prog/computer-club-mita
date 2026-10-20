@@ -59,6 +59,9 @@
     { title:'MIF用イライラ棒', author:'K.A.', category:'プログラミング',
       url:'works/irairabou/', scratch: true, aspect: 4 / 3, thumb:'https://uploads.scratch.mit.edu/get_image/project/1387718978_480x360.png',
       desc:'MIF のために作ったイライラ棒です。' },
+    { title:'昆布クリッカー', author:'S.N.', category:'プログラミング',
+      url:'works/konbu/', scratch: true, aspect: 4 / 3, thumb:'https://uploads.scratch.mit.edu/get_image/project/1366437612_480x360.png',
+      desc:'この作品はコンピューター部の通称「昆布」のクリッカーゲームです。真ん中の昆布をクリックし、ショップでアイテムを買い昆布を増やしていきます。' },
     /* 音楽のサムネイルは、元の曲の公式動画のサムネイル（メルトはニコニコの原曲と同じ絵） */
     { title:'オーバーライド（ピアノカバー）', author:'S.T.', category:'音楽',
       url:'works/override.m4a', thumb:'works/thumbs/override.webp',
