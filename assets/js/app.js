@@ -1124,9 +1124,29 @@
     mv.setAttribute('auto-rotate-delay', '0');
     mv.setAttribute('rotation-per-second', '18deg');
     mv.setAttribute('interaction-prompt', 'none');
-    mv.setAttribute('shadow-intensity', '0.8');
-    mv.setAttribute('exposure', '1.1');
+    mv.setAttribute('shadow-intensity', '1');
+    mv.setAttribute('shadow-softness', '0.6');
+    mv.setAttribute('exposure', '0.85');
+    mv.setAttribute('tone-mapping', 'agx');
     mv.setAttribute('environment-image', 'neutral');
+    /* 色も模様もない（真っ白の）マテリアルは、明るい照明だと陰影が飛んで形が読めない。
+       粘土のような灰色・つや消しに置き換えて、凹凸が影で見えるようにする。
+       色や模様が付いているモデル（カラスなど）には触らない。 */
+    mv.addEventListener('load', function () {
+      var mats = (mv.model && mv.model.materials) || [];
+      mats.forEach(function (m) {
+        var pbr = m.pbrMetallicRoughness;
+        if (!pbr || (pbr.baseColorTexture && pbr.baseColorTexture.texture)) return;
+        var c = pbr.baseColorFactor;
+        /* 白〜Blender の初期マテリアル（0.8 の灰色）まで。色味のあるものは残す */
+        var lo = Math.min(c[0], c[1], c[2]), hi = Math.max(c[0], c[1], c[2]);
+        if (lo > 0.7 && hi - lo < 0.06) {
+          pbr.setBaseColorFactor([0.56, 0.58, 0.56, c[3]]);
+          pbr.setRoughnessFactor(0.72);
+          pbr.setMetallicFactor(0);
+        }
+      });
+    });
     var hint = el('span', 'model-hint'); hint.textContent = 'ドラッグで回転・ホイールで拡大';
     frame.appendChild(mv); frame.appendChild(hint);
   }
