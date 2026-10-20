@@ -47,6 +47,20 @@
     { title:'カラス', author:'T.F.', category:'モデリング',
       url:'works/karasu.glb', thumb:'works/karasu-thumb.webp',
       desc:'Blender で作ったカラスです。できたら 3D プリントして展示したいと思っています。ドラッグで回して見られます。' },
+    { title:'月食城', author:'T.K.', category:'モデリング',
+      /* 月食城・城壁（壁）・城壁（塔）・街路樹の4ファイルを1つにまとめたもの */
+      url:'works/getsushoku.glb',
+      desc:'Blender で作った「月食城」です。お城に、城壁の壁と塔、街路樹を並べています。ドラッグで回して見られます。' },
+    { title:'昆布アイコン', author:'H.T.', category:'モデリング',
+      url:'works/konbu-icon.glb',
+      desc:'Blender で作った昆布のアイコンです。ドラッグで回して見られます。' },
+    { title:'昆布剣と剣差し', author:'H.T.', category:'モデリング',
+      /* 「昆布剣」と「昆布観測島剣差し」を、剣を差した状態で1つにまとめたもの */
+      url:'works/konbu-sword.glb',
+      desc:'Blender で作った昆布の剣と、それを差しておく台です。ドラッグで回して見られます。' },
+    { title:'昆布観測島キーホルダー', author:'H.T.', category:'モデリング',
+      url:'works/konbu-keyholder.glb',
+      desc:'Blender で作った昆布観測島のキーホルダーです。ドラッグで回して見られます。' },
     { title:'円周率', author:'R.K.', category:'プログラミング',
       url:'works/pi/', scratch: true, aspect: 4 / 3, thumb:'works/thumbs/pi.webp',   /* .sb3 を TurboWarp Packager で1枚の HTML にしたもの */
       desc:'Scratch で作った円周率の作品です。' },
