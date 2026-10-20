@@ -61,7 +61,7 @@ window.CCM = {
      待たせてしまうため）。この apiUrl には引き続き「押された」記録が
      1行ずつ飛び、スプレッドシート側の記録として残り続けます。
      --------------------------------------------------------- */
-  apiUrl: 'https://script.google.com/macros/s/AKfycbxNGZdQ0prAhJ6qdnWF85vw8umNqANxBXQYXOjMLkiJgPZfJ1ZJHc1VH8lV2rJBlxRDSQ/exec',
+  apiUrl: 'https://script.google.com/macros/s/AKfycbyTrMQfsI3VS7U08UGXba7GHTq7iuT3zlNeh1bV51JcD1RQPSm5J9gQENUEkbqwLP1nzA/exec',
 
   /* ---------------------------------------------------------
      ハートの即時カウント（Firebase Realtime Database）
