@@ -1,0 +1,69 @@
+/* Discord bot の動きを、このサイトの中で試せるようにした再現画面 */
+:root {
+  --bg: #313338; --side: #2b2d31; --input: #383a40; --text: #dbdee1; --muted: #949ba4;
+  --line: #3f4147; --accent: #5865f2; --ok: #23a55a; --warn: #f0b232; --bad: #f23f43;
+  --hover: #2e3035; --embed: #2b2d31;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); overflow: hidden;
+  font: 15px/1.375 "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+.app { display: grid; grid-template-columns: 200px 1fr; height: 100%; }
+.side { background: var(--side); display: flex; flex-direction: column; min-width: 0; }
+.guild { padding: 12px 14px; font-weight: 700; border-bottom: 1px solid #1f2023; }
+.chs { padding: 10px 8px; flex: 1; overflow: auto; }
+.ch { padding: 5px 8px; border-radius: 4px; color: var(--muted); }
+.ch.on { background: #404249; color: #fff; }
+.ch::before { content: "# "; opacity: .7; }
+.note { margin: 8px; padding: 10px; border-radius: 6px; background: #232428; color: var(--muted); font-size: 12px; }
+.note b { color: var(--warn); font-weight: 600; }
+.note a { color: #00a8fc; }
+.main { display: flex; flex-direction: column; min-width: 0; }
+.top { height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 16px;
+  border-bottom: 1px solid #1f2023; font-weight: 600; }
+.top .sp { flex: 1; }
+.btn { border: 0; border-radius: 4px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer;
+  background: var(--accent); color: #fff; }
+.btn.sub { background: #4e5058; }
+.btn:disabled { opacity: .5; cursor: default; }
+.log { flex: 1; overflow-y: auto; padding: 12px 0 8px; }
+.msg { display: grid; grid-template-columns: 40px 1fr; gap: 0 14px; padding: 3px 16px; }
+.msg:hover { background: var(--hover); }
+.msg.cont { padding-top: 0; }
+.msg.cont .av, .msg.cont .hd { display: none; }
+.msg.cont .bd { grid-column: 2; }
+.av { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; grid-row: span 2;
+  display: grid; place-items: center; font-weight: 700; color: #fff; }
+.hd { font-weight: 600; }
+.hd .tag { margin-left: 4px; padding: 0 4px; border-radius: 3px; background: var(--accent);
+  color: #fff; font-size: 10px; vertical-align: 2px; }
+.hd time { margin-left: 6px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.bd { white-space: pre-wrap; word-break: break-word; }
+.bd.gone { color: var(--muted); font-style: italic; text-decoration: line-through; }
+.sys { color: var(--muted); font-size: 14px; padding: 2px 16px 2px 70px; }
+.sys::before { content: "→ "; color: var(--ok); }
+.embed { margin-top: 4px; max-width: 460px; background: var(--embed); border-left: 4px solid var(--accent);
+  border-radius: 4px; padding: 8px 12px 10px; white-space: normal; }
+.embed.ok { border-color: var(--ok); } .embed.warn { border-color: var(--warn); } .embed.bad { border-color: var(--bad); }
+.embed .t { font-weight: 700; margin-bottom: 4px; }
+.embed .f { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px 12px; margin-top: 6px; }
+.embed .f div { font-size: 13px; } .embed .f b { display: block; font-size: 12px; }
+.slash { color: var(--muted); font-size: 13px; }
+.slash b { color: #c9cdfb; font-weight: 500; }
+.bar { position: relative; padding: 0 16px 16px; }
+.pick { position: absolute; left: 16px; right: 16px; bottom: 62px; background: var(--side);
+  border-radius: 8px; padding: 6px; box-shadow: 0 8px 16px rgba(0,0,0,.3); max-height: 240px; overflow: auto; }
+.pick div { padding: 6px 8px; border-radius: 4px; cursor: pointer; }
+.pick div.on, .pick div:hover { background: #404249; }
+.pick small { color: var(--muted); margin-left: 8px; }
+.in { width: 100%; border: 0; outline: 0; border-radius: 8px; padding: 12px 14px; background: var(--input);
+  color: var(--text); font: inherit; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.chip { border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 999px;
+  padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.chip:hover { background: var(--hover); }
+@media (max-width: 640px) {
+  .app { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .top { font-size: 14px; }
+}
