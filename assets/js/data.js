@@ -62,6 +62,9 @@
     { title:'昆布クリッカー', author:'S.N.', category:'プログラミング',
       url:'works/konbu/', scratch: true, aspect: 4 / 3, thumb:'https://uploads.scratch.mit.edu/get_image/project/1366437612_480x360.png',
       desc:'この作品はコンピューター部の通称「昆布」のクリッカーゲームです。真ん中の昆布をクリックし、ショップでアイテムを買い昆布を増やしていきます。' },
+    { title:'ミニゲーム', author:'K.I.', category:'プログラミング',
+      url:'works/minigame/', scratch: true, aspect: 4 / 3,
+      desc:'誰でも簡単に楽しめると思います。キーボードの矢印キーで操作してください。' },
     /* 音楽のサムネイルは、元の曲の公式動画のサムネイル（メルトはニコニコの原曲と同じ絵） */
     { title:'オーバーライド（ピアノカバー）', author:'S.T.', category:'音楽',
       url:'works/override.m4a', thumb:'works/thumbs/override.webp',
