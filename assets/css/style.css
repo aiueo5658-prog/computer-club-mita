@@ -304,20 +304,27 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
 /* 衛星ひとつ。位置・奥行きの倍率・重なり順は app.js が毎コマ入れる。 */
 .satnode{position:absolute;left:0;top:0;width:0;height:0;
   opacity:0;transition:opacity .2s ease}
-.satsys.on .satnode{opacity:var(--dim,1);transition:opacity .26s ease .04s}
-/* 手前ほど大きい。ふつうの .orbi の拡大に --sc を掛ける。 */
-.satnode > .orbi{transform:translate(-50%,-50%) scale(var(--sc,1))}
-.satnode > .orbi:hover{transform:translate(-50%,-50%) scale(calc(var(--sc,1) * 1.07))}
+.satsys.on .satnode{opacity:var(--dim,1);transition:opacity .26s ease .04s, --hv .3s cubic-bezier(.22,1,.36,1)}
+/* 手前ほど大きい。ふつうの .orbi の拡大に --sc を掛ける。
+   hover の拡大は --hv で持つ。吹き出しの点も同じ --hv で動くので、
+   乗せても点が丸の縁から離れない。transform 自体は毎コマ変わるので、
+   transition を掛けない（掛けると丸だけ遅れて、点とずれる）。 */
+@property --hv{syntax:"<number>";inherits:true;initial-value:1}
+.satnode{--hv:1;transition:opacity .2s ease, --hv .3s cubic-bezier(.22,1,.36,1)}
+.satnode:has(> .orbi:hover){--hv:1.07}
+.satnode > .orbi,.satnode > .orbi:hover{transform:translate(-50%,-50%) scale(calc(var(--sc,1) * var(--hv)));
+  transition:background .3s ease, box-shadow .3s ease, opacity .6s ease}
 /* 名札と吹き出しの出る位置も、その衛星の大きさに合わせる。 */
 .satnode > .flag{--fo:calc(var(--satd,50px) / 2 * var(--sc,1) + 15px * var(--inv,1))}
-.satnode > .call-host{--s:calc(var(--satd,50px) / 2 * var(--sc,1) * var(--kz,1))}
+.satnode > .call-host{--s:calc(var(--satd,50px) / 2 * var(--sc,1) * var(--hv) * var(--kz,1))}
 /* 潜った惑星は衛星の層のまん中に立つ。奥の衛星はこの下を通る。 */
 .orbi.sun{z-index:20}
 
 /* 吹き出し */
 .callout{position:absolute;left:0;top:0;width:0;height:0;z-index:60;
   transform:scale(var(--inv));transform-origin:0 50%}
-.cdot{position:absolute;left:var(--s);top:-3.5px;width:7px;height:7px;border-radius:50%;background:var(--c)}
+/* 点の中心が丸の縁にぴったり乗る */
+.cdot{position:absolute;left:calc(var(--s) - 3.5px);top:-3.5px;width:7px;height:7px;border-radius:50%;background:var(--c)}
 .cdiag{position:absolute;left:var(--s);top:0;width:54px;height:1px;background:var(--c);
   transform-origin:0 50%;transform:rotate(-45deg);animation:drawD .26s cubic-bezier(.22,1,.36,1) both}
 .chorz{position:absolute;left:calc(var(--s) + 38px);top:-38px;width:46px;height:1px;background:var(--c);
