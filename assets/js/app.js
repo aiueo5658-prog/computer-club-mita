@@ -1135,6 +1135,8 @@
     mv.addEventListener('load', function () {
       var mats = (mv.model && mv.model.materials) || [];
       mats.forEach(function (m) {
+        /* 板一枚で作った部分（剣の刃など）は、裏から見ると描かれず消えて見える。両面とも描く */
+        if (m.setDoubleSided) m.setDoubleSided(true);
         var pbr = m.pbrMetallicRoughness;
         if (!pbr || (pbr.baseColorTexture && pbr.baseColorTexture.texture)) return;
         var c = pbr.baseColorFactor;
