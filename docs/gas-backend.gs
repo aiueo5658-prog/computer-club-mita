@@ -443,6 +443,14 @@ function syncComments() {
   return changed;
 }
 
+/* サイトに出ているひとことを全部消す（Firebase の comments を丸ごと削除）。
+   シートの記録は残す。エディタで関数を選んで「実行」する。 */
+function resetAllComments() {
+  var res = UrlFetchApp.fetch(fbUrl('comments'), { method: 'delete', muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) throw new Error('HTTP ' + res.getResponseCode() + ' ' + res.getContentText().slice(0, 120));
+  Logger.log('Firebase のひとことを全部消しました');
+}
+
 /* Firebase の comments 以下を全部読む（キーは作品ごと → ひとことのID） */
 function fbGetAll() {
   var res = UrlFetchApp.fetch(fbUrl('comments'), { muteHttpExceptions: true });
