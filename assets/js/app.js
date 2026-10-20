@@ -245,6 +245,7 @@
 
       c.node.rings.innerHTML = '';
 
+      c.node.ringPitch = null;
       c.node.paths = shells.map(function () {
         /* 手前半分と奥半分は別々の svg にする。同じ svg に入れると
            中心の前後にレイヤーを分けられない。 */
@@ -440,21 +441,16 @@
      yaw では描き直さない。pitch が変わったときだけ引き直す。
      中心の丸に重なるところは描かない。浅い角度だと、そこが
      真ん中を横切るただの線に見えてしまうため。 */
-  /* 線は手前半分と奥半分に分けて引く。作品の丸と（奥側だけ）中心の丸に
-     かかるところは線を切る。前は SVG のマスクを毎コマ動かしていたが、
-     マスクは毎コマ全体を描き直すので重い。線の点を間引くだけなら軽い。 */
+  /* 線は手前半分と奥半分に分けて引くだけ。作品の丸は中身が不透明で、
+     いつも線より上のレイヤーにあるので、重なったところは丸が隠す。
+     中心の丸も奥の線より上にある。線の形は見下ろし角だけで決まるので、
+     角度が変わったときだけ引き直す（公転では動かない）。 */
   var RING_N = 180;
-  function ringPath(r, pitch, wantFront, holes) {
+  function ringPath(r, pitch, wantFront) {
     var out = [], cur = [], EPS = 1e-6;
     for (var k = 0; k <= RING_N; k++) {
       var q = proj(k / RING_N * Math.PI * 2, r, pitch);
       var onSide = wantFront ? (q.z >= -EPS) : (q.z <= EPS);
-      if (onSide) {
-        for (var h = 0; h < holes.length; h++) {
-          var dx = q.x - holes[h].x, dy = q.y - holes[h].y;
-          if (dx * dx + dy * dy < holes[h].r2) { onSide = false; break; }
-        }
-      }
       if (onSide) cur.push(q.x.toFixed(1) + ',' + q.y.toFixed(1));
       else { if (cur.length > 1) out.push('M' + cur.join('L')); cur = []; }
     }
@@ -462,13 +458,13 @@
     return out.join('');
   }
 
-  function drawRings(c, holes) {
-    if (!c.node.paths) return;
-    var back = holes.concat([{ x: 0, y: 0, r2: Math.pow(c.node.pd / 2 + 6, 2) }]);
+  function drawRings(c) {
+    if (!c.node.paths || c.node.ringPitch === cam.pitch) return;
+    c.node.ringPitch = cam.pitch;
     for (var i = 0; i < c.node.shells.length; i++) {
       var r = c.node.shells[i].r;
-      c.node.paths[i].back.setAttribute('d', ringPath(r, cam.pitch, false, back));
-      c.node.paths[i].front.setAttribute('d', ringPath(r, cam.pitch, true, holes));
+      c.node.paths[i].back.setAttribute('d', ringPath(r, cam.pitch, false));
+      c.node.paths[i].front.setAttribute('d', ringPath(r, cam.pitch, true));
     }
   }
 
@@ -478,7 +474,7 @@
       if (state.zoom && state.zoom !== c.key) continue;
       if (!c.node.shells) continue;
 
-      var holes = [];
+      drawRings(c);
       for (var wi = 0; wi < c.works.length; wi++) {
         var wk = c.works[wi], n = wk.node;
         if (!n || !n.r) continue;
@@ -499,9 +495,7 @@
                : (pt.z > 0 ? 24 + Math.round(pt.z * 7)
                            : 12 + Math.round((1 + pt.z) * 7));
         if (n.lastZ !== zi) { st.zIndex = zi; n.lastZ = zi; }
-        holes.push({ x: pt.x, y: pt.y, r2: Math.pow((geo.satD / 2) * pt.s * 1.14, 2) });
       }
-      drawRings(c, holes);
     }
   }
 

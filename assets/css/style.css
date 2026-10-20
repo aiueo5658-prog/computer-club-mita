@@ -304,7 +304,9 @@ html.turning .scene,html.turning .scene *{cursor:grabbing}
 /* 衛星ひとつ。位置・奥行きの倍率・重なり順は app.js が毎コマ入れる。 */
 .satnode{position:absolute;left:0;top:0;width:0;height:0;
   opacity:0;transition:opacity .2s ease}
-.satsys.on .satnode{opacity:var(--dim,1);transition:opacity .26s ease .04s, --hv .3s cubic-bezier(.22,1,.36,1)}
+/* 奥の作品は透かさずに暗くする。透かすと下の軌道の線が透けて見える。 */
+.satnode > .orbi{filter:brightness(var(--dim,1))}
+.satsys.on .satnode{opacity:1;transition:opacity .26s ease .04s, --hv .3s cubic-bezier(.22,1,.36,1)}
 /* 手前ほど大きい。ふつうの .orbi の拡大に --sc を掛ける。
    hover の拡大は --hv で持つ。吹き出しの点も同じ --hv で動くので、
    乗せても点が丸の縁から離れない。transform 自体は毎コマ変わるので、
