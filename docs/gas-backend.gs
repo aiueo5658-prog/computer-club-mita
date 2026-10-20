@@ -518,6 +518,7 @@ function onOpen() {
     .addItem('Jev と Firebase の接続を確認する', 'checkConnections')
     .addSeparator()
     .addItem('5分ごとに自動で反映する（初回だけ）', 'installSyncTrigger')
+    .addItem('チェックを外したらすぐ消す（初回だけ）', 'installInstantTrigger')
     .addToUi();
 }
 
@@ -530,6 +531,42 @@ function installSyncTrigger() {
   var exists = ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'syncComments'; });
   if (!exists) ScriptApp.newTrigger('syncComments').timeBased().everyMinutes(5).create();
   SpreadsheetApp.getUi().alert(exists ? 'すでに有効です。' : '5分ごとの自動反映を有効にしました。');
+}
+
+/* ---- シートを触ったらすぐ反映する ----
+   「公開」列をチェックボックスにして、チェックを外す（＝FALSE）か
+   行を削除すると、その場で syncComments が走ってサイトから消える。
+   外部（Firebase）へ書くので、ふつうの onEdit ではなく
+   インストール型のトリガーにする（ふつうの onEdit は通信できない）。 */
+function installInstantTrigger() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var have = ScriptApp.getProjectTriggers().map(function (t) {
+    return t.getHandlerFunction() + ':' + t.getEventType();
+  });
+  if (have.indexOf('onCommentSheetEdit:' + ScriptApp.EventType.ON_EDIT) < 0)
+    ScriptApp.newTrigger('onCommentSheetEdit').forSpreadsheet(ss).onEdit().create();
+  if (have.indexOf('onCommentSheetEdit:' + ScriptApp.EventType.ON_CHANGE) < 0)
+    ScriptApp.newTrigger('onCommentSheetEdit').forSpreadsheet(ss).onChange().create();
+
+  var sh = sheet(SHEET.comment);
+  var last = Math.max(sh.getLastRow(), 2);
+  sh.getRange(2, C.pub, Math.max(last - 1, 1000), 1)
+    .setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build());
+
+  SpreadsheetApp.getUi().alert('有効にしました。「公開」のチェックを外すか、行を削除すると、すぐサイトから消えます。\nチェックを入れ直すと、また載ります。');
+}
+
+function onCommentSheetEdit(e) {
+  /* 行の削除は onChange（REMOVE_ROW）、チェックの付け外しは onEdit で来る */
+  if (e && e.changeType && e.changeType !== 'REMOVE_ROW') return;
+  if (e && e.range) {
+    var sh = e.range.getSheet();
+    if (sh.getName() !== SHEET.comment) return;
+    if (e.range.getColumn() > C.pub || e.range.getLastColumn() < C.pub) return;
+  }
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return;   /* 連続で押されたら、前の反映が終わるのを待つ */
+  try { syncComments(); } finally { lock.releaseLock(); }
 }
 
 /* 辛口の指摘・侮辱・ふつうの感想を1件ずつ Jev に聞いて、結果を見せる。
