@@ -56,7 +56,7 @@
       desc:'Blender で作った昆布のアイコンです。ドラッグで回して見られます。' },
     { title:'昆布剣と剣差し', author:'H.T.', category:'モデリング',
       /* 「昆布剣」と「昆布観測島剣差し」を、剣を差した状態で1つにまとめたもの */
-      url:'works/konbu-sword.glb',
+      url:'works/konbu-sword.glb?v=2',
       desc:'Blender で作った昆布の剣と、それを差しておく台です。ドラッグで回して見られます。' },
     { title:'昆布観測島キーホルダー', author:'H.T.', category:'モデリング',
       url:'works/konbu-keyholder.glb',
