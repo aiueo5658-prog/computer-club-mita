@@ -1495,7 +1495,7 @@
         /* まず端末の中の判定AI（local-mod.js）で審査する。無料。
            載せられないものはここで止めて、送らない。
            通ったものは判定結果を添えて裏側に送り、裏側が最後に確かめて Firebase に載せる。
-           published … 載った / rejected・slow … 載らない */
+           published … 載った / rejected … 載らない */
         var Mod = window.CCMLocalMod;
         var judged = Mod ? Mod.check(name, text) : Promise.resolve(null);
         judged.then(function (local) {

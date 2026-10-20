@@ -167,13 +167,42 @@ function verdict(status, reason, s) { return { status: status, reason: reason, s
 function num(v) { v = Number(v); return isFinite(v) ? v : 0; }
 
 /* ---- 無料の審査：来場者の端末で動く判定AI（assets/js/local-mod.js）の結果で決める ----
-   NG ワード表や部員の確認待ちは使わない。判定AIの unsafe 確率だけで、載せる／載せないを決める。
-   ここで止めるのは、個人情報と宣伝よけのリンク・メール・電話番号だけ。
+   言葉の一覧（NG）と個人情報・リンクは serverRules で先に止め、残りは判定AIの unsafe 確率で決める。
    端末の答えが無い（判定せずに直接送られた）ものは載せない。 */
 var LOCAL_TH = { reject: 0.5 };
 
+/* 言葉で止める一覧。assets/js/local-mod.js の NG・fold と同じもの。
+   端末の判定は送る側で飛ばせるので、裏側でも必ず当てる。片方を直したら両方直す。 */
+  var NG = [
+    /死ネ|死ンデ(?:クダサイ|ホシ|クレ|ネ|ヨ|ロ|$)|死ニ(?:タマエ|クダサイ|ヤガレ|ナサイ)|死ヌベキ|シネ(?!マ|ラリア)|シンデ(?:クダサイ|ホシ|クレ|ネ$|ヨ$)|シニタマエ|氏ネ/,
+    /亡クナリ(?:クダサイ|下サイ|ナサイ)|クタバ|クタバレ|殺ス|殺シテ|コロス|コロシテ|消エロ|キエロ|自殺/,
+    /^(?:w*)(?:sine|shine|sineyo|shineyo|sinde|shinde|korosu)(?:w*)$/,
+    /基地外|気違イ|キチガイ|キチ(?!ン|ット|ョウ)|ガイジ|池沼|糖質|ナマポ|生活保護|障害者|知恵遅レ|メクラ|ツンボ|カタワ/,
+    /バカ(?!ン)|馬鹿|馬ト鹿|アホ(?!ウドリ)|マヌケ|ブス|デブ|ハゲ(?!シ|マ)|キモ(?!チ)|キショ|ウザ|クズ(?!レ)|ゴミ|カス(?!タ|テラ|ケード)|クソ(?!ゲ)|ザコ|雑魚|イキスギ|イキッテ/,
+    /オカマ|ホモ|レズ|ゲイ(?!ム|ジ)|ニガー|チョン|支那|土人|朝鮮人|韓国人|中国人|在日/,
+    /セックス|チンコ|チンポ|チンチン|マンコ|オッパイ|エッチ|エロ|オナニ|パンパン|69|野獣|yaju|ヤリマスネ|810|114514|イイヨコイヨ|田所/,
+    /ウンコ|ウンチ|シッコ|オモンナ|オモロナ|ツマンネ|ツマラナイ|オモシロクナイ|面白クナイ|面白クナ/,
+    /竹島|独島|尖閣|北方領土|樺太|植民地|慰安婦|南京|台湾ハ|中華人民共和国|紅衛兵|天皇|靖国|ヒトラー|ハイル|ナチ(?!ュ)|総統/,
+    /縦読ミ|タテヨミ|下カラ読|頭文字ヲ/,
+    /[가-힯]/,
+    /sex|fuck|shit|dick|porn|bitch|nigg/
+  ];
+
+  function fold(s) {
+    s = String(s || '').normalize('NFKC').toLowerCase();
+    /* ひらがな → カタカナ */
+    s = s.replace(/[ぁ-ゖ]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) + 0x60); });
+    /* 伸ばし棒・記号・空白・伏せ字を落とす（「し。ね」「〇〇し〇〇ね」「ち○ぽ」「うーんこ」対策） */
+    return s.replace(/[\sー〜~・.,、。_\-*○〇◯●×♡☆★!?！？「」『』()（）\[\]【】…‥'"`]/g, '');
+  }
 function serverRules(post) {
   var all = post.name + ' ' + post.text;
+  var parts = [fold(post.name), fold(post.text)];
+  for (var i = 0; i < NG.length; i++) {
+    for (var j = 0; j < parts.length; j++) {
+      if (parts[j] && NG[i].test(parts[j])) return verdict('rejected', '人への侮辱・不適切（言葉）', {});
+    }
+  }
   if (/https?:\/\/|www\.|\.(com|net|jp|io|xyz)/i.test(all)) return verdict('rejected', '作品と関係のない投稿', {});
   if (/[\w.+-]+@[\w-]+\.[\w.]+/.test(all)) return verdict('rejected', '個人情報（メール）', {});
   if (/0\d{1,4}[-\s]?\d{2,4}[-\s]?\d{3,4}/.test(all.normalize('NFKC'))) return verdict('rejected', '個人情報（電話番号）', {});
@@ -229,8 +258,7 @@ var MESSAGES = {
   held:      'ありがとうございます。部員が確認してから載せます。',
   insult:    'この書き方のままだと載せられません。作品への指摘や改善案は大歓迎です。' +
              '人を傷つける言い方になっていないか、見直してもらえますか。',
-  spam:      '作品と関係のない投稿は載せていません。',
-  slow:      '続けて送るときは、少し待ってからどうぞ。'
+  spam:      '作品と関係のない投稿は載せていません。'
 };
 
 
@@ -306,9 +334,6 @@ function saveComment(b) {
   var title = clean(b.title, 80);
   var device = clean(b.id, 40);
 
-  /* 連投よけ：同じ端末からは 15 秒に1件、1時間に 12 件まで */
-  if (device && !allowPost(device)) return { ok: false, status: 'slow', message: MESSAGES.slow };
-
   var v = judgeComment({ title: title, name: name, text: text }, b.local || null);
   var fid = '';
   if (v.status === 'published') {
@@ -335,23 +360,6 @@ function saveComment(b) {
           : v.reason === '作品と関係のない投稿' ? MESSAGES.spam
           : MESSAGES.insult;
   return { ok: true, status: v.status, message: msg };
-}
-
-function allowPost(device) {
-  var cache = CacheService.getScriptCache();
-  var lock = LockService.getScriptLock();
-  try { lock.waitLock(5000); } catch (e) { return true; }
-  try {
-    if (cache.get('rl:' + device)) return false;
-    var hourKey = 'rlh:' + device;
-    var n = Number(cache.get(hourKey) || 0);
-    if (n >= 12) return false;
-    cache.put('rl:' + device, '1', 15);
-    cache.put(hourKey, String(n + 1), 3600);
-    return true;
-  } finally {
-    lock.releaseLock();
-  }
 }
 
 /* Firebase を使わない構成のときだけ、ブラウザはここから読む。
