@@ -388,6 +388,7 @@ function readComments(slug) {
    シート「コメント」の「公開」列を
      FALSE → TRUE にしたもの … Firebase に載せる（確認待ち・却下の救済）
      TRUE → FALSE にしたもの … Firebase から消す（すり抜けた荒らしの削除）
+     行ごと消したもの        … Firebase からも消す
    「判定」列が空の行（この仕組みより前の古い行）には触らない。 */
 function syncComments() {
   var sh = sheet(SHEET.comment);
@@ -420,7 +421,33 @@ function syncComments() {
       changed++;
     }
   }
+
+  /* シートから行ごと消したひとことは、上のループでは見つけられない。
+     Firebase にあってシートの「FirebaseID」列のどこにも無いものは、
+     シートで消されたものとして Firebase からも消す。 */
+  var keep = {};
+  for (var j = 0; j < rows.length; j++) {
+    var f = String(rows[j][C.fid - 1] || '');
+    if (f) keep[f] = true;
+  }
+  var all = fbGetAll();
+  Object.keys(all).forEach(function (key) {
+    var slug = decodeURIComponent(key);
+    Object.keys(all[key] || {}).forEach(function (id) {
+      if (keep[id]) return;
+      fbDelete(slug, id);
+      cacheDrop('comments:' + slug);
+      changed++;
+    });
+  });
   return changed;
+}
+
+/* Firebase の comments 以下を全部読む（キーは作品ごと → ひとことのID） */
+function fbGetAll() {
+  var res = UrlFetchApp.fetch(fbUrl('comments'), { muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) throw new Error('HTTP ' + res.getResponseCode() + ' ' + res.getContentText().slice(0, 120));
+  return JSON.parse(res.getContentText()) || {};
 }
 
 

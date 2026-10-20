@@ -237,9 +237,23 @@
       c.node.body.style.setProperty('--d', pd + 'px');
       c.node.flag.style.setProperty('--fo', Math.round(pd / 2 + 15) + 'px');
 
-      var mR = pd / 2 + geo.satD * 0.9, xR = widest(geo.satD);
-      var shells = (xR > mR && planShells(c.works.length, geo.satD, mR, xR, PITCH0))
-                || geo.shells;
+      /* 作品の大きさはジャンルごとに決める。いちばん多いジャンルに合わせた
+         geo.satD のままだと、作品の少ないジャンルはサムネが小さく見える。
+         多いジャンルとの比の平方根ぶん（最大2.6倍）から始めて、入るまで縮める。 */
+      var sd = Math.round(geo.satD * Math.min(2.6, Math.sqrt(maxN / c.works.length)));
+      var shells = null, mR, xR;
+      for (; sd > geo.satD; sd = Math.max(geo.satD, Math.round(sd * 0.92))) {
+        mR = pd / 2 + sd * 0.9; xR = widest(sd);
+        if (xR > mR) shells = planShells(c.works.length, sd, mR, xR, PITCH0);
+        if (shells) break;
+      }
+      if (!shells) {
+        sd = geo.satD;
+        mR = pd / 2 + sd * 0.9; xR = widest(sd);
+        shells = (xR > mR && planShells(c.works.length, sd, mR, xR, PITCH0)) || geo.shells;
+      }
+      c.node.satD = sd;
+      c.node.satsys.style.setProperty('--satd', sd + 'px');
       c.node.shells = shells;
       c.node.pd = pd;
 
@@ -274,7 +288,7 @@
           n.r = sh.r;
           n.s0 = j / sh.count + sh.ph;
           n.period = 150 + i * 46;          /* 外の輪ほどゆっくり回る */
-          n.body.style.setProperty('--d', geo.satD + 'px');
+          n.body.style.setProperty('--d', sd + 'px');
         }
       });
     });
