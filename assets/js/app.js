@@ -101,9 +101,10 @@
   /* 原子の電子殻と同じ考え方。まず内側の輪を入るところまで広げ、
      広げきっても入らなければ外側にもう1本足す。
      定員は式ではなく worstGap で実測する。 */
-  function planShells(n, satD, minR, rMax, pitch) {
+  function planShells(n, satD, minR, rMax, pitch, minRings) {
     var i;
-    for (var r = minR; r <= rMax; r += 5) {
+    /* minRings が 2 以上なら、1本で入っても輪を分ける（作品が多いジャンル用） */
+    for (var r = minR; (minRings || 1) < 2 && r <= rMax; r += 5) {
       if (worstGap([{ r: r, count: n, ph: 0 }], satD, pitch) >= satD * GAPMIN)
         return [{ r: Math.round(r), count: n, ph: 0 }];
     }
@@ -242,15 +243,27 @@
          多いジャンルとの比の平方根ぶん（最大2.6倍）から始めて、入るまで縮める。 */
       var sd = Math.round(geo.satD * Math.min(2.6, Math.sqrt(maxN / c.works.length)));
       var shells = null, mR, xR;
+      /* 作品が10点以上のジャンルは、軌道を2本に分けて並べる */
+      var rings = c.works.length >= 10 ? 2 : 1;
       for (; sd > geo.satD; sd = Math.max(geo.satD, Math.round(sd * 0.92))) {
         mR = pd / 2 + sd * 0.9; xR = widest(sd);
-        if (xR > mR) shells = planShells(c.works.length, sd, mR, xR, PITCH0);
+        if (xR > mR) shells = planShells(c.works.length, sd, mR, xR, PITCH0, rings);
         if (shells) break;
       }
       if (!shells) {
         sd = geo.satD;
         mR = pd / 2 + sd * 0.9; xR = widest(sd);
-        shells = (xR > mR && planShells(c.works.length, sd, mR, xR, PITCH0)) || geo.shells;
+        shells = (xR > mR && planShells(c.works.length, sd, mR, xR, PITCH0, rings)) || null;
+        if (!shells && rings === 2 && xR > mR) {
+          /* 重なりの判定を満たす2本が見つからなくても、2本に分ける。
+             外を枠いっぱい、内を作品1つ半ぶん内側に置き、数は半径に比例して振る。
+             内外で半周ずらして、前後で重なりにくくする。 */
+          var n = c.works.length, rIn = Math.max(mR, xR - sd * 1.6);
+          var nOut = Math.round(n * xR / (xR + rIn));
+          shells = [{ r: Math.round(rIn), count: n - nOut, ph: 0.5 / Math.max(n - nOut, 1) },
+                    { r: Math.round(xR),  count: nOut,     ph: 0 }];
+        }
+        if (!shells) shells = (xR > mR && planShells(c.works.length, sd, mR, xR, PITCH0)) || geo.shells;
       }
       c.node.satD = sd;
       c.node.satsys.style.setProperty('--satd', sd + 'px');
