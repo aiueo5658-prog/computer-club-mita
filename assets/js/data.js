@@ -77,7 +77,7 @@
       url:'works/konbu/', scratch: true, aspect: 4 / 3, thumb:'https://uploads.scratch.mit.edu/get_image/project/1366437612_480x360.png',
       desc:'この作品はコンピューター部の通称「昆布」のクリッカーゲームです。真ん中の昆布をクリックし、ショップでアイテムを買い昆布を増やしていきます。' },
     { title:'ミニゲーム', author:'K.I.', category:'プログラミング',
-      url:'works/minigame/', scratch: true, aspect: 4 / 3,
+      url:'works/minigame/', scratch: true, aspect: 4 / 3, thumb:'works/thumbs/minigame.webp',
       desc:'誰でも簡単に楽しめると思います。キーボードの矢印キーで操作してください。' },
     /* 音楽のサムネイルは、元の曲の公式動画のサムネイル（メルトはニコニコの原曲と同じ絵） */
     { title:'オーバーライド（ピアノカバー）', author:'S.T.', category:'音楽',
@@ -89,6 +89,9 @@
     { title:'のだ（ピアノカバー）', author:'S.T.', category:'音楽',
       url:'works/noda.m4a', thumb:'works/thumbs/noda.webp',
       desc:'大漠波新さん作曲、初音ミク・重音テト・ずんだもん歌唱の「のだ」のピアノカバーです。3人の歌声を聴き分けてみてください。' },
+    { title:'鏡音リンの消失（カバー）', author:'T.I.', category:'音楽',
+      url:'works/shoushitsu.m4a', thumb:'works/thumbs/shoushitsu.webp',
+      desc:'この作品は「初音ミクの消失」を鏡音リンでカバーしたものです。' },
     { title:'メルト（カバー）', author:'S.T.', category:'音楽',
       url:'works/melt.m4a', thumb:'works/thumbs/melt.webp',
       desc:'ryo（supercell）さん作曲、初音ミク歌唱の「メルト」を、初音ミク V4X でボカロ、メロディーをシンセサイザー、残りをピアノでカバーしました。歌唱中に一箇所、音の長さが違うところがあるので探してみてください。' },
